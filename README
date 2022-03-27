@@ -1,0 +1,18 @@
+AHMM-MLS allow for the fitting of multi locus selection models on admixed populations
+
+To make:
+    cd src
+    make
+
+Site file format:
+    The site file consists of multiple lines of the form:
+    <bp position of site> \tab <mode>
+
+    The modes are:
+        o, this fits a single site model with unrestricted selection
+        d, this tests for dominance
+        t, this tests for two nearby sites, leaving selection unrestricted
+        T, this tests for two nearby sites, restricting to additive selection
+    
+    an example of a site file can be found in example/
+    

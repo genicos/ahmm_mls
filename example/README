@@ -1,0 +1,4 @@
+The data in this directory is chromosome 3r of Drosophila Melanogaster.
+This command will run 5 two-site tests, and 5 dominance tests on this chromosome
+
+./ahmm_mls -i 3R.SD.SUBDIVIDED.panel -s SD.3R.SUBDIVIDED.ploidy -m 0.17 430 -l 3rsite_file > results
