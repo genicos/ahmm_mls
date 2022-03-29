@@ -69,8 +69,9 @@ public:
     int block_size ; 
 
 
-    /// fit given selections, or discover new ones
-    bool selection_mode = false;
+    
+
+    bool admixture_parameters_set = false;
 
     // given ancestry proportion
     double m;
@@ -78,26 +79,8 @@ public:
     // given generations
     int generations;
 
-    // selected site locations
-    vector<double> selected_sites;
-
-    // fitness of selected sites
-    vector<vector<double>> fitnesses;
-
-    /// Optimize for selection
-    bool optimize_selection = false;
-
     
-    // use output of ahmm-s, test sites of interest
-    bool use_ahmm_s_peaks = false;
 
-    // ahmm-s gss output file
-    string gss_output;
-    vector<double> gss_out_pos;
-    vector<double> gss_out_sel;
-    vector<double> gss_out_llr;
-
-    bool restrict_to_dominance = false;
 
 
 
@@ -109,6 +92,14 @@ public:
     vector<int>    site_file_positions;
     vector<double> site_file_morgan_positions;
     vector<string> site_file_options;
+
+    
+    // calculate likelihoods for models
+    bool use_model_file = false;
+
+    string model_file;
+    vector<vector<double>> models;
+
 
 
     /// read relevant information

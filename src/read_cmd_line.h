@@ -219,7 +219,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         }
 
 
-        if(strcmp(argv[i], "-l") == 0){
+        if ( strcmp(argv[i], "-l") == 0 ){
             use_site_file = true;
 
             site_file = string(argv[++i]);
@@ -227,10 +227,16 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         
         if ( strcmp(argv[i], "-m") == 0){
             
-            selection_mode = true;
+            admixture_parameters_set = true;
 
             m = stod(argv[++i]);
             generations = stoi(argv[++i]);
+        }
+
+        if ( strcmp(argv[i], "-M") == 0 ){
+            use_model_file = true;
+
+            model_file = string(argv[++i]);
         }
 
 
@@ -253,11 +259,14 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         print_usage() ;
         exit(1) ;
     }
+    
+    /*
     if ( use_site_file == false ){
         cerr << "\n\n\t\tERROR: must provide site file\n\n\t\t\t-l [path/to/site_file]\n\n" ;
         print_usage() ;
         exit(1) ;
     }
+    */
     if ( ancestry_proportion.size() > ancestry_pulses.size() ) {
 	cerr << "\n\n\t\tERROR: insufficient ancestry pulses specified\n\n" ;
 	print_usage() ; 

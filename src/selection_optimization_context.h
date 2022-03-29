@@ -28,9 +28,10 @@ public:
     }
     selection_opt(){}
 
-    vector<double> enact_optimization();
-    vector<double> examine_peaks();
+    //vector<double> enact_optimization();
+    //vector<double> examine_peaks();
     vector<double> examine_sites();
+    void test_models();
     void set_context();
 
     //double to_be_optimized(vector<double> parameters);

@@ -71,9 +71,11 @@ using namespace arma ;
 
 
 
-
 #include "read_sites.h"
 #include "site_examining.h"
+
+#include "read_model_file.h"
+#include "model_examining.h"
 
 
 int main ( int argc, char *argv[] ) {
@@ -117,11 +119,9 @@ int main ( int argc, char *argv[] ) {
 
 
     
-    if(options.selection_mode){
-        selection_read_file( options, markov_chain_information, state_list, position, recombination_rate, chromosomes ) ;
-    }else{
-        read_file( options, markov_chain_information, state_list, position, recombination_rate, chromosomes ) ;
-    }
+    
+    selection_read_file( options, markov_chain_information, state_list, position, recombination_rate, chromosomes ) ;
+    
     
     
     recombination_rate[0] = 0;
@@ -154,14 +154,20 @@ int main ( int argc, char *argv[] ) {
     
 
 
+    if(options.use_model_file){
+        read_model_file(options);
+        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
+            
+        selection_optimizer.test_models();
+    }
     
     
-    
-    read_site_file(options, recombination_rate, position);
-    selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
-        
-    selection_optimizer.examine_sites();
-    
+    if(options.use_site_file){
+        read_site_file(options, recombination_rate, position);
+        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
+            
+        selection_optimizer.examine_sites();
+    }
 
 
     
