@@ -262,7 +262,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
 
     if ( use_site_file == false && use_model_file == false){
         cerr << "\n\n\t\tERROR: must provide either site file or model file \n\n\t\t\t-l [path/to/site_file]\n\n" ;
-        cerr << "\t\t\t-M [path/to/model_file]\n\n" ;
+        cerr << "\t\t\t-M [path/to/model_file]\n\n";
         print_usage() ;
         exit(1) ;
     }
