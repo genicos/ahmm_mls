@@ -10,7 +10,7 @@ void read_model_file(cmd_line &options){
 
     vector<double> empty(0);
 
-    options.models.push_back(empty);
+    bool first_site_of_new_model = true;
     
     while ( !in.eof() ) {
         
@@ -33,14 +33,18 @@ void read_model_file(cmd_line &options){
             }
 
             float het_float = stof(het);
+
+            if(first_site_of_new_model){
+                options.models.push_back(empty);
+                first_site_of_new_model = false;
+            }
             
 
             options.models[options.models.size() - 1].push_back(stof(site));
             options.models[options.models.size() - 1].push_back(stof(hom0)/het_float);
             options.models[options.models.size() - 1].push_back(stof(hom1)/het_float);
         }else{
-
-            options.models.push_back(empty);
+            first_site_of_new_model = true;
         }
 
     }
