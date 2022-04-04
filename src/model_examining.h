@@ -45,6 +45,11 @@ void selection_opt::test_models(){
     global_models = options.models;
     global_lnl.resize(options.models.size());
 
+    //set default value for lnl vector
+    for(int i = 0; i < global_lnl.size(); i++){
+        global_lnl[i] = 1;
+    }
+
 
     
     vector<pthread_t> threads(cores);
@@ -57,13 +62,20 @@ void selection_opt::test_models(){
         }
     }
 
+    int lines_printed = 0;
+
+    while(lines_printed < global_lnl.size()){
+        for(int i = lines_printed; i < global_lnl.size() && global_lnl[i] != 1; i++){
+            cout << setprecision(15) << global_lnl[i] << "\n";
+            lines_printed++;
+        }
+        sleep(1);
+    }
+    
+
     //wait for all to finish by joining them
     for (int t = 0; t < cores; t++) {
         pthread_join(threads[t], NULL);
-    }
-
-    for(int i = 0; i < global_lnl.size(); i++) {
-        cout << setprecision(15) << global_lnl[i] << "\n";
     }
     
 }
