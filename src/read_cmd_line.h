@@ -226,7 +226,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             site_file = string(argv[++i]);
         }
         
-        if ( strcmp(argv[i], "-m") == 0){
+        if ( strcmp(argv[i], "-m") == 0 ){
             admixture_parameters_set = true;
 
             m = stod(argv[++i]);
@@ -237,6 +237,11 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             use_model_file = true;
 
             model_file = string(argv[++i]);
+        }
+
+        if ( strcmp(argv[i], "-c") == 0 ){
+            
+            cores = stoi(argv[++i]);
         }
 
 

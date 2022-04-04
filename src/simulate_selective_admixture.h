@@ -223,7 +223,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 
 vector<double> local_ancestries;
 
-int complete_transition_rates_number_of_threads = 7;
+int complete_transition_rates_number_of_threads = 1;
 
 
 
@@ -234,13 +234,25 @@ double global_m;
 int global_generations;
 vector<mat> *global_transition_matrices;
 
-void *single_window_process(void *threadid){
+struct intra_model_shared_info{
+    long t;
+    vector<double> *neutral_sites;
+    vector<double> *recomb_rates_around_selected_sites;
+    vector<vector<double>> *fitnesses;
+    double m;
+    double generations;
+    vector<mat> *transition_matrices;
+};
 
-    long t = (long)threadid;
+void *single_window_process(void *void_info){
+
+    struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
+    long t = info->t;
     
-    for(uint i = t; i < (*global_transition_matrices).size(); i+= complete_transition_rates_number_of_threads){
+    
+    for(uint i = t; i < (*info->transition_matrices).size(); i+= complete_transition_rates_number_of_threads){
 
-        vector<double> trans = adjacent_transition_rate(*global_recomb_rates_around_selected_sites, *global_fitnesses, global_m, (*global_neutral_sites)[i], (*global_neutral_sites)[i + 1], global_generations);
+        vector<double> trans = adjacent_transition_rate(*info->recomb_rates_around_selected_sites, *info->fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
         mat transition_matrix(2,2,fill::zeros);
 
@@ -249,8 +261,11 @@ void *single_window_process(void *threadid){
         transition_matrix(1,0) = trans[2]/(trans[2] + trans[3]);
         transition_matrix(1,1) = 1 - transition_matrix(1,0);
 
-        (*global_transition_matrices)[i] = transition_matrix;
+        (*info->transition_matrices)[i] = transition_matrix;
         local_ancestries[i] = trans[0] + trans[1];
+        /*if (i % 100 == 0){
+            cerr << "i " << i << " "<<transition_matrix.size() <<"\n";
+        }*/
     }
 
     pthread_exit(NULL);
@@ -293,15 +308,7 @@ vector<mat> calculate_transition_rates(
     ///////////////////////////////////////////////////////////////////////////////
     
 
-    // Populating global variables with local variables //////////////////////////////
-    global_neutral_sites = &neutral_sites;                                          //
-    global_recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
-    global_fitnesses = &fitnesses;
-    global_m = m;
-    global_generations = generations;
-    global_transition_matrices = &transition_matrices;                              //
-    //////////////////////////////////////////////////////////////////////////////////
-
+    
     
     // Creating threads to deal with independent adjacent neutral regions //////////////////
     vector<pthread_t> threads(complete_transition_rates_number_of_threads);               //
@@ -309,7 +316,18 @@ vector<mat> calculate_transition_rates(
     
     
     for(long t = 0; t < complete_transition_rates_number_of_threads; t++){
-        int rc = pthread_create(&threads[t], NULL, single_window_process, (void *)t);
+
+        //Passing necessary info to thread
+        struct intra_model_shared_info this_threads_info;
+        this_threads_info.t = t;
+        this_threads_info.neutral_sites = &neutral_sites;
+        this_threads_info.recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
+        this_threads_info.fitnesses = &fitnesses;
+        this_threads_info.m = m;
+        this_threads_info.generations = generations;
+        this_threads_info.transition_matrices = &transition_matrices;
+
+        int rc = pthread_create(&threads[t], NULL, single_window_process, (void *)&this_threads_info);
         if (rc) {
             cerr << "ERROR: unable to create a thread," << rc << "\n";
             exit(-1);
@@ -322,8 +340,8 @@ vector<mat> calculate_transition_rates(
         pthread_join(threads[t], NULL);
     }                                                                                     //
     ////////////////////////////////////////////////////////////////////////////////////////
-
     
+
     
     return transition_matrices;
 }
@@ -739,31 +757,36 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
     transition_matrix[number_chromosomes].resize(recombination_rate.size()) ;
 
 
-
+    
+    //cerr << "location " << &transition_matrices << "\n";
     //// iterate across all positions and compute transition matrixes
 
     //NOTE changed p starting point from 1 to 0
 
     for ( int p = 0 ; p < recombination_rate.size(); p ++ ) {
-        
+        //cerr << "III " << p << " " << transition_matrices.size() << " " << transition_matrices[p].size() << "\n";
         mat segment_transitions = transition_matrices[p];
         
         
 
         /// population transitions by summing across all routes
-
+        
         transition_matrix[number_chromosomes][p] = mat(transition_info.size(),transition_info.size(), fill::zeros);
 
         
         for ( int i = 0 ; i < transition_info.size() ; i ++ ) {
             for ( int j = 0 ; j < transition_info[i].size() ; j ++ ) {
+                
                 for ( std::map<vector<transition_information>,double>::iterator t = transition_info[i][j].begin() ; t != transition_info[i][j].end() ; ++ t ) {
-                    
+                    //cerr << "NNN\n";
+                    //cerr << "size: " << segment_transitions.size() << "\n";
+
                     double prob_t = 1 ;
                     for ( int r = 0 ; r < t->first.size() ; r ++ ) {
                         prob_t *= pow( segment_transitions(t->first[r].start_state,t->first[r].end_state), t->first[r].transition_count ) ;
                     }
 
+                    //cerr << "OOO\n";
                     
                     transition_matrix[number_chromosomes][p](j,i) += prob_t * t->second ;
                 }

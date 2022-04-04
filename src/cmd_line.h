@@ -100,6 +100,8 @@ public:
     string model_file;
     vector<vector<double>> models;
 
+    int cores = 1;
+
 
 
     /// read relevant information

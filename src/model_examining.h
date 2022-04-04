@@ -5,6 +5,29 @@
 
 #include "optimize_selection.h"
 
+#include <pthread.h>
+
+int cores;
+vector<vector<double>> global_models;
+vector<double> global_lnl;
+
+void *single_thread_model_evaluation(void *thread_id){
+
+    long t = (long)thread_id;
+
+    //int used_cores = min(global_models.size(),cores);
+
+    for(int i = t; i < global_models.size(); i += cores){
+        
+        global_lnl[i] = to_be_optimized(global_models[i]);
+        
+    }
+
+    return NULL;
+}
+
+
+
 void selection_opt::test_models(){
     double chrom_size = 0;
     for(uint i = 0; i < n_recombs.size(); i++){
@@ -13,13 +36,35 @@ void selection_opt::test_models(){
 
     context = *this;
 
-    vector<double> empty(0);                    
+    vector<double> empty(0);
     double neutral_lnl = to_be_optimized(empty);
     
     cerr << "Neutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
-    for(int i = 0; i < options.models.size(); i++){
-        cout << setprecision(15) << to_be_optimized(options.models[i]) << "\n";
+    cores = options.cores;
+    global_models = options.models;
+    global_lnl.resize(options.models.size());
+
+
+    
+    vector<pthread_t> threads(cores);
+
+    for(long t = 0; t < cores; t++){
+        int rc = pthread_create(&threads[t], NULL, single_thread_model_evaluation, (void *)t);
+        if (rc) {
+            cerr << "ERROR: unable to create a thread," << rc << "\n";
+            exit(-1);
+        }
     }
+
+    //wait for all to finish by joining them
+    for (int t = 0; t < cores; t++) {
+        pthread_join(threads[t], NULL);
+    }
+
+    for(int i = 0; i < global_lnl.size(); i++) {
+        cout << setprecision(15) << global_lnl[i] << "\n";
+    }
+    
 }
 #endif

@@ -5,6 +5,9 @@ double markov_chain::compute_forward_probabilities( map<int, vector<mat> > &tran
     
     /// return log likelihood which is sum of cts
     double lnl = 0 ;
+
+    /// make this function thread safe
+    vector<vec> alphas ;
     
     /// clear the fw probs matrix
     alphas.resize( transition_probabilites[ploidy_switch[0]].size() ) ;

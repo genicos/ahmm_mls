@@ -89,9 +89,10 @@ double compute_lnl(vector<mat> &transition_matrices){
 
 
     map<int,vector<mat> > transition_matrix ;
-
+    
     // Compute transition matricies for different ploidies
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        
         alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, transition_matrices ) ;
             
         for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
@@ -99,13 +100,12 @@ double compute_lnl(vector<mat> &transition_matrices){
         }
     }
     
-
     vector<mat> interploidy_transitions;
 
     
     double lnl = 0 ;
     
-
+    // Sum up log likelihoods for each panel
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         lnl += context.markov_chain_information[m].compute_forward_probabilities( transition_matrix, interploidy_transitions) ;
     }
@@ -137,12 +137,14 @@ double to_be_optimized(vector<double> parameters){
         context.options.m,
         context.options.generations
     );
-    last_calculated_transition_matricies = transition_matrices;
+    
+    if(parameters.size() == 0){
+        last_calculated_transition_matricies = transition_matrices;
+    }
     
     
     
     double lnl = compute_lnl(transition_matrices);
-    
 
     cerr << "lnl = " << setprecision(15) << lnl << "\n";
     cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
@@ -150,6 +152,9 @@ double to_be_optimized(vector<double> parameters){
     
     return lnl;
 }
+
+
+
 
 
 vector<mat> neutral_transition_matrices;
