@@ -594,7 +594,7 @@ vector<vector<double>> grid_search(
 
 
 //This uses the same global variables as calculate transition rates
-int fast_transition_rates_number_of_threads = 7;
+int fast_transition_rates_number_of_threads = 1;
 
 double fast_transitions_radius_in_morgans = 0.05;
 
