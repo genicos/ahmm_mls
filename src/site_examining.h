@@ -107,7 +107,7 @@ vector<double> selection_opt::examine_sites(){
                 
             double lnl = to_be_optimized(best_parameters);
 
-            cout << "\n\nUnrestricted optimization lnl:\t" << lnl << "\n";
+            cout << setprecision(15) << "\n\nUnrestricted optimization lnl:\t" << lnl << "\n";
             cout << "\n\nneutral lnl:\t" << neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << sites[0][1] << ",1," << sites[0][2] << " or " << sites[0][1]/max(sites[0][1], sites[0][2]) << ","<< 1/max(sites[0][1], sites[0][2]) <<"," << sites[0][2]/max(sites[0][1], sites[0][2]) << "\n";
             
@@ -142,7 +142,7 @@ vector<double> selection_opt::examine_sites(){
 
             double dom0_lnl = to_be_optimized_pop0_dominant(pop0_dom_parameters);
 
-            cout << "\n\nPop0 dom lnl ratio: " << dom0_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "\n\nPop0 dom lnl ratio: " << dom0_lnl - neutral_lnl << "\n";
             cerr << "\n\nPop0 dom lnl ratio: " << dom0_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << "1,1," << sites[0][1] << " or " << 1/max(1.0, sites[0][1]) << "," << 1/max(1.0, sites[0][1]) <<"," << sites[0][1]/max(1.0, sites[0][1]) << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << "1,1," << sites[0][1] << " or " << 1/max(1.0, sites[0][1]) << "," << 1/max(1.0, sites[0][1]) <<"," << sites[0][1]/max(1.0, sites[0][1]) << "\n";
@@ -164,7 +164,7 @@ vector<double> selection_opt::examine_sites(){
 
             double dom1_lnl = to_be_optimized_pop1_dominant(pop1_dom_parameters);
 
-            cout << "\n\nPop1 dom lnl ratio:\t" << dom1_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "\n\nPop1 dom lnl ratio:\t" << dom1_lnl - neutral_lnl << "\n";
             cerr << "\n\nPop1 dom lnl ratio:\t" << dom1_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << "1,1," << sites[0][1] << " or " << 1/max(1.0, sites[0][1]) << "," << 1/max(1.0, sites[0][1]) <<"," << sites[0][1]/max(1.0, sites[0][1]) << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << "1,1," << sites[0][1] << " or " << 1/max(1.0, sites[0][1]) << "," << 1/max(1.0, sites[0][1]) <<"," << sites[0][1]/max(1.0, sites[0][1]) << "\n";
@@ -185,7 +185,7 @@ vector<double> selection_opt::examine_sites(){
 
             double add_lnl = to_be_optimized_additive(additive_parameters);
 
-            cout << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cerr << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
@@ -225,7 +225,7 @@ vector<double> selection_opt::examine_sites(){
             
             double two_site_lnl = to_be_optimized_additive(two_site_parameters);
 
-            cout << "Two site lnl ratio: " << two_site_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "Two site lnl ratio: " << two_site_lnl - neutral_lnl << "\n";
             cerr << "Two site lnl ratio: " << two_site_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
@@ -257,7 +257,7 @@ vector<double> selection_opt::examine_sites(){
 
             double add_lnl = to_be_optimized_additive(additive_parameters);
 
-            cout << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cerr << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
@@ -300,7 +300,7 @@ vector<double> selection_opt::examine_sites(){
             
             double two_site_lnl = to_be_optimized(two_site_parameters);
 
-            cerr << "Two site lnl ratio: " << two_site_lnl - neutral_lnl << "\n";
+            cerr << setprecision(15) << "Two site lnl ratio: " << two_site_lnl - neutral_lnl << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << sites[0][1] << ",1," << sites[0][2] << " or " << sites[0][1]/max(sites[0][1], sites[0][2]) << ","<< 1/max(sites[0][1], sites[0][2]) <<"," << sites[0][2]/max(sites[0][1], sites[0][2]) << "\n";
             cerr << "site:\t" << sites[1][0] << "\t" << sites[1][1] << ",1," << sites[1][2] << " or " << sites[1][1]/max(sites[1][1], sites[1][2]) << ","<< 1/max(sites[1][1], sites[1][2]) <<"," << sites[1][2]/max(sites[1][1], sites[1][2]) << "\n";
 
@@ -329,7 +329,7 @@ vector<double> selection_opt::examine_sites(){
                 
             double single_site_lnl = to_be_optimized(single_site_parameters);
 
-            cout << "\n\nSingle site lnl ratio:\t" << single_site_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "\n\nSingle site lnl ratio:\t" << single_site_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << sites[0][1] << ",1," << sites[0][2] << " or " << sites[0][1]/max(sites[0][1], sites[0][2]) << ","<< 1/max(sites[0][1], sites[0][2]) <<"," << sites[0][2]/max(sites[0][1], sites[0][2]) << "\n";
 
             cerr << "\n\nSingle site lnl ratio:\t" << single_site_lnl - neutral_lnl << "\n";
