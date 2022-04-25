@@ -24,6 +24,96 @@ void selection_opt::set_context(){
 }
 
 
+
+vector<double> get_local_ancestry(vector<mat> neutral_model){
+    
+    map<int,vector<mat> > transition_matrix ;
+
+
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        
+        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, neutral_model ) ;
+            
+        for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
+            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], neutral_model ) ;
+        }
+    }
+
+    vector<mat> interploidy_transitions;
+
+
+    int sample_count = context.markov_chain_information.size();
+    int site_count = context.markov_chain_information[0].alphas.size();
+
+    
+    //populating alphas
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        context.markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
+    }
+
+    //populating betas
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
+    }
+
+    
+    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+
+    //looping through samples
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+
+        //looping through sites
+        for( int i = 0; i < data_ancestry.size(); i++){
+
+            
+
+            vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
+            normalize( smoothed_probs ) ;
+
+            //ploidy 1
+            if(smoothed_probs.size() == 2) {
+                data_ancestry[i] += smoothed_probs[0];
+            }
+
+            //ploidy 2
+            if(smoothed_probs.size() == 3) {
+                data_ancestry[i] += smoothed_probs[0];
+                data_ancestry[i] += smoothed_probs[1] * 0.5;
+            }
+
+            //TODO generalize ploidy here
+        }
+
+    }
+
+    for( int i = 0; i < data_ancestry.size(); i++){
+        data_ancestry[i] /= sample_count;
+    }
+
+
+    vector<double> smoothed_data_ancestry(data_ancestry.size());
+
+    for(int i = 1; i < smoothed_data_ancestry.size() - 1; i++){
+
+        double total = 0;
+        double count = 0;
+        for(int j = i; context.morgan_position[i] - context.morgan_position[j] < 0.001 && j >= 0; j--){
+            total += data_ancestry[j];
+            count ++;
+        }
+        for(int j = i + 1; context.morgan_position[j] - context.morgan_position[i] < 0.001 && j < smoothed_data_ancestry.size(); j++){
+            total += data_ancestry[j];
+            count ++;
+        }
+        smoothed_data_ancestry[i] = total/count;
+    }
+
+    return data_ancestry;
+}
+
+
+
+
 void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses){
 
     int selected_sites_count = parameters.size()/3;
