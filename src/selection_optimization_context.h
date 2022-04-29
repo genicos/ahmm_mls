@@ -12,27 +12,35 @@ public:
     vector<int> position ;
     vector<double> morgan_position;
 
+
     selection_opt(vector<double> neutral_recombs, cmd_line o, vector<markov_chain> mci, map<int, vector<vector<map<vector<transition_information>,double>>>> tmi, vector<int> pos){
         n_recombs = neutral_recombs;
         options = o;
         markov_chain_information = mci;
         transition_matrix_information = tmi;
         position = pos;
-
+        
         morgan_position.resize(n_recombs.size());
         double sum = 0;
         for(uint i = 0; i < n_recombs.size(); i++){
             sum += n_recombs[i];
             morgan_position[i] = sum;
         }
+
     }
     selection_opt(){}
 
     //vector<double> enact_optimization();
     //vector<double> examine_peaks();
+
     vector<double> examine_sites();
+
+    
+    vector<double> grid_search(vector<double> center_point, double width, double height, double x_point_sep, double y_point_sep);
+    //vector<double> grid_search_additive(vector<double> center_point, double width, double height, double x_point_sep, double y_point_sep);
     void test_models();
     void set_context();
+
 
     //double to_be_optimized(vector<double> parameters);
 };

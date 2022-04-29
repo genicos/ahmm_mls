@@ -59,7 +59,6 @@ vector<double> selection_opt::examine_sites(){
     for(uint i = 0; i < n_recombs.size(); i++){
         chrom_size += n_recombs[i];
     }
-    
 
     double nelder_mead_reflection  = 1;
     double nelder_mead_contraction = 0.5;

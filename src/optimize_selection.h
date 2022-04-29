@@ -180,6 +180,7 @@ double compute_lnl(vector<mat> &transition_matrices){
 
     map<int,vector<mat> > transition_matrix ;
     
+    
     // Compute transition matricies for different ploidies
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         
@@ -190,6 +191,7 @@ double compute_lnl(vector<mat> &transition_matrices){
         }
     }
     
+    
     vector<mat> interploidy_transitions;
 
     
@@ -199,7 +201,7 @@ double compute_lnl(vector<mat> &transition_matrices){
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         lnl += context.markov_chain_information[m].compute_forward_probabilities( transition_matrix, interploidy_transitions) ;
     }
-
+    
     return lnl;
 }
 
@@ -215,10 +217,10 @@ double to_be_optimized(vector<double> parameters){
     
     vector<double> selection_recomb_rates;
     vector<vector<double>> fitnesses;
+    
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
 
-    
     
     vector<mat> transition_matrices = calculate_transition_rates(
         context.n_recombs,
@@ -231,7 +233,6 @@ double to_be_optimized(vector<double> parameters){
     if(parameters.size() == 0){
         last_calculated_transition_matricies = transition_matrices;
     }
-    
     
     
     double lnl = compute_lnl(transition_matrices);
