@@ -223,7 +223,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 
 vector<double> local_ancestries;
 
-int complete_transition_rates_number_of_threads = 1;
+int complete_transition_rates_number_of_threads = 7;
 
 
 
@@ -263,11 +263,9 @@ void *single_window_process(void *void_info){
 
         (*info->transition_matrices)[i] = transition_matrix;
         local_ancestries[i] = trans[0] + trans[1];
-        /*if (i % 100 == 0){
-            cerr << "i " << i << " "<<transition_matrix.size() <<"\n";
-        }*/
     }
 
+    free(void_info);
     pthread_exit(NULL);
     return NULL;
 }
@@ -318,16 +316,16 @@ vector<mat> calculate_transition_rates(
     for(long t = 0; t < complete_transition_rates_number_of_threads; t++){
 
         //Passing necessary info to thread
-        struct intra_model_shared_info this_threads_info;
-        this_threads_info.t = t;
-        this_threads_info.neutral_sites = &neutral_sites;
-        this_threads_info.recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
-        this_threads_info.fitnesses = &fitnesses;
-        this_threads_info.m = m;
-        this_threads_info.generations = generations;
-        this_threads_info.transition_matrices = &transition_matrices;
+        struct intra_model_shared_info *this_threads_info = (struct intra_model_shared_info *)malloc(sizeof(struct intra_model_shared_info));
+        this_threads_info->t = t;
+        this_threads_info->neutral_sites = &neutral_sites;
+        this_threads_info->recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
+        this_threads_info->fitnesses = &fitnesses;
+        this_threads_info->m = m;
+        this_threads_info->generations = generations;
+        this_threads_info->transition_matrices = &transition_matrices;
 
-        int rc = pthread_create(&threads[t], NULL, single_window_process, (void *)&this_threads_info);
+        int rc = pthread_create(&threads[t], NULL, single_window_process, (void *)this_threads_info);
         if (rc) {
             cerr << "ERROR: unable to create a thread," << rc << "\n";
             exit(-1);
@@ -594,7 +592,7 @@ vector<vector<double>> grid_search(
 
 
 //This uses the same global variables as calculate transition rates
-int fast_transition_rates_number_of_threads = 1;
+int fast_transition_rates_number_of_threads = 7;
 
 double fast_transitions_radius_in_morgans = 0.05;
 
