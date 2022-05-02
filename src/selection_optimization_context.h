@@ -11,6 +11,7 @@ public:
     map<int, vector<vector< map< vector<transition_information>, double > > > > transition_matrix_information ;
     vector<int> position ;
     vector<double> morgan_position;
+    double chrom_size;
 
 
     selection_opt(vector<double> neutral_recombs, cmd_line o, vector<markov_chain> mci, map<int, vector<vector<map<vector<transition_information>,double>>>> tmi, vector<int> pos){
@@ -26,6 +27,8 @@ public:
             sum += n_recombs[i];
             morgan_position[i] = sum;
         }
+
+        chrom_size = sum;
 
     }
     selection_opt(){}

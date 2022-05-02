@@ -92,6 +92,14 @@ vector<double> selection_opt::examine_sites(){
             starting_parameters[1] = 1;
             starting_parameters[2] = 1;
 
+            starting_parameters = grid_search(starting_parameters, 0.02, 0.02, 0.005, 0.005);
+
+            cerr << "Best grid search result:\n";
+            cerr << starting_parameters[0] << "\n";
+            cerr << starting_parameters[1] << "\n";
+            cerr << starting_parameters[2] << "\n";
+
+
             vector<vector<double>> sites = parameters_to_sites(starting_parameters);
 
             

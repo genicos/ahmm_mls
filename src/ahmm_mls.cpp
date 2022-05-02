@@ -72,6 +72,7 @@ using namespace arma ;
 
 
 #include "read_sites.h"
+#include "grid_search.h"
 #include "site_examining.h"
 
 #include "read_model_file.h"
