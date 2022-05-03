@@ -3,14 +3,17 @@
 #include <vector>
 #include <math.h>
 
-vector<double> selection_opt::grid_search(vector<double> center_point, double width, double height, double x_point_sep, double y_point_sep){
+vector<double> selection_opt::grid_search(vector<double> center_point, double width, double height, int x_ticks, double y_ticks){
     
     vector<double> ans(3);
     double best_lnl = -DBL_MAX;
 
-    for(double site = center_point[0] - width/2; site >= 0 && site <= center_point[0] + width/2 && site <= chrom_size; site += x_point_sep){
-        for(double f1 = center_point[1] - height/2; f1 >= 0 && f1 <= center_point[1] + height/2; f1 += y_point_sep){
-            for(double f2 = center_point[2] - height/2; f2 >= 0 && f2 <= center_point[2] + height/2; f2 += y_point_sep){
+    for(int i = 0; i < x_ticks; i++){
+        double site = (2.0 * i / (x_ticks-1) - 1) * abs(2.0 * i / (x_ticks-1) - 1) * width + center_point[0];
+        for(int j = 0; j < y_ticks; j++){
+            double f1 = (2.0 * j / (y_ticks-1) - 1) * abs(2.0 * j / (y_ticks-1) - 1) * height + center_point[1];
+            for(int k = 0; k < y_ticks; k++){
+                double f2 = (2.0 * k / (y_ticks-1) - 1) * abs(2.0 * k / (y_ticks-1) - 1) * height + center_point[2];
                 vector<double> point(3);
                 point[0] = site;
                 point[1] = f1;
