@@ -8,7 +8,7 @@
  
  This is software distributed under the gnu public license version 3.
  
- */
+*/
 
 /// headers
 #include <iostream>
@@ -77,6 +77,8 @@ using namespace arma ;
 
 #include "read_model_file.h"
 #include "model_examining.h"
+
+#include "uninformed_inference.h"
 
 
 int main ( int argc, char *argv[] ) {
@@ -153,7 +155,11 @@ int main ( int argc, char *argv[] ) {
     }
     
     
+    if(options.uninformed_inference){
+        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
 
+        selection_optimizer.uninformed_inference();
+    }
 
     if(options.use_model_file){
         read_model_file(options);

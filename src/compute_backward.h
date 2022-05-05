@@ -3,6 +3,7 @@
 
 /// backward probabilities are same except transpose transition matrix
 void markov_chain::compute_backward_probabilities( map<int, vector<mat> > &transition_probabilites, vector<mat> &interploidy_transitions ) {
+    
 
     // resize betas matrix
     betas.resize(transition_probabilites[number_chromosomes].size()) ;
@@ -10,9 +11,11 @@ void markov_chain::compute_backward_probabilities( map<int, vector<mat> > &trans
     /// index to tract position in ploidy path will iterate through backwards for backward probs
     int ploidy_index = ploidy_switch_position.size() - 2 ;
         
+    cerr << "HHHH\n";
     /// set last states to one
-    betas.back().resize(alphas.back().size()) ;
-    
+    betas.back().resize(transition_probabilites[ploidy_switch[0]][1].n_cols) ;
+
+    cerr << "III\n";
     /// start with last position and multiply
     betas.back() = emission_probabilities.back() * end_prob ;
     normalize(betas.back()) ;

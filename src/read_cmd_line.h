@@ -220,6 +220,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
 
 
 
+
         if ( strcmp(argv[i], "-l") == 0 ){
             use_site_file = true;
 
@@ -244,6 +245,12 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             cores = stoi(argv[++i]);
         }
 
+        if ( strcmp(argv[i], "-S") == 0){
+
+            uninformed_inference = true;
+
+        }
+
 
         
 
@@ -265,12 +272,14 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         exit(1) ;
     }
 
-    if ( use_site_file == false && use_model_file == false ){
+    /*
+    if ( use_site_file == false && use_model_file == false){
         cerr << "\n\n\t\tERROR: must provide either site file or model file \n\n\t\t\t-l [path/to/site_file]\n\n" ;
         cerr << "\t\t\t-M [path/to/model_file]\n\n" ;
         print_usage() ;
         exit(1) ;
     }
+    */
     
     if ( ancestry_proportion.size() > ancestry_pulses.size() ) {
 	cerr << "\n\n\t\tERROR: insufficient ancestry pulses specified\n\n" ;

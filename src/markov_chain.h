@@ -28,6 +28,8 @@ public:
     vector<vec> alphas ;
     double compute_forward_probabilities( map<int, vector<mat> > &transition_matrix, vector<mat> &interploidy_transitions  ) ;
     double compute_forward_probabilities( map<int, vector<mat> > &transition_probabilites, vector<mat> &interploidy_transitions, int position1, int position2);
+
+    double compute_lnl( map<int, vector<mat> > &transition_matrix, vector<mat> &interploidy_transitions  ) ;
     
     /// backward probs
     vector<vec> betas ;

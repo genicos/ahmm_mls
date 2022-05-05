@@ -81,7 +81,9 @@ public:
 
     
 
-
+    // Place sites one at a time, with no info on selected sites
+    bool uninformed_inference = false;
+    
 
 
     // examine sites from site file
