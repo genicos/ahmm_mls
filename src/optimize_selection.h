@@ -19,13 +19,13 @@ double get_wall_time(){
 
 selection_opt context;
 
-void selection_opt::set_context(){
+void selection_opt::set_context() {
     context = *this;
 }
 
 
 
-vector<double> get_local_ancestry(vector<mat> neutral_model){
+vector<double> get_local_ancestry (vector<mat> neutral_model) {
     
     map<int,vector<mat> > transition_matrix ;
 
