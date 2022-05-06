@@ -2,7 +2,6 @@
 #define UNINFORMED_INFERENCE
 
 void selection_opt::uninformed_inference(){
-    cerr << "Made it\n";
 
 
     // Hyper Parameters of optimization ///////////
@@ -104,7 +103,6 @@ void selection_opt::uninformed_inference(){
     //set_context();
     context = *this;
 
-    cerr << "aaaa\n";
 
     // Calculating lnl for neutral model
     vector<double> empty(0);
@@ -115,7 +113,6 @@ void selection_opt::uninformed_inference(){
 
     neutral_transition_matrices = last_calculated_transition_matricies;
 
-    cerr<<"bbbb\n";
     double window_size = 0.001;
 
 
@@ -127,10 +124,10 @@ void selection_opt::uninformed_inference(){
     double last_lnl = neutral_lnl;
     cout << "Neutral lnl\t" << setprecision(15) << neutral_lnl << "\n";
     vector<double> data_ancestry;
-    vector<double> expected_ancestry;
-    cerr<<"ccc\n";
+    vector<double> expected_ancestry;  
+
     data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
-    cerr<<"ddd\n";
+    
     /*
     vector<double> real(3);
     real[0] = 0.2;

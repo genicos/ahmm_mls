@@ -29,7 +29,7 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
     
     map<int,vector<mat> > transition_matrix ;
 
-    cerr << "AAAA\n";
+    
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         
         alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, neutral_model ) ;
@@ -38,25 +38,24 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
             alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], neutral_model ) ;
         }
     }
-    cerr << "BBB\n";
+    
     vector<mat> interploidy_transitions;
 
 
     int sample_count = context.markov_chain_information.size();
     int site_count = context.markov_chain_information[0].alphas.size();
 
-    cerr << "CCCC\n";
+    
     //populating alphas
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         context.markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
     }
-    cerr << "DDDDD\n";
+    
     //populating betas
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
     }
 
-    cerr << "EEEEE\n";
     vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
 
     
@@ -86,20 +85,19 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
         }
 
     }
-    cerr << "FFFF\n";
+    
     for( int i = 0; i < data_ancestry.size(); i++){
         data_ancestry[i] /= sample_count;
     }
 
 
     vector<double> smoothed_data_ancestry(data_ancestry.size());
-    cerr << "GGGGGGG\n";
+    
     for(int i = 1; i < smoothed_data_ancestry.size() - 1; i++){
 
         double total = 0;
         double count = 0;
-        cerr << context.morgan_position.size() << "\n";
-        cerr << smoothed_data_ancestry.size() << "\n";
+        
         for(int j = i; context.morgan_position[i] - context.morgan_position[j] < 0.001 && j >= 0; j--){
             total += data_ancestry[j];
             count ++;
@@ -108,10 +106,10 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
             total += data_ancestry[j];
             count ++;
         }
-        cerr << "KKK\n";
+        
         smoothed_data_ancestry[i] = total/count;
     }
-    cerr << "JJJ\n";
+    
     return data_ancestry;
 }
 

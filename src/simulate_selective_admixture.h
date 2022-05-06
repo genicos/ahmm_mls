@@ -546,7 +546,7 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
     //NOTE changed p starting point from 1 to 0
 
     for ( int p = 0 ; p < recombination_rate.size(); p ++ ) {
-        //cerr << "III " << p << " " << transition_matrices.size() << " " << transition_matrices[p].size() << "\n";
+        
         mat segment_transitions = transition_matrices[p];
         
         
@@ -560,15 +560,12 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
             for ( int j = 0 ; j < transition_info[i].size() ; j ++ ) {
                 
                 for ( std::map<vector<transition_information>,double>::iterator t = transition_info[i][j].begin() ; t != transition_info[i][j].end() ; ++ t ) {
-                    //cerr << "NNN\n";
-                    //cerr << "size: " << segment_transitions.size() << "\n";
 
                     double prob_t = 1 ;
                     for ( int r = 0 ; r < t->first.size() ; r ++ ) {
                         prob_t *= pow( segment_transitions(t->first[r].start_state,t->first[r].end_state), t->first[r].transition_count ) ;
                     }
 
-                    //cerr << "OOO\n";
                     
                     transition_matrix[number_chromosomes][p](j,i) += prob_t * t->second ;
                 }
