@@ -223,16 +223,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 
 vector<double> local_ancestries;
 
-int complete_transition_rates_number_of_threads = 7;
 
-
-
-vector<double> *global_neutral_sites;
-vector<double> *global_recomb_rates_around_selected_sites;
-vector<vector<double>> *global_fitnesses;
-double global_m;
-int global_generations;
-vector<mat> *global_transition_matrices;
 
 struct intra_model_shared_info{
     long t;
@@ -242,6 +233,8 @@ struct intra_model_shared_info{
     double m;
     double generations;
     vector<mat> *transition_matrices;
+    int cores;
+    vector<double> *selected_sites;
 };
 
 void *single_window_process(void *void_info){
@@ -250,7 +243,7 @@ void *single_window_process(void *void_info){
     long t = info->t;
     
     
-    for(uint i = t; i < (*info->transition_matrices).size(); i+= complete_transition_rates_number_of_threads){
+    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores){
 
         vector<double> trans = adjacent_transition_rate(*info->recomb_rates_around_selected_sites, *info->fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
@@ -278,15 +271,13 @@ vector<mat> calculate_transition_rates(
   vector<double> &recomb_rates_around_selected_sites,
   vector<vector<double>> &fitnesses,
   double m,
-  int generations
+  int generations,
+  int cores
 ){
     vector<mat> transition_matrices(recomb_rates_around_neutral_sites.size());
     local_ancestries.clear();
     local_ancestries.resize(recomb_rates_around_neutral_sites.size());
     
-    //NOTE im changing the relationship between neutral_sites and recomb_rates_around_neutral_sites
-    // im now treating recomb_rates_around_neutral_sites as if it only contains regions delimited by two neutral sites
-    // thus neutral_sites.size = recomb_rates_around_neutral_sites.size + 1
 
     // Creating site vectors //////////////////////////////////////////////////////
     vector<double>  neutral_sites(recomb_rates_around_neutral_sites.size()  + 1);//
@@ -309,11 +300,11 @@ vector<mat> calculate_transition_rates(
     
     
     // Creating threads to deal with independent adjacent neutral regions //////////////////
-    vector<pthread_t> threads(complete_transition_rates_number_of_threads);               //
+    vector<pthread_t> threads(cores);                                                     //
 
     
     
-    for(long t = 0; t < complete_transition_rates_number_of_threads; t++){
+    for(long t = 0; t < cores; t++){
 
         //Passing necessary info to thread
         struct intra_model_shared_info *this_threads_info = (struct intra_model_shared_info *)malloc(sizeof(struct intra_model_shared_info));
@@ -324,6 +315,7 @@ vector<mat> calculate_transition_rates(
         this_threads_info->m = m;
         this_threads_info->generations = generations;
         this_threads_info->transition_matrices = &transition_matrices;
+        this_threads_info->cores = cores;
 
         int rc = pthread_create(&threads[t], NULL, single_window_process, (void *)this_threads_info);
         if (rc) {
@@ -334,7 +326,7 @@ vector<mat> calculate_transition_rates(
 
     
     //wait for all to finish by joining them
-    for (int t = 0; t < complete_transition_rates_number_of_threads; t++) {
+    for (int t = 0; t < cores; t++) {
         pthread_join(threads[t], NULL);
     }                                                                                     //
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -352,16 +344,6 @@ vector<mat> calculate_transition_rates(
 void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , vector<vector< map< vector<transition_information>, double > > > &transition_info, vector<double> &recombination_rate, vector<int> &positions, double &number_chromosomes, vector<mat> &transition_matrices);
 
 
-//indicie_bounds[i] corrosponds to a thread i, which will find transitions for
-// all grid sites in the range [indicie_bounds[i][0], indicie_bounds[i][1])
-vector<vector<int>> indicie_bounds;
-
-selection_opt grid_context;
-vector<vector<double>> *global_lnl_ratios;
-vector<double> *global_grid_sites;
-double grid_transitions_radius_in_morgans = 0.05;
-vector<vector<double>> grid_fitnesses;
-vector<vector<markov_chain>> thread_specific_markov_chain_information;
 
 
 
@@ -374,29 +356,25 @@ vector<vector<markov_chain>> thread_specific_markov_chain_information;
 
 
 
-
-//This uses the same global variables as calculate transition rates
-int fast_transition_rates_number_of_threads = 7;
 
 double fast_transitions_radius_in_morgans = 0.05;
 
-vector<double> *global_selected_sites;
 
+void *single_fast_window_process(void *void_info){
 
-void *single_fast_window_process(void *threadid){
-
-    long t = (long)threadid;
+    struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
+    long t = info->t;
     
-    for(uint i = t; i < (*global_transition_matrices).size(); i+= fast_transition_rates_number_of_threads){
+    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores){
         
         vector<double> pertinent_selected_sites;
         vector<vector<double>> pertinent_fitnesses;
 
-        for(uint j = 0; j < (*global_selected_sites).size(); j++){
-            double distance = (*global_neutral_sites)[i] - (*global_selected_sites)[j];
+        for(uint j = 0; j < (*info->selected_sites).size(); j++){
+            double distance = (*info->neutral_sites)[i] - (*info->selected_sites)[j];
             if(distance <= fast_transitions_radius_in_morgans && distance >= -fast_transitions_radius_in_morgans){
-                pertinent_selected_sites.push_back((*global_selected_sites)[j]);
-                pertinent_fitnesses.push_back((*global_fitnesses)[j]);
+                pertinent_selected_sites.push_back((*info->selected_sites)[j]);
+                pertinent_fitnesses.push_back((*info->fitnesses)[j]);
             }
         }
 
@@ -411,7 +389,7 @@ void *single_fast_window_process(void *threadid){
             pertinent_recomb_rates_around_selected_sites[pertinent_selected_sites.size()] = 1 - pertinent_selected_sites[pertinent_selected_sites.size() - 1];
 
 
-            vector<double> trans = adjacent_transition_rate(pertinent_recomb_rates_around_selected_sites, pertinent_fitnesses, global_m, (*global_neutral_sites)[i], (*global_neutral_sites)[i + 1], global_generations);
+            vector<double> trans = adjacent_transition_rate(pertinent_recomb_rates_around_selected_sites, pertinent_fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
             mat transition_matrix(2,2,fill::zeros);
 
@@ -420,7 +398,7 @@ void *single_fast_window_process(void *threadid){
             transition_matrix(1,0) = trans[2]/(trans[2] + trans[3]);
             transition_matrix(1,1) = 1 - transition_matrix(1,0);
 
-            (*global_transition_matrices)[i] = transition_matrix;
+            (*info->transition_matrices)[i] = transition_matrix;
             local_ancestries[i] = trans[0] + trans[1];
         }else{
             mat transition_matrix(2,2,fill::zeros);
@@ -430,10 +408,11 @@ void *single_fast_window_process(void *threadid){
             transition_matrix(1,0) = 0.5;
             transition_matrix(1,1) = 0.5;
 
-            (*global_transition_matrices)[i] = transition_matrix;
+            (*info->transition_matrices)[i] = transition_matrix;
         }
     }
     
+    free(void_info);
     pthread_exit(NULL);
     return NULL;
 }
@@ -445,16 +424,14 @@ vector<mat> fast_transition_rates(
   vector<double> &recomb_rates_around_selected_sites,
   vector<vector<double>> &fitnesses,
   double m,
-  int generations
+  int generations,
+  int cores
 ){
     vector<mat> transition_matrices(recomb_rates_around_neutral_sites.size());
     
     local_ancestries.clear();
     local_ancestries.resize(recomb_rates_around_neutral_sites.size());
 
-    //NOTE im changing the relationship between neutral_sites and recomb_rates_around_neutral_sites
-    // im now treating recomb_rates_around_neutral_sites as if it only contains regions delimited by two neutral sites
-    // thus neutral_sites.size = recomb_rates_around_neutral_sites.size + 1
 
     // Creating site vectors //////////////////////////////////////////////////////
     vector<double>  neutral_sites(recomb_rates_around_neutral_sites.size()  + 1);//
@@ -473,26 +450,27 @@ vector<mat> fast_transition_rates(
     }                                                                            //
     ///////////////////////////////////////////////////////////////////////////////
 
-    
-    // Populating global variables with local variables //////////////////////////////
-    global_neutral_sites = &neutral_sites;                                          //
-    global_selected_sites = &selected_sites;
-    global_recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
-    global_fitnesses = &fitnesses;
-    global_m = m;
-    global_generations = generations;
-    global_transition_matrices = &transition_matrices;                              //
-    //////////////////////////////////////////////////////////////////////////////////
-
 
 
     // Creating threads to deal with independent adjacent neutral regions //////////////////
-    
-    vector<pthread_t> threads(fast_transition_rates_number_of_threads);
+    vector<pthread_t> threads(cores);
 
-    for(long t = 0; t < fast_transition_rates_number_of_threads; t++){
+    for(long t = 0; t < cores; t++){
+
+        //Passing necessary info to thread
+        struct intra_model_shared_info *this_threads_info = (struct intra_model_shared_info *)malloc(sizeof(struct intra_model_shared_info));
+        this_threads_info->t = t;
+        this_threads_info->neutral_sites = &neutral_sites;
+        this_threads_info->recomb_rates_around_selected_sites = &recomb_rates_around_selected_sites;
+        this_threads_info->fitnesses = &fitnesses;
+        this_threads_info->m = m;
+        this_threads_info->generations = generations;
+        this_threads_info->transition_matrices = &transition_matrices;
+        this_threads_info->cores = cores;
         
-        int rc = pthread_create(&threads[t], NULL, single_fast_window_process, (void *)t);
+        this_threads_info->selected_sites = &selected_sites;
+
+        int rc = pthread_create(&threads[t], NULL, single_fast_window_process, (void *)this_threads_info);
         if (rc) {
             cerr << "ERROR: unable to create a thread," << rc << "\n";
             exit(-1);
@@ -501,7 +479,7 @@ vector<mat> fast_transition_rates(
 
     
     //wait for all to finish by joining them
-    for (int t = 0; t < fast_transition_rates_number_of_threads; t++) {
+    for (int t = 0; t < cores; t++) {
         pthread_join(threads[t], NULL);
     }                                                                                     //
     ////////////////////////////////////////////////////////////////////////////////////////

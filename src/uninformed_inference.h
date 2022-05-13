@@ -315,7 +315,7 @@ void selection_opt::uninformed_inference(){
 
         cerr << "lnl: " << new_lnl << "\n";
 
-        if(new_lnl - last_lnl < 1){
+        if(new_lnl - last_lnl < 6){
             sites.pop_back();
             break;
         }

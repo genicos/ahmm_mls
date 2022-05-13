@@ -41,7 +41,8 @@ void selection_opt::test_models(){
     
     cerr << "Neutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
-    cores = options.cores;
+    
+    cores = min((int)options.models.size(), (int)options.cores);
     global_models = options.models;
     global_lnl.resize(options.models.size());
 

@@ -223,13 +223,17 @@ double to_be_optimized(vector<double> parameters){
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
 
-    
+    int cores = context.options.cores;
+    if(context.options.use_model_file)
+        cores = 1;
+
     vector<mat> transition_matrices = calculate_transition_rates(
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
         context.options.m,
-        context.options.generations
+        context.options.generations,
+        cores
     );
     
     if(parameters.size() == 0){
@@ -261,14 +265,17 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
 
-    
+    int cores = context.options.cores;
+    if(context.options.use_model_file)
+        cores = 1;
     
     vector<mat> transition_matrices = fast_transition_rates(
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
         context.options.m,
-        context.options.generations
+        context.options.generations,
+        cores
     );
 
     
