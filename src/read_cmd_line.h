@@ -245,10 +245,18 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             cores = stoi(argv[++i]);
         }
 
-        if ( strcmp(argv[i], "-S") == 0){
+        if ( strcmp(argv[i], "-S") == 0 ){
 
             uninformed_inference = true;
 
+        }
+
+        if( strcmp(argv[i], "-vc") == 0 ){
+            verbose_stderr = true;
+        }
+
+        if( strcmp(argv[i], "-vo") == 0 ){
+            verbose_stdout = true;
         }
 
 

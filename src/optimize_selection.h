@@ -124,9 +124,15 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
     if(selected_sites_count > 0){
         
-        cerr << "\nCalculating likelihood for\n";
-        for (uint i = 0; i < selected_sites_count; i++){
-            cerr << "selection site: " << parameters[3*i + 0] << " with fitness: " << parameters[3*i + 1] << ",1," << parameters[3*i + 2] << "\n";
+        if(context.options.verbose_stderr){
+            cerr << "\nTesting parameters:\n";
+            for (uint i = 0; i < selected_sites_count; i++){
+                cerr << "selection site: " << parameters[3*i + 0] << " with fitness: " << parameters[3*i + 1] << ",1," << parameters[3*i + 2] << "\n";
+            }
+        }else{
+            for (uint i = 0; i < selected_sites_count; i++){
+                cerr << parameters[3*i + 0] << "\t" << parameters[3*i + 1] << "\t" << parameters[3*i + 2] << "\n";
+            }
         }
 
         //Sort selected sites and fitnesses///////////////////////////
@@ -243,9 +249,12 @@ double to_be_optimized(vector<double> parameters){
     
     double lnl = compute_lnl(transition_matrices);
 
-    cerr << "lnl = " << setprecision(15) << lnl << "\n";
-    cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
-
+    if(context.options.verbose_stderr){
+        cerr << "lnl = " << setprecision(15) << lnl << "\n";
+        cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
+    }else{
+        cerr << "lnl\t" << setprecision(15) << lnl << "\n";
+    }
     
     return lnl;
 }
@@ -319,8 +328,12 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     
 
 
-    cerr << "lnl ratio = " << setprecision(15) << lnl - neutral_lnl << "\n";
-    cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
+    if(context.options.verbose_stderr){
+        cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
+        cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
+    }else{
+        cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
+    }
     
     return lnl - neutral_lnl;
 }
@@ -498,9 +511,13 @@ vector<double> multi_level_optimization(
     for(int j = 0; j < bottle_necks.size(); j++){
         for(int k = 0; k < bottle_necks[j].size(); k++){
             for(int l = 0; l < bottle_necks[j][k][0]; l++){
-                cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                if(context.options.verbose_stderr){
+                    cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                }
+
                 found_parameters = search(chrom_size, opt, sites, bottle_necks[j][k][1], bottle_necks[j][k][2], bottle_necks[j][k][3]);
-                        
+
+
                 cout << "\n Result of search" << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
                 cout << opt.max_value << "\n";
                 for(uint j = 0; j < found_parameters.size(); j++){
@@ -567,7 +584,9 @@ vector<double> search_sites(
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized);
         
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     return opt.points[opt.max_index];
@@ -605,7 +624,9 @@ vector<double> search_sites_fast(double chrom_size, nelder_mead &opt, vector<vec
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_only_near_sites);
         
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     return opt.points[opt.max_index];
@@ -659,7 +680,10 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
 
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_only_near_sites);
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     vector<double> ans(sites.size()*3);
@@ -716,7 +740,10 @@ vector<double> search_sites_fast_dom0(double chrom_size, nelder_mead &opt, vecto
     
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_pop0_dominant_fast);
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     return opt.points[opt.max_index];
@@ -750,7 +777,9 @@ vector<double> search_sites_fast_dom1(double chrom_size, nelder_mead &opt, vecto
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_pop1_dominant_fast);
 
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     return opt.points[opt.max_index];
@@ -783,9 +812,11 @@ vector<double> search_sites_fast_additive(double chrom_size, nelder_mead &opt, v
     opt.calculate_points(&to_be_optimized_additive_fast);
 
     while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
-
         opt.iterate(&to_be_optimized_additive_fast);
-        cerr << "INFO simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
     }
 
     return opt.points[opt.max_index];

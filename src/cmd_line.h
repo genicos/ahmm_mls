@@ -105,6 +105,9 @@ public:
     int cores = 1;
 
 
+    bool verbose_stdout = false;
+    bool verbose_stderr = false;
+
 
     /// read relevant information
     void read_cmd_line ( int argc, char *argv[] ) ;

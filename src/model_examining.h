@@ -39,7 +39,7 @@ void selection_opt::test_models(){
     vector<double> empty(0);
     double neutral_lnl = to_be_optimized(empty);
     
-    cerr << "Neutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
+    cerr << "\nNeutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
     
     cores = min((int)options.models.size(), (int)options.cores);
