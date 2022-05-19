@@ -144,7 +144,15 @@ vector<double> selection_opt::examine_sites(){
 
 
             // Pop0 dominant testing
-            vector<vector<double>> sites = parameters_to_sites(dom_starting_parameters, 2);
+            vector<double> dom0_starting_parameters = grid_search_dominant0(dom_starting_parameters, 0.001, 0.05, 3, 6);
+
+            if(options.verbose_stderr){
+                cerr << "Best grid search result:\n";
+                cerr << dom0_starting_parameters[0] << "\n";
+                cerr << dom0_starting_parameters[1] << "\n";
+            }
+
+            vector<vector<double>> sites = parameters_to_sites(dom0_starting_parameters, 2);
                 
             vector<double> pop0_dom_parameters = multi_level_optimization(
                 chrom_size,
@@ -167,7 +175,15 @@ vector<double> selection_opt::examine_sites(){
 
 
             // Pop1 dominant testing
-            sites = parameters_to_sites(dom_starting_parameters, 2);
+            vector<double> dom1_starting_parameters = grid_search_dominant1(dom_starting_parameters, 0.001, 0.05, 3, 6);
+
+            if(options.verbose_stderr){
+                cerr << "Best grid search result:\n";
+                cerr << dom1_starting_parameters[0] << "\n";
+                cerr << dom1_starting_parameters[1] << "\n";
+            }
+
+            sites = parameters_to_sites(dom1_starting_parameters, 2);
                 
             vector<double> pop1_dom_parameters = multi_level_optimization(
                 chrom_size,
@@ -189,6 +205,14 @@ vector<double> selection_opt::examine_sites(){
 
 
             // Additive selection testing
+            add_starting_parameters = grid_search_additive(add_starting_parameters, 0.001, 0.05, 3, 6);
+
+            if(options.verbose_stderr){
+                cerr << "Best grid search result:\n";
+                cerr << add_starting_parameters[0] << "\n";
+                cerr << add_starting_parameters[1] << "\n";
+            }
+
             sites = parameters_to_sites(add_starting_parameters, 2);
 
             vector<double> additive_parameters = multi_level_optimization(

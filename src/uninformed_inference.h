@@ -128,13 +128,22 @@ void selection_opt::uninformed_inference(){
 
     data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
     
-    /*
-    vector<double> real(3);
-    real[0] = 0.2;
-    real[1] = 1.00502512;
-    real[2] = 0.9949748;
+    
+    vector<double> real(3*3);
+
+    real[0] = 0.202267606840444;
+    real[1] = 0.992946097560774;
+    real[2] = 0.978177701027005;
+
+    real[3] = 0.296936797841395;
+    real[4] = 0.99535487754206;
+    real[5] = 1.00152856640739;
+
+    real[6] = 0.199454782503397;
+    real[7] = 0.984155781641525;
+    real[8] = 0.967120928804454;
     double real_lnl = to_be_optimized(real);
-    */
+    
 
 
 
@@ -170,10 +179,13 @@ void selection_opt::uninformed_inference(){
             if (abs(smoothed_data_ancestry[i] - expected_ancestry[i]) > largest_deviation){
                 largest_deviation = abs(smoothed_data_ancestry[i] - expected_ancestry[i]);
                 largest_deviator = i;
+                
                 //cerr << "largestdeviator" << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] << "\t" << morgan_position[i] <<"\n";
+                
             }
             if(morgan_position[i] > tot){
                 cerr << setprecision(5) << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] << "\t" << morgan_position[i] << "\n";
+                cout << morgan_position[i]  << "\t" << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] <<"\n";
                 tot += window_size;
             }
         }
