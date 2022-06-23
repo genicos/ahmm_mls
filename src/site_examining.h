@@ -83,6 +83,28 @@ vector<double> selection_opt::examine_sites(){
 
 
 
+    //TODO
+    if(false){
+        vector<double> test(12);
+        test[0] = 0.1;
+        test[1] = 1;
+        test[2] = 1;
+        test[3] = 0.2;
+        test[4] = 1;
+        test[5] = 1;
+        test[6] = 0.3;
+        test[7] = 1;
+        test[8] = 0.98;
+        test[9]  = 0.4;
+        test[10] = 1;
+        test[11] = 0.98;
+
+        cerr << to_be_optimized_only_near_sites(test) << "\n";
+        exit(0);
+    }
+
+
+
 
     for(int i = 0; i < options.site_file_morgan_positions.size(); i++){
         if (options.site_file_options[i].compare("o") == 0){

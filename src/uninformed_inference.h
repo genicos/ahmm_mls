@@ -126,9 +126,9 @@ void selection_opt::uninformed_inference(){
     vector<double> data_ancestry;
     vector<double> expected_ancestry;  
 
-    data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+    //data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
     
-    
+    /*
     vector<double> real(3*3);
 
     real[0] = 0.202267606840444;
@@ -143,6 +143,7 @@ void selection_opt::uninformed_inference(){
     real[7] = 0.984155781641525;
     real[8] = 0.967120928804454;
     double real_lnl = to_be_optimized(real);
+    */
     
 
 
@@ -150,7 +151,7 @@ void selection_opt::uninformed_inference(){
     //STANDARD: for now, only adds 5 sites
     while(sites.size() < 5){
 
-        //data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+        data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
         expected_ancestry = local_ancestries;
 
         vector<double> smoothed_data_ancestry(data_ancestry.size());
@@ -208,7 +209,7 @@ void selection_opt::uninformed_inference(){
 
         
         //generalized bottlenecking
-        if(true){
+        //if(true){
 
             //Checking if new site is near an old site
             bool new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = false;
@@ -299,9 +300,9 @@ void selection_opt::uninformed_inference(){
                 best_ratio = -DBL_MAX;
             }
             */
-        }else{
+        //}else{
 
-        }
+        //}
         //end of else
 
 
@@ -327,7 +328,7 @@ void selection_opt::uninformed_inference(){
 
         cerr << "lnl: " << new_lnl << "\n";
 
-        if(new_lnl - last_lnl < 6){
+        if(new_lnl - last_lnl < 6 && !new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
             sites.pop_back();
             break;
         }

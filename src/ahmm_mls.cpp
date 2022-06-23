@@ -153,6 +153,18 @@ int main ( int argc, char *argv[] ) {
     if ( options.n_restarts < 0 ) {
         options.n_restarts = factorial[nparams] * 2 ;
     }
+
+
+
+
+
+    //TODO testing, remove
+    if(false){
+
+        testing_stuff();
+        exit(0);
+    }
+
     
     
     if(options.uninformed_inference){

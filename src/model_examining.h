@@ -51,6 +51,8 @@ void selection_opt::test_models(){
         global_lnl[i] = 1;
     }
 
+    
+
 
     
     vector<pthread_t> threads(cores);
