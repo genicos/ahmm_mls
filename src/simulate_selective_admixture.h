@@ -129,6 +129,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     
     
 
+
     int haploids = pow(2,sites);
     
     Row<double> H(haploids, fill::zeros);
@@ -754,7 +755,7 @@ int pairs_skipped = 5;
 //This version skips a few pairs, and interpolates in between them
 
 
-void *alt_single_fast_window_process(void *void_info){
+void *alt_single_fast_window_process(void *void_info) {
 
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
     long t = info->t;
