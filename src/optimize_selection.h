@@ -296,7 +296,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
 
     
-    
+    /*
     vector<mat> these_neutral_transition_rates(neutral_transition_matrices.size());
     
 
@@ -330,7 +330,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     double neutral_lnl = compute_lnl(these_neutral_transition_rates);
     
     
-    
+    */
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
@@ -339,7 +339,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
         cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
     }
     
-    return lnl - neutral_lnl;
+    return lnl;
 }
 
 
@@ -563,7 +563,7 @@ vector<double> search_sites(
     vector<double> center_point(sites.size()*3);
     vector<double> scales(sites.size()*3);
 
-    for(uint i = 0; i < sites.size(); i++){
+    for(uint i = 0; i < sites.size(); i++) {
         center_point[i*3+0] = sites[i][0];
         center_point[i*3+1] = sites[i][1];
         center_point[i*3+2] = sites[i][2];
@@ -585,7 +585,10 @@ vector<double> search_sites(
     
     opt.calculate_points(&to_be_optimized);
 
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
+        
         opt.iterate(&to_be_optimized);
         
         if(context.options.verbose_stderr){
@@ -685,7 +688,9 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
 
     opt.calculate_points(&to_be_optimized_only_near_sites);
 
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_only_near_sites);
 
         if(context.options.verbose_stderr){
@@ -745,7 +750,9 @@ vector<double> search_sites_fast_dom0(double chrom_size, nelder_mead &opt, vecto
 
     opt.calculate_points(&to_be_optimized_pop0_dominant_fast);
     
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_pop0_dominant_fast);
 
         if(context.options.verbose_stderr){
@@ -781,7 +788,9 @@ vector<double> search_sites_fast_dom1(double chrom_size, nelder_mead &opt, vecto
 
     opt.calculate_points(&to_be_optimized_pop1_dominant_fast);
 
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_pop1_dominant_fast);
 
         if(context.options.verbose_stderr){
@@ -818,7 +827,9 @@ vector<double> search_sites_fast_additive(double chrom_size, nelder_mead &opt, v
 
     opt.calculate_points(&to_be_optimized_additive_fast);
 
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_additive_fast);
 
         if(context.options.verbose_stderr){
