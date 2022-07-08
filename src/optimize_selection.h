@@ -126,13 +126,13 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
     if(selected_sites_count > 0){
         
-        if(context.options.verbose_stderr){
+        if(context.options.verbose_stderr) {
             cerr << "\nTesting parameters:\n";
-            for (uint i = 0; i < selected_sites_count; i++){
+            for (uint i = 0; i < selected_sites_count; i++) {
                 cerr << "selection site: " << parameters[3*i + 0] << " with fitness: " << parameters[3*i + 1] << ",1," << parameters[3*i + 2] << "\n";
             }
         }else{
-            for (uint i = 0; i < selected_sites_count; i++){
+            for (uint i = 0; i < selected_sites_count; i++) {
                 cerr << parameters[3*i + 0] << "\t" << parameters[3*i + 1] << "\t" << parameters[3*i + 2] << "\n";
             }
         }
@@ -281,7 +281,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     if(context.options.use_model_file)
         cores = 1;
     
-    vector<mat> transition_matrices = alternative_fast_transition_rates (
+    vector<mat> transition_matrices = fast_transition_rates (
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
@@ -295,7 +295,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     double lnl = compute_lnl(transition_matrices);
 
 
-    /*
+    
     
     vector<mat> these_neutral_transition_rates(neutral_transition_matrices.size());
     
@@ -329,7 +329,8 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
     double neutral_lnl = compute_lnl(these_neutral_transition_rates);
     
-    */
+    
+    
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
@@ -338,7 +339,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
         cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
     }
     
-    return lnl;
+    return lnl - neutral_lnl;
 }
 
 
@@ -624,11 +625,14 @@ vector<double> search_sites_fast(double chrom_size, nelder_mead &opt, vector<vec
 
     opt.calculate_points(&to_be_optimized_only_near_sites);
 
-    while(opt.max_value - opt.min_value > depth && opt.repeated_shrinkages < 4){
+    double initial_range = opt.max_value - opt.min_value;
+
+    while((opt.max_value - opt.min_value) / initial_range > depth && opt.repeated_shrinkages < 4){
         opt.iterate(&to_be_optimized_only_near_sites);
         
         if(context.options.verbose_stderr){
             cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+            cerr << "Initial range: " << initial_range << "\n";
         }
     }
 

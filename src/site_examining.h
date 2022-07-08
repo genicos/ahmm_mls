@@ -7,53 +7,6 @@
 
 
 
-void help(double s3, double f3, mat transition_matrix1, double m, int t, double n1, double n2, double scale, bool show){
-    vector<double> recomb_rates_2(2);
-            recomb_rates_2[0] = s3;
-            recomb_rates_2[1] = 1 - s3;
-
-            vector<vector<double>> fitness_2(1);
-            vector<double> fit_2_1(3);
-            fit_2_1[0] = 1;
-            fit_2_1[1] = 1 + (f3 - 1)/2;
-            fit_2_1[2] = f3;
-            fitness_2[0] = fit_2_1;
-
-            vector<double> trans2 = adjacent_transition_rate(recomb_rates_2, fitness_2, m, n1, n2, t);
-
-
-            mat transition_matrix2(2,2,fill::zeros);
-
-            transition_matrix2(0,0) = trans2[0]/(trans2[0] + trans2[1]);
-            transition_matrix2(0,1) = 1 - transition_matrix2(0,0);
-            transition_matrix2(1,0) = trans2[2]/(trans2[2] + trans2[3]);
-            transition_matrix2(1,1) = 1 - transition_matrix2(1,0);
-            
-            if(!show){
-                cerr << setprecision(17) << f3 << "\t" << s3 << "\n";
-                cerr << setprecision(17) << transition_matrix1(0,0) << "\t" << transition_matrix2(0,0) << "\t" << scale*(transition_matrix2(0,0) - transition_matrix1(0,0)) << "\n";
-                cerr << setprecision(17) << transition_matrix1(1,1) << "\t" << transition_matrix2(1,1) << "\t" << scale*(transition_matrix2(1,1) - transition_matrix1(1,1)) << "\n\n";
-            }else{
-                double diff1 = transition_matrix2(0,0) - transition_matrix1(0,0); 
-                double diff2 = transition_matrix2(1,1) - transition_matrix1(1,1);
-
-                if(diff1 < 0 && diff2 < 0){
-                    cerr << "-";
-                }
-                if(diff1 < 0 && diff2 > 0){
-                    cerr << "/";
-                }
-                if(diff1 > 0 && diff2 < 0){
-                    cerr << "#";
-                }
-                if(diff1 > 0 && diff2 > 0){
-                    cerr << "+";
-                }
-            }
-}
-
-
-
 
 vector<double> selection_opt::examine_sites(){
     vector<double> ans;
@@ -68,13 +21,13 @@ vector<double> selection_opt::examine_sites(){
     shallow_short[0] = 5;
     shallow_short[1] = 0.03;
     shallow_short[2] = 0.01;
-    shallow_short[3] = 20;
+    shallow_short[3] = 0.2;
 
     vector<double> shallow_tall(4);
     shallow_tall[0] = 5;
     shallow_tall[1] = 0.03;
     shallow_tall[2] = 0.05;
-    shallow_tall[3] = 20;
+    shallow_tall[3] = 0.2;
 
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
@@ -85,13 +38,13 @@ vector<double> selection_opt::examine_sites(){
     deep_short[0] = 5;
     deep_short[1] = 0.01;
     deep_short[2] = 0.005;
-    deep_short[3] = 5;
+    deep_short[3] = 0.04;
 
     vector<double> deep_tall(4);
     deep_tall[0] = 5;
     deep_tall[1] = 0.01;
     deep_tall[2] = 0.01;
-    deep_tall[3] = 5;
+    deep_tall[3] = 0.04;
 
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
@@ -130,274 +83,6 @@ vector<double> selection_opt::examine_sites(){
     cerr << "\nNeutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
     neutral_transition_matrices = last_calculated_transition_matricies;
-
-
-    if(false){
-
-        //Treating two sites as one
-
-        double s1 = 0.2;
-        double s2 = 0.3;
-        double f1 = 2;
-        double f2 = 0.5;
-
-        double n1 = 0.40;
-        double n2 = 0.401;
-
-        static double m = 0.20;
-        int t = 300;
-
-
-        double s3 = 0.265476;
-        
-
-        cerr << "A\n";
-        vector<double> recomb_rates_1(3);
-        recomb_rates_1[0] = s1;
-        recomb_rates_1[1] = s2 - s1;
-        recomb_rates_1[2] = 1 - s2;
-
-        vector<vector<double>> fitness_1(2);
-        vector<double> fit_1_1(3);
-        fit_1_1[0] = 1;
-        fit_1_1[1] = 1 + (f1 - 1)/2;
-        fit_1_1[2] = f1;
-        vector<double> fit_1_2(3);
-        fit_1_2[0] = 1;
-        fit_1_2[1] = 1 + (f2 - 1)/2;
-        fit_1_2[2] = f2;
-
-        fitness_1[0] = fit_1_1;
-        fitness_1[1] = fit_1_2;
-
-        vector<double> trans1 = adjacent_transition_rate(recomb_rates_1, fitness_1, m, n1, n2, t);
-        
-
-        mat transition_matrix1(2,2,fill::zeros);
-
-        transition_matrix1(0,0) = trans1[0]/(trans1[0] + trans1[1]);
-        transition_matrix1(0,1) = 1 - transition_matrix1(0,0);
-        transition_matrix1(1,0) = trans1[2]/(trans1[2] + trans1[3]);
-        transition_matrix1(1,1) = 1 - transition_matrix1(1,0);
-
-        double f3 = 0.5;
-
-        double s_start = 0.40069138142637;
-        double s_step =  0.0000000000000001;
-        int s_num =                     100;
-
-        double f_start = 0.99039841958817;
-        double f_step =  0.0000000000000001;
-        int f_num =                     100;
-
-        for(int i = 0; i < f_num; i++){
-            if(i % 10 == 0){
-                cerr << (i/10)%10;
-            }else{
-                cerr << " ";
-            }
-        }
-        cerr << "\n";
-
-        for(int i = 0; i < s_num; i++){
-            s3 = s_start + i * s_step;
-
-            for(int j = 0; j < f_num; j++){
-                
-                f3 = f_start + j * f_step;
-
-                help( s3,  f3,  transition_matrix1,  m,  t,  n1,  n2, 1e8, true);
-            }
-            cerr << setprecision(20) << " "<< s3 <<"\n";
-            
-        }
-        cerr << f_start << "\t" << f3 << "\n";
-
-        s3 = 0.400691381426372;
-        f3 = 0.990398419588176;
-
-        help( s3,  f3,  transition_matrix1,  m,  t,  n1,  n2, 1, false);
-
-        
-        
-
-
-
-
-
-
-        
-
-        
-
-       
-
-        
-        exit(0);
-    }
-
-    if(false){
-        //second
-
-        //I think it might be impossible to treat 2 sites as one
-
-        double s4 = 0.6;
-        double f4 = 1;
-
-
-
-
-        double s1 = 0.2;
-        double s2 = 0.3;
-        double f1 = 2;
-        double f2 = 0.5;
-
-        double n1 = 0.4;
-        double n2 = 0.401;
-
-        static double m = 0.2;
-        int t = 300;
-
-
-        vector<double> recomb_rates_1(4);
-        recomb_rates_1[0] = s1;
-        recomb_rates_1[1] = s2 - s1;
-        recomb_rates_1[2] = s4 - s2;
-        recomb_rates_1[3] = 1 - s4;
-
-
-        vector<vector<double>> fitness_1(3);
-
-        vector<double> fit_1_1(3);
-        fit_1_1[0] = 1;
-        fit_1_1[1] = 1 + (f1 - 1)/2;
-        fit_1_1[2] = f1;
-        vector<double> fit_1_2(3);
-        fit_1_2[0] = 1;
-        fit_1_2[1] = 1 + (f2 - 1)/2;
-        fit_1_2[2] = f2;
-        vector<double> fit_1_3(3);
-        fit_1_3[0] = 1;
-        fit_1_3[1] = 1 + (f4 - 1)/2;
-        fit_1_3[2] = f4;
-
-        cerr << fit_1_3[2] << " hey\n";
-
-        fitness_1[0] = fit_1_1;
-        fitness_1[1] = fit_1_2;
-        fitness_1[2] = fit_1_3;
-
-
-
-        vector<double> trans1 = adjacent_transition_rate(recomb_rates_1, fitness_1, m, n1, n2, t);
-        
-        mat transition_matrix1(2,2,fill::zeros);
-
-        transition_matrix1(0,0) = trans1[0]/(trans1[0] + trans1[1]);
-        transition_matrix1(0,1) = 1 - transition_matrix1(0,0);
-        transition_matrix1(1,0) = trans1[2]/(trans1[2] + trans1[3]);
-        transition_matrix1(1,1) = 1 - transition_matrix1(1,0);
-
-
-        double s3 = 0.400691381426372;
-        double f3 = 0.990398419588176;
-
-
-        vector<double> recomb_rates_2(3);
-        recomb_rates_2[0] = s3;
-        recomb_rates_2[1] = s4 - s3;
-        recomb_rates_2[2] = 1 - s4;
-
-        vector<vector<double>> fitness_2(2);
-        vector<double> fit_2_1(3);
-        fit_2_1[0] = 1;
-        fit_2_1[1] = 1 + (f3 - 1)/2;
-        fit_2_1[2] = f3;
-
-        vector<double> fit_2_2(3);
-        fit_2_2[0] = 1;
-        fit_2_2[1] = 1 + (f4 - 1)/2;
-        fit_2_2[2] = f4;
-
-        fitness_2[0] = fit_2_1;
-        fitness_2[1] = fit_2_2;
-
-        vector<double> trans2 = adjacent_transition_rate(recomb_rates_2, fitness_2, m, n1, n2, t);
-
-
-        mat transition_matrix2(2,2,fill::zeros);
-
-        transition_matrix2(0,0) = trans2[0]/(trans2[0] + trans2[1]);
-        transition_matrix2(0,1) = 1 - transition_matrix2(0,0);
-        transition_matrix2(1,0) = trans2[2]/(trans2[2] + trans2[3]);
-        transition_matrix2(1,1) = 1 - transition_matrix2(1,0);
-
-
-        cerr << setprecision(17) << transition_matrix1(0,0) << "\t" << transition_matrix2(0,0) << "\t" << (transition_matrix2(0,0) - transition_matrix1(0,0)) << "\n";
-        cerr << setprecision(17) << transition_matrix1(1,1) << "\t" << transition_matrix2(1,1) << "\t" << (transition_matrix2(1,1) - transition_matrix1(1,1)) << "\n\n";
-
-
-
-        exit(0);
-    }
-
-
-    //TODO
-    if(false){
-        // stream in simulated transitions
-        string file_name = "simulated_transitions";
-        ifstream in ( file_name.c_str() );
-
-        vector<mat> sim_trans(0);
-
-        while ( !in.eof() ) {
-            double t00, t01, t10, t11;
-
-            in >> t00 >> t01 >> t10 >> t11;
-
-            mat transition_matrix(2,2,fill::zeros);
-
-            transition_matrix(0,0) = t00;
-            transition_matrix(0,1) = t01;
-            transition_matrix(1,0) = t10;
-            transition_matrix(1,1) = t11;
-
-            sim_trans.push_back(transition_matrix);
-        }
-
-        double new_lnl = compute_lnl(sim_trans);
-
-        cerr << "neutral lnl\t" << neutral_lnl << "\n";
-        cerr << "new lnl    \t" << new_lnl << "\n";
-        exit(0);
-    }
-
-
-
-    //TODO
-    if(true){
-
-        vector<double> test(3);
-        test[0] = 0.0501;
-        test[1] = 1;
-        test[2] = 1;
-
-        vector<vector<double>> sites = parameters_to_sites(test);
-
-            
-        vector<double> best_parameters = multi_level_optimization(
-            chrom_size,
-            optimizer,
-            sites,
-            bottle_necks,
-            &search_sites_fast
-        );
-
-        cerr << "DONE\nDONE\nDONE\n";
-        cerr << to_be_optimized_only_near_sites(best_parameters) << "\n";
-
-        exit(0);
-    }
 
 
 
