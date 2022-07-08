@@ -281,7 +281,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     if(context.options.use_model_file)
         cores = 1;
     
-    vector<mat> transition_matrices = fast_transition_rates (
+    vector<mat> transition_matrices = alternative_fast_transition_rates (
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
