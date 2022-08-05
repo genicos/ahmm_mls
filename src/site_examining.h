@@ -21,13 +21,13 @@ vector<double> selection_opt::examine_sites(){
     shallow_short[0] = 5;
     shallow_short[1] = 0.03;
     shallow_short[2] = 0.01;
-    shallow_short[3] = 0.2;
+    shallow_short[3] = 20;
 
     vector<double> shallow_tall(4);
     shallow_tall[0] = 5;
     shallow_tall[1] = 0.03;
     shallow_tall[2] = 0.05;
-    shallow_tall[3] = 0.2;
+    shallow_tall[3] = 20;
 
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
@@ -38,13 +38,13 @@ vector<double> selection_opt::examine_sites(){
     deep_short[0] = 5;
     deep_short[1] = 0.01;
     deep_short[2] = 0.005;
-    deep_short[3] = 0.04;
+    deep_short[3] = 5;
 
     vector<double> deep_tall(4);
     deep_tall[0] = 5;
     deep_tall[1] = 0.01;
     deep_tall[2] = 0.01;
-    deep_tall[3] = 0.04;
+    deep_tall[3] = 5;
 
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
