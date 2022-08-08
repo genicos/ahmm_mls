@@ -88,7 +88,11 @@ vector<double> selection_opt::examine_sites(){
 
 
     for(int i = 0; i < options.site_file_morgan_positions.size(); i++){
-        if (options.site_file_options[i].compare("o") == 0){
+
+        double bound_size = options.site_file_high_bounds[i] 
+                - options.site_file_low_bounds[i];
+        
+        if (options.site_file_options[i].compare("o") == 0) {
 
             vector<double> starting_parameters(3);
             starting_parameters[0] = options.site_file_morgan_positions[i];
@@ -106,6 +110,14 @@ vector<double> selection_opt::examine_sites(){
 
 
             vector<vector<double>> sites = parameters_to_sites(starting_parameters);
+
+            
+            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = 0;
+            optimizer.min_bounds[2] = 0;
 
             
             vector<double> best_parameters = multi_level_optimization(
@@ -143,7 +155,7 @@ vector<double> selection_opt::examine_sites(){
             vector<double> add_starting_parameters(2);
             add_starting_parameters[0] = options.site_file_morgan_positions[i];
             add_starting_parameters[1] = 0;
-
+            
 
 
             // Pop0 dominant testing
@@ -156,7 +168,14 @@ vector<double> selection_opt::examine_sites(){
             }
 
             vector<vector<double>> sites = parameters_to_sites(dom0_starting_parameters, 2);
-                
+            
+
+            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = 0;
+            
             vector<double> pop0_dom_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -180,14 +199,20 @@ vector<double> selection_opt::examine_sites(){
             // Pop1 dominant testing
             vector<double> dom1_starting_parameters = grid_search_dominant1(dom_starting_parameters, 0.001, 0.05, 3, 6);
 
-            if(options.verbose_stderr){
+            if(options.verbose_stderr) {
                 cerr << "Best grid search result:\n";
                 cerr << dom1_starting_parameters[0] << "\n";
                 cerr << dom1_starting_parameters[1] << "\n";
             }
 
             sites = parameters_to_sites(dom1_starting_parameters, 2);
-                
+            
+            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = 0;
+
             vector<double> pop1_dom_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -218,6 +243,12 @@ vector<double> selection_opt::examine_sites(){
 
             sites = parameters_to_sites(add_starting_parameters, 2);
 
+            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = -1;
+
             vector<double> additive_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -246,6 +277,7 @@ vector<double> selection_opt::examine_sites(){
             cout << setprecision(15) << "Pop1 dominant lnl:\t" << dom1_lnl << "\n";
             cout << setprecision(15) << "Additive selection lnl:\t" << add_lnl << "\n";
         }
+
         else if (options.site_file_options[i].compare("T") == 0){
 
             //Testing for two sites additive
@@ -256,9 +288,22 @@ vector<double> selection_opt::examine_sites(){
             two_site_starting_params[3] = 0;
 
 
+
             vector<vector<double>> sites = parameters_to_sites(two_site_starting_params, 2);
 
-            
+
+            optimizer.init_bounds(4, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = -1;
+
+            optimizer.min_bounds[2] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[2] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[3] = -1;
+
+
             vector<double> two_site_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -293,6 +338,13 @@ vector<double> selection_opt::examine_sites(){
 
             // single site additive selection testing
             sites = parameters_to_sites(add_starting_parameters, 2);
+
+
+            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = -1;
 
             vector<double> additive_parameters = multi_level_optimization(
                 chrom_size,
@@ -337,7 +389,20 @@ vector<double> selection_opt::examine_sites(){
 
             vector<vector<double>> sites = parameters_to_sites(two_site_starting_params);
 
-            
+            optimizer.init_bounds(6, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = 0;
+            optimizer.min_bounds[2] = 0;
+
+            optimizer.min_bounds[3] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[3] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[4] = 0;
+            optimizer.min_bounds[5] = 0;
+
+
             vector<double> two_site_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -366,6 +431,15 @@ vector<double> selection_opt::examine_sites(){
 
             sites = parameters_to_sites(single_site_starting_parameters);
 
+
+            optimizer.init_bounds(3, min(0.01, bound_size/2) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = 0;
+            optimizer.min_bounds[2] = 0;
+
+
             
             vector<double> single_site_parameters = multi_level_optimization(
                 chrom_size,
@@ -374,7 +448,7 @@ vector<double> selection_opt::examine_sites(){
                 bottle_necks,
                 &search_sites_fast
             );
-
+            
                 
             double single_site_lnl = to_be_optimized(single_site_parameters);
 

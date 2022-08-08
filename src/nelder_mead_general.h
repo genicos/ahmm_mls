@@ -50,12 +50,15 @@ public:
     }
 
     void init_bounds(int dimensions, double reb);
+    void enforce_bounds();
 
     void populate_points(int dimensions, double size, vector<double> center, vector<double> scales);
     void populate_points(int dimensions, double size, vector<double> center);
 
     int calculate_points(double (*f)(vector<double>));  // returns number of function calls
     int iterate(double (*f)(vector<double>));           //
+
+    
     
 
     vector<double> best_reflections;
@@ -78,6 +81,7 @@ public:
 
 
 void nelder_mead::init_bounds(int dimensions, double reb){
+    
     bounded = true;
 
     max_bounds.resize(dimensions);
@@ -90,6 +94,17 @@ void nelder_mead::init_bounds(int dimensions, double reb){
     }
 }
 
+void nelder_mead::enforce_bounds(){
+    for(uint i = 0; i < points.size(); i++){
+        for(int d = 0; d < points[i].size(); d++) {
+            if(points[i][d] >= max_bounds[d]){
+                points[i][d] = max_bounds[d] - random_edge_bounce * rand() / RAND_MAX;
+            }else if(points[i][d] <= min_bounds[d]){
+                points[i][d] = min_bounds[d] + random_edge_bounce * rand() / RAND_MAX;
+            }
+        }
+    }
+}
 
 void nelder_mead::populate_points(int dimensions, double size, vector<double> center,vector<double> scales){
     int n = dimensions;
@@ -223,6 +238,7 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
 
     for(uint d = 0; d < points[0].size(); d++){
         reflected[d] = best_centroid[d] + reflection * (best_centroid[d] - points[min_index][d]);
+        
         
         if(bounded){
             if(reflected[d] >= max_bounds[d]){

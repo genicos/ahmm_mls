@@ -187,7 +187,6 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
 double compute_lnl(vector<mat> &transition_matrices){
 
-
     map<int,vector<mat> > transition_matrix ;
     
     
@@ -195,7 +194,7 @@ double compute_lnl(vector<mat> &transition_matrices){
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         
         alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, transition_matrices ) ;
-            
+         
         for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
             alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs, context.position, context.markov_chain_information[m].ploidy_switch[p], transition_matrices ) ;
         }
@@ -291,46 +290,8 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     );
 
     
-    
     double lnl = compute_lnl(transition_matrices);
 
-
-    
-    /*
-    vector<mat> these_neutral_transition_rates(neutral_transition_matrices.size());
-    
-
-    mat filler_matrix(2,2,fill::zeros);
-
-    filler_matrix(0,0) = 0.5;
-    filler_matrix(0,1) = 0.5;
-    filler_matrix(1,0) = 0.5;
-    filler_matrix(1,1) = 0.5;
-
-    int selected_sites_count = parameters.size() / 3;
-    
-    double sum = 0;
-    for(uint i = 0; i < neutral_transition_matrices.size(); i++){
-        sum += context.n_recombs[i];
-        bool near_a_selected_site = false;
-        for(uint j = 0; j < selected_sites_count; j++){
-            double distance = sum - parameters[j*3];
-            if (distance <= fast_transitions_radius_in_morgans && distance >= -fast_transitions_radius_in_morgans){
-                near_a_selected_site = true;
-            }
-        }
-        if(near_a_selected_site){
-            these_neutral_transition_rates[i] = neutral_transition_matrices[i];
-        }else{
-            these_neutral_transition_rates[i] = filler_matrix;
-        }
-    }
-    
-
-    double neutral_lnl = compute_lnl(these_neutral_transition_rates);
-    
-    
-    */
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
@@ -582,6 +543,8 @@ vector<double> search_sites(
             }
         }
     }
+
+    opt.enforce_bounds();
     
     opt.calculate_points(&to_be_optimized);
 
@@ -623,6 +586,8 @@ vector<double> search_sites_fast(double chrom_size, nelder_mead &opt, vector<vec
             }
         }
     }
+
+    opt.enforce_bounds();
 
     opt.calculate_points(&to_be_optimized_only_near_sites);
 
@@ -680,6 +645,8 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
             }
         }
     }
+
+    opt.enforce_bounds();
 
     opt.calculate_points(&to_be_optimized_only_near_sites);
 
@@ -741,6 +708,8 @@ vector<double> search_sites_fast_dom0(double chrom_size, nelder_mead &opt, vecto
         }
     }
 
+    opt.enforce_bounds();
+
     opt.calculate_points(&to_be_optimized_pop0_dominant_fast);
 
     while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
@@ -776,6 +745,8 @@ vector<double> search_sites_fast_dom1(double chrom_size, nelder_mead &opt, vecto
             }
         }
     }
+
+    opt.enforce_bounds();
 
     opt.calculate_points(&to_be_optimized_pop1_dominant_fast);
 
@@ -813,6 +784,8 @@ vector<double> search_sites_fast_additive(double chrom_size, nelder_mead &opt, v
             }
         }
     }
+
+    opt.enforce_bounds();
 
     opt.calculate_points(&to_be_optimized_additive_fast);
 
