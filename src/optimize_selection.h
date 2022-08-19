@@ -189,12 +189,11 @@ double compute_lnl(vector<mat> &transition_matrices){
 
     map<int,vector<mat> > transition_matrix ;
     
-    
     // Compute transition matricies for different ploidies
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         
         alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, transition_matrices ) ;
-         
+        
         for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
             alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs, context.position, context.markov_chain_information[m].ploidy_switch[p], transition_matrices ) ;
         }
@@ -267,14 +266,14 @@ double to_be_optimized(vector<double> parameters){
 vector<mat> neutral_transition_matrices;
 
 double to_be_optimized_only_near_sites(vector<double> parameters) {
-
+    
     double timer = get_wall_time();
     
     vector<double> selection_recomb_rates;
     vector<vector<double>> fitnesses;
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
-
+    
     int cores = context.options.cores;
     
     if(context.options.use_model_file)
@@ -289,9 +288,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
         cores
     );
 
-    
     double lnl = compute_lnl(transition_matrices);
-
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
@@ -483,8 +480,8 @@ vector<double> multi_level_optimization(
                 found_parameters = search(chrom_size, opt, sites, bottle_necks[j][k][1], bottle_necks[j][k][2], bottle_necks[j][k][3]);
 
 
-                cout << "\n Result of search" << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
-                cout << opt.max_value << "\n";
+                cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                cout << setprecision(15) << opt.max_value - context.neutral_lnl<< "\n";
                 for(uint j = 0; j < found_parameters.size(); j++){
                     cout << found_parameters[j] << "\n";
                 }
@@ -604,7 +601,7 @@ vector<double> search_sites_fast(double chrom_size, nelder_mead &opt, vector<vec
 
 
 vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-
+    
     vector<vector<double>> new_sites;
 
     vector<bool> in_new_sites(sites.size());
@@ -621,6 +618,7 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
         }
 
     }
+    
 
     vector<double> center_point(new_sites.size()*3);
     vector<double> scales(new_sites.size()*3);
@@ -633,7 +631,7 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
         scales[i*3+1] = height;
         scales[i*3+2] = height;
     }
-
+    
 
     opt.populate_points(new_sites.size()*3, 1, center_point, scales);
 
@@ -645,19 +643,22 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
             }
         }
     }
-
+    
+    
     opt.enforce_bounds();
 
     opt.calculate_points(&to_be_optimized_only_near_sites);
+    
 
     while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
+        
         opt.iterate(&to_be_optimized_only_near_sites);
 
         if(context.options.verbose_stderr){
             cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
         }
     }
-
+    
     vector<double> ans(sites.size()*3);
     
     int counter = 0;
@@ -675,7 +676,7 @@ vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead
             ans[i*3 + 2] = sites[i][2];
         }
     }
-
+    
     return ans;
 }
 

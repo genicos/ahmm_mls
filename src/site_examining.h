@@ -54,6 +54,43 @@ vector<double> selection_opt::examine_sites(){
     //////////////////////////////////////////////////
 
 
+    // Defining multi-level optimization parameters ///////
+    vector<vector<vector<double>>> two_site_bottle_necks;//
+
+    
+    shallow_short[0] = 5;
+    shallow_short[1] = 0.01;
+    shallow_short[2] = 0.005;
+    shallow_short[3] = 5;
+
+    
+    shallow_tall[0] = 5;
+    shallow_tall[1] = 0.01;
+    shallow_tall[2] = 0.03;
+    shallow_tall[3] = 5;
+
+    shallow[0] = shallow_short;
+    shallow[1] = shallow_tall;
+
+
+    deep_short[0] = 5;
+    deep_short[1] = 0.002;
+    deep_short[2] = 0.002;
+    deep_short[3] = 1;
+
+    deep_tall[0] = 5;
+    deep_tall[1] = 0.002;
+    deep_tall[2] = 0.005;
+    deep_tall[3] = 1;
+
+    deep[0] = deep_short;
+    deep[1] = deep_tall;
+
+    two_site_bottle_necks.push_back(shallow);
+    two_site_bottle_necks.push_back(deep);               //
+    ///////////////////////////////////////////////////////
+
+
 
 
 
@@ -77,8 +114,10 @@ vector<double> selection_opt::examine_sites(){
 
     context = *this;
 
-    vector<double> empty(0);                    
-    double neutral_lnl = to_be_optimized(empty);
+    vector<double> empty(0);
+
+    context.neutral_lnl = to_be_optimized(empty);
+    neutral_lnl = context.neutral_lnl;                  //TODO i dont know where this is declared?
     
     cerr << "\nNeutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
@@ -112,7 +151,7 @@ vector<double> selection_opt::examine_sites(){
             vector<vector<double>> sites = parameters_to_sites(starting_parameters);
 
             
-            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.init_bounds(3, min(0.01, bound_size/2) );
             optimizer.min_bounds[0] = options.site_file_low_bounds[i];
             optimizer.max_bounds[0] = options.site_file_high_bounds[i];
 
@@ -308,7 +347,7 @@ vector<double> selection_opt::examine_sites(){
                 chrom_size,
                 optimizer,
                 sites,
-                bottle_necks,
+                two_site_bottle_necks,
                 &search_sites_fast_additive,
                 2
             );
@@ -360,7 +399,7 @@ vector<double> selection_opt::examine_sites(){
             cout << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
 
-            cerr << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
+            cerr << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
             cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
 
 
@@ -370,10 +409,12 @@ vector<double> selection_opt::examine_sites(){
             cout << "Completed additive two site testing of site at " << options.site_file_positions[i] << "\n";
             cout << setprecision(15) << "Two site lnl:\t" << two_site_lnl << "\n";
             cout << setprecision(15) << "single site lnl:\t" << add_lnl << "\n";
+            cout << setprecision(15) << "lnl ratio:\t" << two_site_lnl - add_lnl << "\n";
 
             cerr << "Completed additive two site testing of site at " << options.site_file_positions[i] << "\n";
             cerr << setprecision(15) << "Two site lnl:\t" << two_site_lnl << "\n";
             cerr << setprecision(15) << "single site lnl:\t" << add_lnl << "\n";
+            cerr << setprecision(15) << "lnl ratio:\t" << two_site_lnl - add_lnl << "\n";
 
         }
         else if (options.site_file_options[i].compare("t") == 0){

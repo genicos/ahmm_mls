@@ -13,6 +13,8 @@ public:
     vector<double> morgan_position;
     double chrom_size;
 
+    double neutral_lnl;
+
 
     selection_opt(vector<double> neutral_recombs, cmd_line o, vector<markov_chain> mci, map<int, vector<vector<map<vector<transition_information>,double>>>> tmi, vector<int> pos){
         n_recombs = neutral_recombs;

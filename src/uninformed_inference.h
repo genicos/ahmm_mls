@@ -144,6 +144,110 @@ void selection_opt::uninformed_inference(){
     real[8] = 0.967120928804454;
     double real_lnl = to_be_optimized(real);
     */
+    if(true){
+        // Defining multi-level optimization parameters //
+    
+
+    cerr << "AAAAAAA\n";
+    // Defining multi-level optimization parameters ///////
+    vector<vector<vector<double>>> two_site_bottle_necks;//
+
+    
+    shallow_short[0] = 5;
+    shallow_short[1] = 0.01;
+    shallow_short[2] = 0.005;
+    shallow_short[3] = 5;
+
+    
+    shallow_tall[0] = 5;
+    shallow_tall[1] = 0.01;
+    shallow_tall[2] = 0.03;
+    shallow_tall[3] = 5;
+
+    shallow.resize(2);
+
+    shallow[0] = shallow_short;
+    shallow[1] = shallow_tall;
+
+
+    deep_short[0] = 5;
+    deep_short[1] = 0.002;
+    deep_short[2] = 0.002;
+    deep_short[3] = 1;
+
+    deep_tall[0] = 5;
+    deep_tall[1] = 0.002;
+    deep_tall[2] = 0.005;
+    deep_tall[3] = 1;
+
+    deep.resize(2);
+
+    deep[0] = deep_short;
+    deep[1] = deep_tall;
+
+    two_site_bottle_necks.push_back(shallow);
+    two_site_bottle_necks.push_back(deep);               //
+    ///////////////////////////////////////////////////////
+    cerr << "bbb\n";
+
+    vector<double> params(8);
+        params[0] = .0574;
+        params[1] = 0;
+        params[2] = .0844;
+        params[3] = 0;
+        params[4] = .1094;
+        params[5] = 0;
+        params[6] = .1544;
+        params[7] = 0;
+
+        optimizer.init_bounds(8, 0.01);
+        
+        optimizer.min_bounds[0] = 0;
+        optimizer.max_bounds[0] = chrom_size;
+        optimizer.min_bounds[1] = -1;
+
+        optimizer.min_bounds[2] = 0;
+        optimizer.max_bounds[2] = chrom_size;
+        optimizer.min_bounds[3] = -1;
+
+        optimizer.min_bounds[4] = 0;
+        optimizer.max_bounds[4] = chrom_size;
+        optimizer.min_bounds[5] = -1;
+
+        optimizer.min_bounds[6] = 0;
+        optimizer.max_bounds[6] = chrom_size;
+        optimizer.min_bounds[7] = -1;
+
+        sites = parameters_to_sites(params, 2);
+        cerr << "ASD\n";
+
+        vector<double> two_site_parameters = multi_level_optimization(
+                chrom_size,
+                optimizer,
+                sites,
+                two_site_bottle_necks,
+                &search_sites_fast_additive,
+                2
+            );
+        
+
+        cerr << "FINAL\n";
+        cout << "FINAL\n";
+        for(int i = 0; i < 8; i++){
+            cerr << two_site_parameters[i] << "\n";
+            cout << two_site_parameters[i] << "\n";
+        }
+
+        exit(0);
+
+    }
+
+
+
+
+
+
+
     
 
 
@@ -208,102 +312,93 @@ void selection_opt::uninformed_inference(){
         vector<double> found_parameters;
 
         
-        //generalized bottlenecking
-        //if(true){
-
-            //Checking if new site is near an old site
-            bool new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = false;
-            int site_its_close_to = 0;
-            for(int s = 0; s < sites.size(); s++){
-                if( abs(sites[s][0] - new_site[0]) < 0.05 && !site_has_been_deep_searched[s]){
-                    new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = true;
-                    site_its_close_to = s;
-                }
+    
+        //Checking if new site is near an old site
+        bool new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = false;
+        int site_its_close_to = 0;
+        for(int s = 0; s < sites.size(); s++){
+            if( abs(sites[s][0] - new_site[0]) < 0.05 && !site_has_been_deep_searched[s]){
+                new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = true;
+                site_its_close_to = s;
             }
+        }
+        
+        cout << "close: " << new_site_is_close_to_existing_site_that_hasnt_been_deep_searched << "\n";
 
-            cout << "close: " << new_site_is_close_to_existing_site_that_hasnt_been_deep_searched << "\n";
+        if(new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
+            //pop close one from sites and place it at the end
+            // then do a bottle_necks search with
+            // search sites fast fix all but last
 
-            if(new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
-                //pop close one from sites and place it at the end
-                // then do a bottle_necks search with
-                // search sites fast fix all but last
+            //Remove site its close to and place it at the end
+            cout << "its close\n";
+            cerr << "its close\n";
 
-                //Remove site its close to and place it at the end
-                cout << "its close\n";
+            vector<double> near_site = sites[site_its_close_to];
+            sites.erase(sites.begin() + site_its_close_to);
+            sites.push_back(near_site);
 
-                vector<double> near_site = sites[site_its_close_to];
-                sites.erase(sites.begin() + site_its_close_to);
-                sites.push_back(near_site);
+            optimizer.init_bounds(sites.size()*3, 0.01);
 
-                multi_level_optimization(
-                    chrom_size,
-                    optimizer,
-                    sites,
-                    bottle_necks,
-                    &search_sites_fast_fix_all_but_last
-                );
+            for(int i = 0; i < sites.size(); i++){
 
-                site_has_been_deep_searched[site_has_been_deep_searched.size() - 1] = true;
+                optimizer.min_bounds[i*3 + 0] = 0;
+                optimizer.max_bounds[i*3 + 0] = chrom_size;
 
-            }else{
+                optimizer.min_bounds[i*3 + 1] = 0;
+                optimizer.min_bounds[i*3 + 2] = 0;
+
+
                 
-                cout << "its not close\n";
-
-                sites.push_back(new_site);
-                site_has_been_deep_searched.push_back(false);
-                // do a bottle_necks search with
-                // search sites fast fix all but last
-
-                multi_level_optimization(
-                    chrom_size,
-                    optimizer,
-                    sites,
-                    shallow_bottle_necks,
-                    &search_sites_fast_fix_all_but_last
-                );
             }
+
             
-            /*
+
             multi_level_optimization(
                 chrom_size,
                 optimizer,
                 sites,
                 bottle_necks,
-                &search_sites_fast
+                &search_sites_fast_fix_all_but_last
             );
-            */
+
+            site_has_been_deep_searched[site_has_been_deep_searched.size() - 1] = true;
+
+        }else{
+                
+            cout << "its not close\n";
+            cerr << "its not close\n";
+
+            sites.push_back(new_site);
+            site_has_been_deep_searched.push_back(false);
 
 
-            // i need a fine tune afterward when theres more than one site
+            optimizer.init_bounds(sites.size()*3, 0.01);
 
-            /*
-            for(int j = 0; j < bottle_necks.size(); j++){
-                for(int k = 0; k < bottle_necks[j].size(); k++){
-                    for(int l = 0; l < bottle_necks[j][k][0]; l++){
-                        cerr << "\n SEARCH " << j << "/" << bottle_necks.size() << " " << k << "/" << bottle_necks[j].size() << " " << l << "/" << bottle_necks[j][k][0] << "\n";
-                        found_parameters = search_sites_fast_fix_all_but_last(chrom_size, optimizer, sites, bottle_necks[j][k][1], bottle_necks[j][k][2], bottle_necks[j][k][3]);
-                        
-                        cout << "\n Result of search " << j << "/" << bottle_necks.size() << " " << k << "/" << bottle_necks[j].size() << " " << l << "/" << bottle_necks[j][k][0] << "\n";
-                        cout << optimizer.max_value << "\n";
-                        for(uint j = 0; j < found_parameters.size(); j++){
-                            cout << found_parameters[j] << "\n";
-                        }
-                        cout << "\n";
+            for(int i = 0; i < sites.size(); i++){
+                optimizer.min_bounds[i*3 + 0] = 0;
+                optimizer.max_bounds[i*3 + 0] = chrom_size;
 
-                        if(optimizer.max_value > best_ratio) {
-                            best_ratio = optimizer.max_value;
-                            best_parameters = found_parameters;
-                        }
-                    }
-                }
-                sites = parameters_to_sites(best_parameters);
-                best_ratio = -DBL_MAX;
+                optimizer.min_bounds[i*3 + 1] = 0;
+                optimizer.min_bounds[i*3 + 2] = 0;
+
+                cerr << "AAAAAAAAAAA\n";
+                cerr << sites[i][0] << "\n";
+                cerr << sites[i][1] << "\n";
+                cerr << sites[i][2] << "\n";
             }
-            */
-        //}else{
+            
 
-        //}
-        //end of else
+            // do a bottle_necks search with
+            // search sites fast fix all but last
+            multi_level_optimization(
+                chrom_size,
+                optimizer,
+                sites,
+                shallow_bottle_necks,
+                &search_sites_fast_fix_all_but_last
+            );
+        }
 
 
         cerr << "\n\nBest sites so far:\n";

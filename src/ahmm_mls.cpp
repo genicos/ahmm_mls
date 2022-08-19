@@ -129,9 +129,9 @@ int main ( int argc, char *argv[] ) {
     
     recombination_rate[0] = 0;
 
-    /*
+    
     //For converting bp to morgan
-    double sum = 0;
+    /*double sum = 0;
     for(int i = 0; i < recombination_rate.size(); i++){
         sum += recombination_rate[i];
         cout << setprecision(15) << position[i] << "\t" << sum << "\n";

@@ -199,17 +199,18 @@ void nelder_mead::populate_points(int dimensions, double size, vector<double> ce
 
 
 int nelder_mead::calculate_points(double (*f)(vector<double>)){
-
+    cerr << "AAAAAAAAA\n";
     point_values.resize(points.size());
-    
+    cerr << "BBBBBB\n";
+    cerr << "whats going on here :" << points.size() << " " << point_values.size() << "\n";
     for(uint i = 0; i < points.size(); i++){
         point_values[i] = (*f)(points[i]);
     }
-
+    cerr << "CCCCCc\n";
     determine_max();
     determine_min();
     determine_scnd_min();
-
+    cerr << "DDDDDDD\n";
     repeated_shrinkages = 0;
     
     return points.size();

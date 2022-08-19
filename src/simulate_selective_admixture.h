@@ -789,6 +789,19 @@ vector<mat> alternative_fast_transition_rates (
     }                                                                                     //
     ////////////////////////////////////////////////////////////////////////////////////////
 
+    int last_present = transition_matrices.size() - 1;
+
+    for(int i = transition_matrices.size() - 1; i >= 0; i--){
+        if (transition_matrices[i].n_elem != 0){
+            last_present = i;
+            break;
+        }
+    }
+
+    for(int i = last_present + 1; i < transition_matrices.size(); i++) {
+        transition_matrices[i] = transition_matrices[last_present];
+    }
+
     
     return transition_matrices;
 }
@@ -810,7 +823,6 @@ vector<mat> alternative_fast_transition_rates (
 //// create transition matrix for a given admixture model
 void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , vector<vector< map< vector<transition_information>, double > > > &transition_info, vector<double> &recombination_rate, vector<int> &positions, double &number_chromosomes, vector<mat> &transition_matrices) {
     
-    
     /// check if we already computed this for this sample ploidy
     if ( transition_matrix.find( number_chromosomes ) != transition_matrix.end() ) {
         return ;
@@ -821,37 +833,40 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
     transition_matrix[number_chromosomes].resize(recombination_rate.size()) ;
 
 
-    
     //// iterate across all positions and compute transition matrixes
 
     //NOTE changed p starting point from 1 to 0
 
+    
     for ( int p = 0 ; p < recombination_rate.size(); p ++ ) {
         
         mat segment_transitions = transition_matrices[p];
         
-        
-
         /// population transitions by summing across all routes
         
         transition_matrix[number_chromosomes][p] = mat(transition_info.size(),transition_info.size(), fill::zeros);
 
         
+
         for ( int i = 0 ; i < transition_info.size() ; i ++ ) {
             for ( int j = 0 ; j < transition_info[i].size() ; j ++ ) {
                 
                 for ( std::map<vector<transition_information>,double>::iterator t = transition_info[i][j].begin() ; t != transition_info[i][j].end() ; ++ t ) {
+                    
 
                     double prob_t = 1 ;
                     for ( int r = 0 ; r < t->first.size() ; r ++ ) {
+                        
                         prob_t *= pow( segment_transitions(t->first[r].start_state,t->first[r].end_state), t->first[r].transition_count ) ;
+                        
                     }
-
+                    
                     
                     transition_matrix[number_chromosomes][p](j,i) += prob_t * t->second ;
                 }
             }
         }
+
     }
 }
 
@@ -1025,10 +1040,6 @@ void testing_stuff(){
    
 
     vector<double> test_1_anc_2 = test_1_traj[test_1_t - 1];
-    
-
-    cerr<<"Should match: " << test_1_anc_1[0] << " " << test_1_anc_2[0] << "\n";
-    cerr<<"Should match: " << test_1_anc_1[1] << " " << test_1_anc_2[1] << "\n";
 
 
 
@@ -1090,11 +1101,6 @@ void testing_stuff(){
     
 
     vector<double> test_2_anc_2 = test_2_traj[test_2_t];
-    
-
-        
-    cerr<<"Should match: " << test_2_anc_1[0] << " " << test_2_anc_2[0] << "\n";
-    cerr<<"Should match: " << test_2_anc_1[1] << " " << test_2_anc_2[1] << "\n";
 
 }
 
