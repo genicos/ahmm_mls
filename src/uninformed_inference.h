@@ -144,11 +144,11 @@ void selection_opt::uninformed_inference(){
     real[8] = 0.967120928804454;
     double real_lnl = to_be_optimized(real);
     */
-    if(true){
+    
+    if(false){
         // Defining multi-level optimization parameters //
     
 
-    cerr << "AAAAAAA\n";
     // Defining multi-level optimization parameters ///////
     vector<vector<vector<double>>> two_site_bottle_necks;//
 
@@ -188,8 +188,7 @@ void selection_opt::uninformed_inference(){
     two_site_bottle_necks.push_back(shallow);
     two_site_bottle_necks.push_back(deep);               //
     ///////////////////////////////////////////////////////
-    cerr << "bbb\n";
-
+    
     vector<double> params(8);
         params[0] = .0574;
         params[1] = 0;
@@ -219,7 +218,7 @@ void selection_opt::uninformed_inference(){
         optimizer.min_bounds[7] = -1;
 
         sites = parameters_to_sites(params, 2);
-        cerr << "ASD\n";
+        cerr << "Starting\n";
 
         vector<double> two_site_parameters = multi_level_optimization(
                 chrom_size,
@@ -381,11 +380,6 @@ void selection_opt::uninformed_inference(){
 
                 optimizer.min_bounds[i*3 + 1] = 0;
                 optimizer.min_bounds[i*3 + 2] = 0;
-
-                cerr << "AAAAAAAAAAA\n";
-                cerr << sites[i][0] << "\n";
-                cerr << sites[i][1] << "\n";
-                cerr << sites[i][2] << "\n";
             }
             
 
@@ -395,7 +389,7 @@ void selection_opt::uninformed_inference(){
                 chrom_size,
                 optimizer,
                 sites,
-                shallow_bottle_necks,
+                bottle_necks,
                 &search_sites_fast_fix_all_but_last
             );
         }

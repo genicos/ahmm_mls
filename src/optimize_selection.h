@@ -10,9 +10,7 @@
 double get_wall_time(){
     struct timeval time;
     if (gettimeofday(&time,NULL)){
-
         // error
-        
         return 0;
     }
     return (double)time.tv_sec + (double)time.tv_usec * .000001;
@@ -413,6 +411,49 @@ double to_be_optimized_additive_fast(vector<double> parameters){
 
 
 
+
+
+
+double to_be_optimized_restricted_additive(vector<double> parameters){
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
+        new_parameters.push_back(1/(1-parameters[i]/2));
+        
+    }
+
+    return to_be_optimized(new_parameters);
+}
+
+//each site is one parameters,p[0] which translates to (NA, (1-p[0])/(1-p[0]/2), 1/(1-p[0]/2))
+double to_be_optimized_restricted_additive_fast(vector<double> parameters) {
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
+        new_parameters.push_back(1/(1-parameters[i]/2));
+        
+    }
+
+
+
+    return to_be_optimized_only_near_sites(new_parameters);
+}
+
+
+
+
+
+
+
+
 vector<double> sites_to_parameters(vector<vector<double>> sites, int parameters_per_site = 3){
     if(parameters_per_site == 0){
         parameters_per_site = 3;
@@ -800,4 +841,46 @@ vector<double> search_sites_fast_additive(double chrom_size, nelder_mead &opt, v
 
     return opt.points[opt.max_index];
 }
+
+
+
+vector<double> search_sites_fast_restricted_additive(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
+
+    vector<double> center_point(sites.size());
+    vector<double> scales(sites.size());
+
+    for(uint i = 0; i < sites.size(); i++){
+        center_point[i] = sites[i][0];
+        scales[i] = height;
+    }
+
+    opt.populate_points(sites.size(), 1, center_point, scales);
+
+    //random reflections
+    for(uint i = 0; i < center_point.size(); i++){
+        if(rand() < RAND_MAX/2){
+            for(uint j = 0; j < opt.points.size(); j++){
+                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
+            }
+        }
+    }
+
+    opt.enforce_bounds();
+
+    opt.calculate_points(&to_be_optimized_restricted_additive_fast);
+
+    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
+        opt.iterate(&to_be_optimized_restricted_additive_fast);
+
+        if(context.options.verbose_stderr){
+            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+        }
+    }
+
+    return opt.points[opt.max_index];
+}
+
+
+
+
 #endif

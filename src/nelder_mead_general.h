@@ -35,7 +35,7 @@ public:
 
     int repeated_shrinkages = 0;
 
-    nelder_mead(double r, double c, double e, double s){
+    nelder_mead(double r, double c, double e, double s) {
         reflection = r;
         contraction = c;
         expansion = e;
@@ -124,7 +124,6 @@ void nelder_mead::populate_points(int dimensions, double size, vector<double> ce
     points.push_back(negative_point);
     
 
-
     for(int i = 0; i < n; i++){
         vector<double> basis(n,0);
         basis[i] = size;
@@ -178,7 +177,6 @@ void nelder_mead::populate_points(int dimensions, double size, vector<double> ce
     points.push_back(negative_point);
     
 
-
     for(int i = 0; i < n; i++){
         vector<double> basis(n,0);
         basis[i] = size;
@@ -199,18 +197,17 @@ void nelder_mead::populate_points(int dimensions, double size, vector<double> ce
 
 
 int nelder_mead::calculate_points(double (*f)(vector<double>)){
-    cerr << "AAAAAAAAA\n";
+    
     point_values.resize(points.size());
-    cerr << "BBBBBB\n";
-    cerr << "whats going on here :" << points.size() << " " << point_values.size() << "\n";
+    
     for(uint i = 0; i < points.size(); i++){
         point_values[i] = (*f)(points[i]);
     }
-    cerr << "CCCCCc\n";
+    
     determine_max();
     determine_min();
     determine_scnd_min();
-    cerr << "DDDDDDD\n";
+    
     repeated_shrinkages = 0;
     
     return points.size();

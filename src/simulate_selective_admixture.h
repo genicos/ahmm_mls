@@ -70,7 +70,7 @@ void normH(Row<double> *H){
 
 //m is proportion of ancestry type 0
 vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vector<double>> fitnesses, double m,
-    double n_site1, double n_site2, int generations){
+    double n_site1, double n_site2, int generations) {
     
     
     // inserting netural sites //////////////////////////////////////////////////////////////
@@ -492,7 +492,7 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
 
 
 
-double fast_transitions_radius_in_morgans = 0.05;
+double fast_transitions_radius_in_morgans = 0.05*0.3025;
 
 
 void *single_fast_window_process(void *void_info){

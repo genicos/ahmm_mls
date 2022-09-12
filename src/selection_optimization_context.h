@@ -16,6 +16,10 @@ public:
     double neutral_lnl;
 
 
+
+    vector<double> restricted_search_sites;
+
+
     selection_opt(vector<double> neutral_recombs, cmd_line o, vector<markov_chain> mci, map<int, vector<vector<map<vector<transition_information>,double>>>> tmi, vector<int> pos){
         n_recombs = neutral_recombs;
         options = o;
