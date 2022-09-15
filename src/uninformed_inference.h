@@ -122,137 +122,20 @@ void selection_opt::uninformed_inference(){
     vector<bool> site_has_been_deep_searched; 
 
     double last_lnl = neutral_lnl;
+
     cout << "Neutral lnl\t" << setprecision(15) << neutral_lnl << "\n";
+
     vector<double> data_ancestry;
     vector<double> expected_ancestry;  
 
     //data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
-    
-    /*
-    vector<double> real(3*3);
-
-    real[0] = 0.202267606840444;
-    real[1] = 0.992946097560774;
-    real[2] = 0.978177701027005;
-
-    real[3] = 0.296936797841395;
-    real[4] = 0.99535487754206;
-    real[5] = 1.00152856640739;
-
-    real[6] = 0.199454782503397;
-    real[7] = 0.984155781641525;
-    real[8] = 0.967120928804454;
-    double real_lnl = to_be_optimized(real);
-    */
-    
-    if(false){
-        // Defining multi-level optimization parameters //
-    
-
-    // Defining multi-level optimization parameters ///////
-    vector<vector<vector<double>>> two_site_bottle_necks;//
-
-    
-    shallow_short[0] = 5;
-    shallow_short[1] = 0.01;
-    shallow_short[2] = 0.005;
-    shallow_short[3] = 5;
-
-    
-    shallow_tall[0] = 5;
-    shallow_tall[1] = 0.01;
-    shallow_tall[2] = 0.03;
-    shallow_tall[3] = 5;
-
-    shallow.resize(2);
-
-    shallow[0] = shallow_short;
-    shallow[1] = shallow_tall;
-
-
-    deep_short[0] = 5;
-    deep_short[1] = 0.002;
-    deep_short[2] = 0.002;
-    deep_short[3] = 1;
-
-    deep_tall[0] = 5;
-    deep_tall[1] = 0.002;
-    deep_tall[2] = 0.005;
-    deep_tall[3] = 1;
-
-    deep.resize(2);
-
-    deep[0] = deep_short;
-    deep[1] = deep_tall;
-
-    two_site_bottle_necks.push_back(shallow);
-    two_site_bottle_necks.push_back(deep);               //
-    ///////////////////////////////////////////////////////
-    
-    vector<double> params(8);
-        params[0] = .0574;
-        params[1] = 0;
-        params[2] = .0844;
-        params[3] = 0;
-        params[4] = .1094;
-        params[5] = 0;
-        params[6] = .1544;
-        params[7] = 0;
-
-        optimizer.init_bounds(8, 0.01);
-        
-        optimizer.min_bounds[0] = 0;
-        optimizer.max_bounds[0] = chrom_size;
-        optimizer.min_bounds[1] = -1;
-
-        optimizer.min_bounds[2] = 0;
-        optimizer.max_bounds[2] = chrom_size;
-        optimizer.min_bounds[3] = -1;
-
-        optimizer.min_bounds[4] = 0;
-        optimizer.max_bounds[4] = chrom_size;
-        optimizer.min_bounds[5] = -1;
-
-        optimizer.min_bounds[6] = 0;
-        optimizer.max_bounds[6] = chrom_size;
-        optimizer.min_bounds[7] = -1;
-
-        sites = parameters_to_sites(params, 2);
-        cerr << "Starting\n";
-
-        vector<double> two_site_parameters = multi_level_optimization(
-                chrom_size,
-                optimizer,
-                sites,
-                two_site_bottle_necks,
-                &search_sites_fast_additive,
-                2
-            );
-        
-
-        cerr << "FINAL\n";
-        cout << "FINAL\n";
-        for(int i = 0; i < 8; i++){
-            cerr << two_site_parameters[i] << "\n";
-            cout << two_site_parameters[i] << "\n";
-        }
-
-        exit(0);
-
-    }
-
-
-
-
-
-
 
     
 
 
 
     //STANDARD: for now, only adds 5 sites
-    while(sites.size() < 5){
+    while(sites.size() < 3){
 
         data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
         expected_ancestry = local_ancestries;

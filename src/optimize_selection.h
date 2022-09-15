@@ -70,6 +70,8 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
             vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
             normalize( smoothed_probs ) ;
 
+            //int ploidy = statecount2ploidy[smoothed_probs.size()];
+
             //ploidy 1
             if(smoothed_probs.size() == 2) {
                 data_ancestry[i] += smoothed_probs[0];
@@ -81,7 +83,14 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
                 data_ancestry[i] += smoothed_probs[1] * 0.5;
             }
 
+
             //TODO generalize ploidy here
+            /*
+            data_ancestry[i] += smoothed_probs[0];
+            for(int i = 1; i < smoothed_probs.size() - 1; i++){
+                data_ancestry[i] += smoothed_probs[i] * (smoothed_probs.size() - i)/(smoothed_probs.size() - 1);
+            }
+            */
         }
 
     }

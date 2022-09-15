@@ -69,9 +69,6 @@ void selection_read_file ( cmd_line &options, vector<markov_chain> &markov_chain
         }
         
         if ( new_line.chrom != last_chrom ) {
-            //TODO when splitting panels, this sometimes messed things up
-            // so i turned 0.5 to 0
-            // when i commented it out I got a routine error
             recombination_rate.push_back( 0 ) ;
             last_chrom = new_line.chrom ;
             extra_recombination = 0 ; 

@@ -19,10 +19,10 @@
 using namespace arma;
 using namespace std;
 
+
 double gwall_time(){
     struct timeval time;
     if (gettimeofday(&time,NULL)){
-        //  Handle error
         return 0;
     }
     return (double)time.tv_sec + (double)time.tv_usec * .000001;
@@ -221,127 +221,6 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 }
 
 
-vector<vector<double>> ancestry_trajectory(vector<double> recomb_rates, vector<vector<double>> fitnesses, double m,
-    int generations){
-    
-    int sites = fitnesses.size();
-    
-    int haploids = pow(2,sites);
-    
-    Row<double> H(haploids, fill::zeros);
-    H(0) = m;
-    H(haploids - 1) = 1 - m;
-
-    mat M(haploids*haploids, haploids, fill::zeros);
-
-    Row<double> D(haploids*haploids, fill::zeros);
-
-    // populate M matrix //////////////////////////////////////////////////////////////
-    //loop through all diploids                                                      //
-    
-    for (int i = 0; i < haploids; i++){
-        for (int j = 0; j < haploids; j++){
-
-            int di = i*haploids + j;
-            vector<bool> chr1 = index_to_gamete(i, sites);
-            vector<bool> chr2 = index_to_gamete(j, sites);
-
-
-            double fitness = 1;
-
-            for(int s = 0; s < sites; s++){
-                if     (chr1[s] == 0 && chr2[s] == 0)
-                    fitness *= fitnesses[s][0];
-                else if(chr1[s] == 1 && chr2[s] == 1)
-                    fitness *= fitnesses[s][2];
-                else
-                    fitness *= fitnesses[s][1];
-            }
-
-            //calculating possible recombinants
-            vector<bool> recomb_chr1 = chr1;
-            vector<bool> recomb_chr2 = chr2;
-
-            // split before first site
-            M(di, gamete_to_index(recomb_chr1)) += recomb_rates[0]/2 * fitness;
-            M(di, gamete_to_index(recomb_chr2)) += recomb_rates[0]/2 * fitness;
-
-            // split directly after site s
-            for(int s = 0; s < sites; s++){
-                recomb_chr1[s] = chr2[s];
-                recomb_chr2[s] = chr1[s];
-
-                M(di, gamete_to_index(recomb_chr1)) += recomb_rates[s+1]/2 * fitness;
-                M(di, gamete_to_index(recomb_chr2)) += recomb_rates[s+1]/2 * fitness;
-
-            }
-        }
-    }                                                                                //
-    ///////////////////////////////////////////////////////////////////////////////////
-    
-    vector<vector<double>> ancestry_trajectories(generations + 1);
-    
-    // Run through generations /////////////
-    for(int g = 0; g < generations; g++) {//
-        vector<double> this_generation_ancestry(sites);
-
-        for(int i = 0; i < sites; i++){
-            this_generation_ancestry[i] = 0;
-        }
-
-        for(int i = 0; i < haploids; i++){
-            
-            vector<bool> gamete = index_to_gamete(i, sites);
-
-
-            for(int j = 0; j < sites; j++){
-                
-                
-                if(!gamete[j]){
-                    this_generation_ancestry[j] += H(i);
-                }
-            }
-        }
-
-        ancestry_trajectories[g] = this_generation_ancestry;
-
-
-        HtoD(&H, &D);
-        H = D * M;
-        normH(&H);
-    }                                     //
-    ////////////////////////////////////////
-
-    vector<double> this_generation_ancestry(sites);
-
-    for(int i = 0; i < sites; i++){
-        this_generation_ancestry[i] = 0;
-    }
-
-    for(int i = 0; i < haploids; i++){
-        
-        vector<bool> gamete = index_to_gamete(i, sites);
-
-
-        for(int j = 0; j < sites; j++){
-            
-            
-            if(!gamete[j]){
-                this_generation_ancestry[j] += H(i);
-            }
-        }
-    }
-
-    ancestry_trajectories[generations] = this_generation_ancestry;
-
-    return ancestry_trajectories;
-}
-
-
-
-
-
-
 
 
 
@@ -491,10 +370,10 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
 
 
 
+//TODO parameterize this!!!!
+double fast_transitions_radius_in_morgans = 0.05;
 
-double fast_transitions_radius_in_morgans = 0.05*0.3025;
-
-
+//TODO probably delete this method, im not using it
 void *single_fast_window_process(void *void_info){
 
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
@@ -648,15 +527,11 @@ int pairs_skipped = 5;
 
 
 //This version skips a few pairs, and interpolates in between them
-
-
 void *alt_single_fast_window_process(void *void_info) {
 
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
     long t = info->t;
     
-
-    //TODO each pair is responsible to spread the interpolation to those pairs around it
     
     for(uint i = t*pairs_skipped + (pairs_skipped/2); i < (*info->transition_matrices).size(); i+= info->cores*pairs_skipped){
         
@@ -988,123 +863,3 @@ mat alt_create_transition_rates ( vector<pulse> admixture_pulses, double n, vect
 }
 
 #endif
-
-
-
-//TODO
-void testing_stuff(){
-
-    //Testing that with two neutral sites,
-    //the transition rates between them as calculated
-    //with adjacent_transition_rate and ancestry_trajectory are the same
-    
-    vector<double> test_1_recomb(1);
-    test_1_recomb[0] = 1;
-    vector<vector<double>> test_1_fitness(0);
-
-    int test_1_t = 10;
-    double test_1_m = 0.2;
-
-
-    double test_1_n1 = 0.1;
-    double test_1_n2 = 0.3;
-    
-
-    vector<double> test_1_traj_recomb(3);
-    test_1_traj_recomb[0] = test_1_n1;
-    test_1_traj_recomb[1] = test_1_n2 - test_1_n1;
-    test_1_traj_recomb[2] = 1 - test_1_n2;
-    
-
-    vector<vector<double>> test_1_traj_fit(2);
-    vector<double> neut_fit(3);
-    neut_fit[0] = 1;
-    neut_fit[1] = 1;
-    neut_fit[2] = 1;
-    test_1_traj_fit[0] = neut_fit;
-    test_1_traj_fit[1] = neut_fit;
-    
-
-    vector<double> test_1_adj = adjacent_transition_rate(test_1_recomb, test_1_fitness, test_1_m,
-    test_1_n1, test_1_n2, test_1_t);
-    
-
-    vector<double> test_1_anc_1(2);
-    test_1_anc_1[0] = test_1_adj[0] + test_1_adj[1];
-    test_1_anc_1[1] = test_1_adj[0] + test_1_adj[2];
-
-    
-
-    vector<vector<double>> test_1_traj = ancestry_trajectory(test_1_traj_recomb, test_1_traj_fit, test_1_m,
-    test_1_t);
-   
-
-    vector<double> test_1_anc_2 = test_1_traj[test_1_t - 1];
-
-
-
-
-
-
-
-    //Testing that with a selected site,
-    //the ancestry rates as calculated
-    //with adjacent_transition_rate and ancestry_trajectory are the same
-
-    int test_2_t = 265;
-    double test_2_m = 0.6152;
-
-
-    double test_2_n1 = 0.2354;
-    double test_2_n2 = 0.2531;
-
-    vector<double> test_2_fit(3);
-    test_2_fit[0] = 0.236;
-    test_2_fit[1] = 1;
-    test_2_fit[2] = 1.24;
-
-
-    
-    vector<double> test_2_recomb(2);
-    test_2_recomb[0] = test_2_n2;
-    test_2_recomb[1] = 1 - test_2_n2;
-
-    vector<vector<double>> test_2_fitness(1);
-    test_2_fitness[0] = test_2_fit;
-
-    
-
-    vector<double> test_2_traj_recomb(3);
-    test_2_traj_recomb[0] = test_2_n1;
-    test_2_traj_recomb[1] = test_2_n2 - test_2_n1;
-    test_2_traj_recomb[2] = 1 - test_2_n2;
-   
-
-    vector<vector<double>> test_2_traj_fit(2);
-    
-    test_2_traj_fit[0] = neut_fit;
-    test_2_traj_fit[1] = test_2_fit;
-    
-
-    vector<double> test_2_adj = adjacent_transition_rate(test_2_recomb, test_2_fitness, test_2_m,
-    test_2_n1, test_2_n2, test_2_t);
-    
-
-    vector<double> test_2_anc_1(2);
-    test_2_anc_1[0] = test_2_adj[0] + test_2_adj[1];
-    test_2_anc_1[1] = test_2_adj[0] + test_2_adj[2];
-
-    
-
-    vector<vector<double>> test_2_traj = ancestry_trajectory(test_2_traj_recomb, test_2_traj_fit, test_2_m,
-    test_2_t);
-    
-
-    vector<double> test_2_anc_2 = test_2_traj[test_2_t];
-
-}
-
-
-
-
-

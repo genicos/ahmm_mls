@@ -185,6 +185,7 @@ vector<double> selection_opt::examine_sites(){
                 cerr << "site:\t" << sites[0][0] << "\t" << sites[0][1] << ",1," << sites[0][2] << " or " << sites[0][1]/max(sites[0][1], sites[0][2]) << ","<< 1/max(sites[0][1], sites[0][2]) <<"," << sites[0][2]/max(sites[0][1], sites[0][2]) << "\n";
             }
         }
+        
         else if (options.site_file_options[i].compare("d") == 0) {
 
             //Dominance testing
@@ -247,7 +248,7 @@ vector<double> selection_opt::examine_sites(){
 
             sites = parameters_to_sites(dom1_starting_parameters, 2);
             
-            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.init_bounds(2, min(0.01, bound_size/5) );
             optimizer.min_bounds[0] = options.site_file_low_bounds[i];
             optimizer.max_bounds[0] = options.site_file_high_bounds[i];
 
@@ -283,7 +284,7 @@ vector<double> selection_opt::examine_sites(){
 
             sites = parameters_to_sites(add_starting_parameters, 2);
 
-            optimizer.init_bounds(2, min(0.01, bound_size/2) );
+            optimizer.init_bounds(2, min(0.01, bound_size/5) );
             optimizer.min_bounds[0] = options.site_file_low_bounds[i];
             optimizer.max_bounds[0] = options.site_file_high_bounds[i];
 
@@ -320,19 +321,62 @@ vector<double> selection_opt::examine_sites(){
 
         else if (options.site_file_options[i].compare("T") == 0){
 
+            vector<vector<double>> sites;
+
+
+            
+            vector<double> add_starting_parameters(2);
+            add_starting_parameters[0] = options.site_file_morgan_positions[i];
+            add_starting_parameters[1] = 0;
+
+            // single site additive selection testing
+            sites = parameters_to_sites(add_starting_parameters, 2);
+
+
+            optimizer.init_bounds(2, min(0.01, bound_size/5) );
+            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
+            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
+
+            optimizer.min_bounds[1] = -1;
+
+            vector<double> additive_parameters = multi_level_optimization(
+                chrom_size,
+                optimizer,
+                sites,
+                bottle_necks,
+                &search_sites_fast_additive,
+                2
+            );
+
+            double add_lnl = to_be_optimized_additive(additive_parameters);
+
+
+            cout << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
+            cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
+
+            cerr << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
+            cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
+
+
+
+
+
+
+
+
             //Testing for two sites additive
             vector<double> two_site_starting_params(4);
-            two_site_starting_params[0] = options.site_file_morgan_positions[i] - 0.01;
+            two_site_starting_params[0] = additive_parameters[0];
             two_site_starting_params[1] = 0;
-            two_site_starting_params[2] = options.site_file_morgan_positions[i] + 0.01;
+            two_site_starting_params[2] = 2 * options.site_file_morgan_positions[i] - additive_parameters[0] ;
             two_site_starting_params[3] = 0;
 
 
 
-            vector<vector<double>> sites = parameters_to_sites(two_site_starting_params, 2);
+            sites = parameters_to_sites(two_site_starting_params, 2);
 
 
-            optimizer.init_bounds(4, min(0.01, bound_size/2) );
+            optimizer.init_bounds(4, min(0.01, bound_size/5) );
             optimizer.min_bounds[0] = options.site_file_low_bounds[i];
             optimizer.max_bounds[0] = options.site_file_high_bounds[i];
 
@@ -367,41 +411,10 @@ vector<double> selection_opt::examine_sites(){
             
 
 
-            
 
 
+        
 
-
-            vector<double> add_starting_parameters(2);
-            add_starting_parameters[0] = options.site_file_morgan_positions[i];
-            add_starting_parameters[1] = 0;
-
-            // single site additive selection testing
-            sites = parameters_to_sites(add_starting_parameters, 2);
-
-
-            optimizer.init_bounds(2, min(0.01, bound_size/2) );
-            optimizer.min_bounds[0] = options.site_file_low_bounds[i];
-            optimizer.max_bounds[0] = options.site_file_high_bounds[i];
-
-            optimizer.min_bounds[1] = -1;
-
-            vector<double> additive_parameters = multi_level_optimization(
-                chrom_size,
-                optimizer,
-                sites,
-                bottle_necks,
-                &search_sites_fast_additive,
-                2
-            );
-
-            double add_lnl = to_be_optimized_additive(additive_parameters);
-
-            cout << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
-            cout << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
-
-            cerr << setprecision(15) << "\n\nAdditive lnl ratio:\t" << add_lnl - neutral_lnl << "\n";
-            cerr << "site:\t" << sites[0][0] << "\t" << (1-sites[0][1]) << ","<< (1-sites[0][1]/2) << ",1\t1," << (1-sites[0][1]/2)/(1-sites[0][1]) << "," << 1/(1-sites[0][1]) << "\n";
 
 
 
@@ -416,6 +429,8 @@ vector<double> selection_opt::examine_sites(){
             cerr << setprecision(15) << "Two site lnl:\t" << two_site_lnl << "\n";
             cerr << setprecision(15) << "single site lnl:\t" << add_lnl << "\n";
             cerr << setprecision(15) << "lnl ratio:\t" << two_site_lnl - add_lnl << "\n";
+
+
 
         }
         else if (options.site_file_options[i].compare("t") == 0){
@@ -512,28 +527,25 @@ vector<double> selection_opt::examine_sites(){
         }else if (options.site_file_options[i].compare("S") == 0){
 
             //FOR TESTING PERPOSES I WILL SUPPLY THE SITES
-            vector<double> loci(3);
-            loci[2] = 0.02863 * 0.3025;
+            vector<double> loci(6);
             loci[0] = 0.05008 * 0.3025;
             loci[1] = 0.06598 * 0.3025;
-            
 
+            loci[2] = 0.11139 * 0.3025;
+            loci[3] = 0.13544 * 0.3025;
 
-            //loci[0] = 0.05008 * 0.3025;
-            //loci[1] = 0.06598 * 0.3025;
-
-            //loci[2] = 0.11139 * 0.3025;
-            //loci[3] = 0.13544 * 0.3025;
-
-            //loci[4] = 0.27583 * 0.3025;
-            //loci[5] = 0.29938 * 0.3025;
+            loci[4] = 0.27583 * 0.3025;
+            loci[5] = 0.29938 * 0.3025;
 
             context.restricted_search_sites = loci;
 
-            vector<double> starting_parameters(3);
+            vector<double> starting_parameters(6);
             starting_parameters[0] = 0;
             starting_parameters[1] = 0;
             starting_parameters[2] = 0;
+            starting_parameters[3] = 0;
+            starting_parameters[4] = 0;
+            starting_parameters[5] = 0;
 
 
             vector<vector<double>> sites = parameters_to_sites(starting_parameters,1);
@@ -543,13 +555,16 @@ vector<double> selection_opt::examine_sites(){
             optimizer.min_bounds[0] = -1;
             optimizer.min_bounds[1] = -1;
             optimizer.min_bounds[2] = -1;
+            optimizer.min_bounds[3] = -1;
+            optimizer.min_bounds[4] = -1;
+            optimizer.min_bounds[5] = -1;
 
 
             vector<double> found_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
                 sites,
-                two_site_bottle_necks,
+                bottle_necks,
                 &search_sites_fast_restricted_additive,
                 1
             );
@@ -557,17 +572,17 @@ vector<double> selection_opt::examine_sites(){
 
             cerr << "Found parameters: \n";
             cout << "Found parameters: \n";
-            for(int i = 0; i < found_parameters.size(); i++){
+            for(int i = 0; i < 6; i++){
                 cerr << loci[i] << "\t" << found_parameters[i] << "\n";
                 cout << loci[i] << "\t" << found_parameters[i] << "\n";
             }
             
 
-            double lnl = to_be_optimized_restricted_additive(found_parameters);
+            // double lnl = to_be_optimized_restricted_additive(found_parameters);
 
 
-            cerr << "Lnl: " << lnl << "\n";
-            cout << "Lnl: " << lnl << "\n";
+            //cerr << "Lnl: " << lnl << "\n";
+            //cout << "Lnl: " << lnl << "\n";
 
 
 
