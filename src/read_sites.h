@@ -15,7 +15,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
     options.site_file_low_bounds.resize(0);
     options.site_file_high_bounds.resize(0);
 
-    
+    /*
     while ( !in.eof() ) {
         
         int morgan_or_bp_choice; //morgan:1   bp:0
@@ -37,6 +37,37 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
         options.site_file_low_bounds.push_back(low_end);
         options.site_file_high_bounds.push_back(high_end);
     }
+    */
+    //cerr << "BBBBBBBBBBBB\n";
+
+    string line;
+    while (getline(in, line))
+    {
+        cerr << line << "\n";
+        istringstream iss (line);
+        
+        int morgan_or_bp_choice; //morgan:1   bp:0
+
+        double position;
+
+        string option;
+
+        double low_end;
+        double high_end;
+
+        if (!(iss >> morgan_or_bp_choice >> position >> option >> low_end >> high_end)) { break; } // error
+
+        
+        
+        morgan_or_bp.push_back(morgan_or_bp_choice);
+        options.site_file_positions.push_back(position);
+        options.site_file_options.push_back(option);
+
+        options.site_file_low_bounds.push_back(low_end);
+        options.site_file_high_bounds.push_back(high_end);
+    }
+
+    //cerr << "AAAAAAAAAAAA" << morgan_or_bp.size() << "\n";
 
 
     options.site_file_morgan_positions.resize(options.site_file_positions.size());

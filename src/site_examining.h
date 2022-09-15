@@ -185,7 +185,7 @@ vector<double> selection_opt::examine_sites(){
                 cerr << "site:\t" << sites[0][0] << "\t" << sites[0][1] << ",1," << sites[0][2] << " or " << sites[0][1]/max(sites[0][1], sites[0][2]) << ","<< 1/max(sites[0][1], sites[0][2]) <<"," << sites[0][2]/max(sites[0][1], sites[0][2]) << "\n";
             }
         }
-        
+
         else if (options.site_file_options[i].compare("d") == 0) {
 
             //Dominance testing
@@ -531,10 +531,10 @@ vector<double> selection_opt::examine_sites(){
             loci[0] = 0.05008 * 0.3025;
             loci[1] = 0.06598 * 0.3025;
 
-            loci[2] = 0.11139 * 0.3025;
+            loci[2] = 0.11139 * 0.3025; // 0.033695475
             loci[3] = 0.13544 * 0.3025;
 
-            loci[4] = 0.27583 * 0.3025;
+            loci[4] = 0.27583 * 0.3025; //0.083438575
             loci[5] = 0.29938 * 0.3025;
 
             context.restricted_search_sites = loci;
