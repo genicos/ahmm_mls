@@ -91,11 +91,11 @@ public:
 
     //sites file
     string site_file;
-    vector<double>    site_file_positions;
-    vector<double> site_file_morgan_positions;
-    vector<string> site_file_options;
-    vector<double> site_file_low_bounds;
-    vector<double> site_file_high_bounds;
+    vector<vector<double>> site_file_positions;
+    vector<vector<double>> site_file_morgan_positions;
+    vector<vector<string>> site_file_options;
+    vector<vector<double>> site_file_low_bounds;
+    vector<vector<double>> site_file_high_bounds;
 
     
     // calculate likelihoods for models

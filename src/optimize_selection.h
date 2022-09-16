@@ -226,7 +226,7 @@ double compute_lnl(vector<mat> &transition_matrices){
 
 vector<mat> last_calculated_transition_matricies;
 
-double to_be_optimized(vector<double> parameters){
+double to_be_optimized (vector<double> parameters) {
 
     double timer = get_wall_time();
     
@@ -306,6 +306,8 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     
     return lnl;
 }
+
+
 
 
 
@@ -423,6 +425,49 @@ double to_be_optimized_additive_fast(vector<double> parameters){
 
 
 
+
+double to_be_optimized_restricted(vector<double> parameters){
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size()/2; i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(parameters[i*2 + 0]);
+        new_parameters.push_back(parameters[i*2 + 1]);
+        
+    }
+
+    return to_be_optimized(new_parameters);
+}
+
+
+double to_be_optimized_restricted_fast(vector<double> parameters) {
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size()/2; i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(parameters[i*2 + 0]);
+        new_parameters.push_back(parameters[i*2 + 1]);
+        
+    }
+
+    return to_be_optimized_only_near_sites(new_parameters);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 double to_be_optimized_restricted_additive(vector<double> parameters){
 
     vector<double> new_parameters;
@@ -455,6 +500,186 @@ double to_be_optimized_restricted_additive_fast(vector<double> parameters) {
 
     return to_be_optimized_only_near_sites(new_parameters);
 }
+
+
+
+
+
+
+
+// (p[0]) => (NA, 1, p[0])
+double to_be_optimized_restricted_dom0(vector<double> parameters){
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(1);
+        new_parameters.push_back(parameters[i]);
+        
+    }
+
+    return to_be_optimized(new_parameters);
+}
+
+
+double to_be_optimized_restricted_dom0_fast(vector<double> parameters) {
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(1);
+        new_parameters.push_back(parameters[i]);
+        
+    }
+
+    return to_be_optimized_only_near_sites(new_parameters);
+}
+
+
+
+
+
+// (p[0]) => (NA, p[0], 1)
+double to_be_optimized_restricted_dom1(vector<double> parameters){
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(parameters[i]);
+        new_parameters.push_back(1);
+        
+    }
+
+    return to_be_optimized(new_parameters);
+}
+
+
+double to_be_optimized_restricted_dom1_fast(vector<double> parameters) {
+
+    vector<double> new_parameters;
+
+    for(int i = 0; i < parameters.size(); i++){
+        
+        new_parameters.push_back(context.restricted_search_sites[i]);
+        new_parameters.push_back(parameters[i]);
+        new_parameters.push_back(1);
+        
+    }
+
+    return to_be_optimized_only_near_sites(new_parameters);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef double (*lnl_function)(vector<double> parameters);
+
+
+lnl_function to_be_optimized_variations (bool fast, bool restricted_site, bool additive, bool dom0, bool dom1) {
+
+    
+
+    if(restricted_site){
+        if(fast){
+            if(additive){
+                return &to_be_optimized_restricted_additive_fast;
+            }else if(dom0){
+                return &to_be_optimized_restricted_dom0_fast;
+            }else if(dom1){
+                return &to_be_optimized_restricted_dom1_fast;
+            }else{
+                return &to_be_optimized_restricted_fast;
+            }
+        }else{
+            if(additive){
+                return &to_be_optimized_restricted_additive;
+            }else if(dom0){
+                return &to_be_optimized_restricted_dom0;
+            }else if(dom1){
+                return &to_be_optimized_restricted_dom1;
+            }else{
+                return &to_be_optimized_restricted;
+            }
+        }
+    }else{
+        if(fast){
+            if(additive){
+                return &to_be_optimized_additive_fast;
+            }else if(dom0){
+                return &to_be_optimized_pop0_dominant_fast;
+            }else if(dom1){
+                return &to_be_optimized_pop1_dominant_fast;
+            }else{
+                return &to_be_optimized_only_near_sites; //TODO i dont like this name
+            }
+        }else{
+            if(additive){
+                return &to_be_optimized_additive;
+            }else if(dom0){
+                return &to_be_optimized_pop0_dominant;
+            }else if(dom1){
+                return &to_be_optimized_pop1_dominant;
+            }else{
+                return &to_be_optimized;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -511,7 +736,8 @@ vector<double> multi_level_optimization(
     nelder_mead &opt,
     vector<vector<double>> &sites,
     vector<vector<vector<double>>> &bottle_necks,
-    vector<double> (*search) (double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth),
+    double (*to_be_optimized_function) (vector<double>),
+    vector<bool> is_loci,
     int parameters_per_site = 3
 ){
     vector<double> best_parameters;
@@ -526,8 +752,52 @@ vector<double> multi_level_optimization(
                 if(context.options.verbose_stderr){
                     cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
                 }
+                
 
-                found_parameters = search(chrom_size, opt, sites, bottle_necks[j][k][1], bottle_necks[j][k][2], bottle_necks[j][k][3]);
+                vector<double> center_point(sites.size()*parameters_per_site);
+                vector<double> scales(sites.size()*parameters_per_site);
+
+
+                for(uint i = 0; i < sites.size(); i++){
+                    for(int h = 0; h < parameters_per_site; h++){
+                        center_point[i*parameters_per_site + h] = sites[i][h];
+                        if(is_loci[h]){
+                            scales[i*parameters_per_site + h] = bottle_necks[j][k][1];
+                        }else{
+                            scales[i*parameters_per_site + h] = bottle_necks[j][k][2];
+                        }
+                    }
+                }
+
+                opt.populate_points(sites.size()*parameters_per_site, 1, center_point, scales);
+
+
+                //random reflections
+                for(uint i = 0; i < center_point.size(); i++){
+                    if(rand() < RAND_MAX/2){
+                        for(uint j = 0; j < opt.points.size(); j++){
+                            opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
+                        }
+                    }
+                }
+
+                opt.enforce_bounds();
+
+                opt.calculate_points(to_be_optimized_function);
+
+                while((opt.max_value - opt.min_value) > bottle_necks[j][k][3] && opt.repeated_shrinkages < 4){
+                    opt.iterate(to_be_optimized_function);
+
+                    if(context.options.verbose_stderr){
+                        cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
+                    }
+                }
+
+                
+
+
+
+                found_parameters = opt.points[opt.max_index];
 
 
                 cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";

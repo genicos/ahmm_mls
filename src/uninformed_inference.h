@@ -235,7 +235,7 @@ void selection_opt::uninformed_inference(){
             }
 
             
-
+            /* TODO update this
             multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -243,6 +243,7 @@ void selection_opt::uninformed_inference(){
                 bottle_necks,
                 &search_sites_fast_fix_all_but_last
             );
+            */
 
             site_has_been_deep_searched[site_has_been_deep_searched.size() - 1] = true;
 
@@ -268,13 +269,16 @@ void selection_opt::uninformed_inference(){
 
             // do a bottle_necks search with
             // search sites fast fix all but last
-            multi_level_optimization(
+
+            //TODO update this one too
+            /*multi_level_optimization(
                 chrom_size,
                 optimizer,
                 sites,
                 bottle_necks,
                 &search_sites_fast_fix_all_but_last
             );
+            */
         }
 
 

@@ -43,31 +43,82 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
     string line;
     while (getline(in, line))
     {
-        cerr << line << "\n";
         istringstream iss (line);
+
+        //cerr << "THIS IS THE LINE:" << line;
         
         int morgan_or_bp_choice; //morgan:1   bp:0
+        if (!( iss >> morgan_or_bp_choice )) { break; }
+        morgan_or_bp.push_back(morgan_or_bp_choice);
+        
 
-        double position;
+        vector<string> searches(0);
+        vector<double> loci(0);
+        vector<double> low_bounds(0);
+        vector<double> high_bounds(0);
+        
 
         string option;
+        if (!( iss >> option )) { break; }
+        searches.push_back(option);
 
-        double low_end;
-        double high_end;
+        //cerr << "OPTION:" << option << "\n";
 
-        if (!(iss >> morgan_or_bp_choice >> position >> option >> low_end >> high_end)) { break; } // error
+
+        double entry;
+
+        while ( iss >> entry ){
+
+            loci.push_back(entry);
+
+            if (!( iss >> option )) { 
+                low_bounds.push_back(-DBL_MAX);
+                high_bounds.push_back(DBL_MAX);
+                break;
+            }
+
+            //cerr << "NEXTHING:" << option << "\n";
+
+            //check if option is a double
+            auto result = double();
+            auto i = std::istringstream(option);
+            i >> result;
+
+            
+            if (!i.fail() && i.eof()) {
+                // if it is a double, its the bounds
+
+                double low_bound = stod(option);
+
+                low_bounds.push_back(low_bound);
+
+                double high_bound;
+                if (!( iss >> high_bound )) { break; }
+
+                high_bounds.push_back(high_bound);
+
+            }else{
+                //if option is not the double, its the next option
+                searches.push_back(option);
+
+                low_bounds.push_back(-DBL_MAX);
+                high_bounds.push_back(DBL_MAX);
+            }
+            
+        }
 
         
         
         morgan_or_bp.push_back(morgan_or_bp_choice);
-        options.site_file_positions.push_back(position);
-        options.site_file_options.push_back(option);
 
-        options.site_file_low_bounds.push_back(low_end);
-        options.site_file_high_bounds.push_back(high_end);
+        options.site_file_options.push_back(searches);
+        options.site_file_positions.push_back(loci);
+        
+
+        options.site_file_low_bounds.push_back(low_bounds);
+        options.site_file_high_bounds.push_back(high_bounds);
     }
 
-    //cerr << "AAAAAAAAAAAA" << morgan_or_bp.size() << "\n";
 
 
     options.site_file_morgan_positions.resize(options.site_file_positions.size());
@@ -88,41 +139,46 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
         
         if(morgan_or_bp[i] == 0) {
             
+            for(int k = 0; k < options.site_file_positions[i].size(); k++) {
+                
+                options.site_file_morgan_positions[i] = options.site_file_positions[i];
 
-            //Converting test center to morgan postion, 
-            //if I cant find the bp position, exit program
-            int j = 0;
-            for(; j < positions.size(); j++){
-                if (positions[j] >= options.site_file_positions[i]) {
-                    options.site_file_morgan_positions[i] = morgan_position[j];
-                    cerr << options.site_file_morgan_positions[i] << "beb\n";
-                    break;
+                
+                //Converting test center to morgan postion, 
+                //if I cant find the bp position, exit program
+                int j = 0;
+                for(; j < positions.size(); j++){
+                    if (positions[j] >= options.site_file_positions[i][k]) {
+                        options.site_file_morgan_positions[i][k] = morgan_position[j];
+                        cerr << options.site_file_morgan_positions[i][k] << "beb\n";
+                        break;
+                    }
                 }
-            }
-            if(j == positions.size()){
-                cerr << "Position not found: " << options.site_file_positions[i] << "\n";
-                exit(0);//TODO
-            }
-
-
-            //Converting low bounds to morgan postion, 
-            //if I cant find the bp position, leave it as is
-            j = 0;
-            for(; j < positions.size(); j++){
-                if (positions[j] >= options.site_file_low_bounds[i]) {
-                    options.site_file_low_bounds[i] = morgan_position[j];
-                    break;
+                if(j == positions.size()){
+                    cerr << "Position not found: " << options.site_file_positions[i][k] << "\n";
+                    exit(0);//TODO
                 }
-            }
 
 
-            //Converting high bounds to morgan postion, 
-            //if I cant find the bp position, leave it as is
-            j = 0;
-            for(; j < positions.size(); j++){
-                if (positions[j] >= options.site_file_high_bounds[i]) {
-                    options.site_file_high_bounds[i] = morgan_position[j];
-                    break;
+                //Converting low bounds to morgan postion, 
+                //if I cant find the bp position, leave it as is
+                j = 0;
+                for(; j < positions.size(); j++){
+                    if (positions[j] >= options.site_file_low_bounds[i][k]) {
+                        options.site_file_low_bounds[i][k] = morgan_position[j];
+                        break;
+                    }
+                }
+
+
+                //Converting high bounds to morgan postion, 
+                //if I cant find the bp position, leave it as is
+                j = 0;
+                for(; j < positions.size(); j++){
+                    if (positions[j] >= options.site_file_high_bounds[i][k]) {
+                        options.site_file_high_bounds[i][k] = morgan_position[j];
+                        break;
+                    }
                 }
             }
 
@@ -132,11 +188,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
 
     }
 
-    for(int i = 0; i < options.site_file_positions.size() ;i++ ){
-        if (options.site_file_low_bounds[i] < 0){
-            options.site_file_low_bounds[i] = 0;
-        }
-    }
+    
 
 }
 
