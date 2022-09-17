@@ -18,16 +18,16 @@ vector<double> selection_opt::examine_sites(){
     vector<vector<double>> shallow;
     
     vector<double> shallow_short(4);
-    shallow_short[0] = 5;
+    shallow_short[0] = 1;
     shallow_short[1] = 0.03;
     shallow_short[2] = 0.01;
-    shallow_short[3] = 20;
+    shallow_short[3] = 2000;
 
     vector<double> shallow_tall(4);
-    shallow_tall[0] = 5;
+    shallow_tall[0] = 1;
     shallow_tall[1] = 0.03;
     shallow_tall[2] = 0.05;
-    shallow_tall[3] = 20;
+    shallow_tall[3] = 20000;
 
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
@@ -35,16 +35,16 @@ vector<double> selection_opt::examine_sites(){
     vector<vector<double>> deep;
 
     vector<double> deep_short(4);
-    deep_short[0] = 5;
+    deep_short[0] = 1;
     deep_short[1] = 0.01;
     deep_short[2] = 0.005;
-    deep_short[3] = 1;
+    deep_short[3] = 1000;
 
     vector<double> deep_tall(4);
-    deep_tall[0] = 5;
+    deep_tall[0] = 1;
     deep_tall[1] = 0.01;
     deep_tall[2] = 0.01;
-    deep_tall[3] = 1;
+    deep_tall[3] = 1000;
 
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
@@ -117,7 +117,9 @@ vector<double> selection_opt::examine_sites(){
     vector<double> empty(0);
 
     context.neutral_lnl = to_be_optimized(empty);
-    neutral_lnl = context.neutral_lnl;                  //TODO i dont know where this is declared?
+    neutral_lnl = context.neutral_lnl;                  //TODO i dont know where this is declared
+    
+    double fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
     
     cerr << "\nNeutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
@@ -135,8 +137,6 @@ vector<double> selection_opt::examine_sites(){
         
         char two_site_test_op = 't';
         bool two_site_test = option.find(two_site_test_op) != string::npos;
-
-        cerr << "AAAAAAAAAAAAAAAA " << two_site_test << "\n";
         
         //bool unrestricted = false;
         //char unrestricted_op = 'o';
@@ -163,13 +163,18 @@ vector<double> selection_opt::examine_sites(){
         vector<bool> is_loci(0);
         if(!restrict_site){
             is_loci.push_back(true);
+        }else{
+            context.restricted_search_sites.resize(site_count);
+            for(int j = 0; j < site_count; j++){
+                context.restricted_search_sites[j] = options.site_file_morgan_positions[i][j];
+            }
+            
         }
 
         is_loci.push_back(false);
         if(!(additive || dom0 || dom1)){
             is_loci.push_back(false);
         }
-
 
 
         if(two_site_test) {
@@ -348,19 +353,25 @@ vector<double> selection_opt::examine_sites(){
 
                 if(restrict_site){
                     cout << context.restricted_search_sites[j] << "\t";
+                    cerr << context.restricted_search_sites[j] << "\t";
                 }else{
                     cout << sites[j][index] << "\t";
+                    cerr << sites[j][index] << "\t";
                     index ++;
                 }
 
                 if(additive){
                     cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
+                    cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
                 }else if(dom0){
                     cout << "1,1," << sites[j][index] << "\n";
+                    cerr << "1,1," << sites[j][index] << "\n";
                 }else if(dom1){
                     cout << sites[j][index] << ",1,1\n";
+                    cerr << sites[j][index] << ",1,1\n";
                 }else{
                     cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
+                    cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
                 }
             }
 
@@ -386,12 +397,7 @@ vector<double> selection_opt::examine_sites(){
 
 
 
-
-
-
-
-
-
+            
 
             vector<vector<double>> sites;
 
@@ -413,13 +419,15 @@ vector<double> selection_opt::examine_sites(){
                     singular_starting_parameters.push_back(1);
                 }
             }
-
+            
 
             // single site additive selection testing
             sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
 
+            
 
             optimizer.init_bounds(parameter_count, 0.01 );
+
 
             for(int j = 0; j < site_count; j++){
                 optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
@@ -436,10 +444,6 @@ vector<double> selection_opt::examine_sites(){
             }
 
 
-
-
-
-
             vector<double> singular_optimized_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
@@ -450,10 +454,8 @@ vector<double> selection_opt::examine_sites(){
                 parameters_per_site
             );
 
-            double singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
-            
-            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+            cerr << "\n\nCOMPLETED\n";
+            cout << "\n\nCOMPLETED\n";
 
             for(int j = 0; j < site_count; j++){
                 
@@ -464,21 +466,41 @@ vector<double> selection_opt::examine_sites(){
 
                 if(restrict_site){
                     cout << context.restricted_search_sites[j] << "\t";
+                    cerr << context.restricted_search_sites[j] << "\t";
                 }else{
                     cout << sites[j][index] << "\t";
+                    cerr << sites[j][index] << "\t";
                     index ++;
                 }
 
                 if(additive){
                     cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
+                    cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
                 }else if(dom0){
                     cout << "1,1," << sites[j][index] << "\n";
+                    cerr << "1,1," << sites[j][index] << "\n";
                 }else if(dom1){
                     cout << sites[j][index] << ",1,1\n";
+                    cerr << sites[j][index] << ",1,1\n";
                 }else{
                     cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
+                    cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
                 }
             }
+            
+
+            double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+            
+            cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - fast_neutral_lnl<< "\n";
+            cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - fast_neutral_lnl<< "\n";
+
+            //double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+            
+            //cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+            //cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+
+            
+
         }
         
     }

@@ -187,7 +187,6 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
         }
 
     }
-
     
 
 }

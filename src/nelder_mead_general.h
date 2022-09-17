@@ -81,17 +81,20 @@ public:
 
 
 void nelder_mead::init_bounds(int dimensions, double reb){
-    
+
     bounded = true;
 
-    max_bounds.resize(dimensions);
-    min_bounds.resize(dimensions);
-    random_edge_bounce = reb;
+    max_bounds.clear();
+    min_bounds.clear();
 
+    
+    random_edge_bounce = reb;
+    
     for(int i = 0; i < dimensions; i++){
-        max_bounds[i] =  DBL_MAX;
-        min_bounds[i] = -DBL_MAX;
+        max_bounds.push_back(  DBL_MAX);
+        min_bounds.push_back( -DBL_MAX);
     }
+    
 }
 
 void nelder_mead::enforce_bounds(){

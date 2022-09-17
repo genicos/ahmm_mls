@@ -371,7 +371,7 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
 
 
 //TODO parameterize this!!!!
-double fast_transitions_radius_in_morgans = 0.05;
+double fast_transitions_radius_in_morgans = 0.02;
 
 //TODO probably delete this method, im not using it
 void *single_fast_window_process(void *void_info){
@@ -612,7 +612,7 @@ vector<mat> alternative_fast_transition_rates (
     local_ancestries.clear();
     local_ancestries.resize(recomb_rates_around_neutral_sites.size());
 
-
+    
     // Creating site vectors //////////////////////////////////////////////////////
     vector<double>  neutral_sites(recomb_rates_around_neutral_sites.size()  + 1);//
     vector<double> selected_sites(recomb_rates_around_selected_sites.size() - 1);
@@ -630,7 +630,7 @@ vector<mat> alternative_fast_transition_rates (
     }                                                                            //
     ///////////////////////////////////////////////////////////////////////////////
 
-
+    
 
     // Creating threads to deal with independent adjacent neutral regions //////////////////
     vector<pthread_t> threads(cores);
@@ -656,7 +656,6 @@ vector<mat> alternative_fast_transition_rates (
             exit(-1);
         }
     }
-
     
     //wait for all to finish by joining them
     for (int t = 0; t < cores; t++) {

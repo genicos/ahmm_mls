@@ -283,6 +283,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     
     int cores = context.options.cores;
     
+
     if(context.options.use_model_file)
         cores = 1;
     
@@ -296,6 +297,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     );
 
     double lnl = compute_lnl(transition_matrices);
+    
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
@@ -495,8 +497,6 @@ double to_be_optimized_restricted_additive_fast(vector<double> parameters) {
         new_parameters.push_back(1/(1-parameters[i]/2));
         
     }
-
-
 
     return to_be_optimized_only_near_sites(new_parameters);
 }
@@ -703,19 +703,19 @@ vector<double> sites_to_parameters(vector<vector<double>> sites, int parameters_
 }
 
 vector<vector<double>> parameters_to_sites(vector<double> parameters, int parameters_per_site = 3){
-
+    
     vector<vector<double>> sites(parameters.size()/parameters_per_site);
-
+    
     for(int j = 0; j < sites.size(); j++){
         vector<double> site(parameters_per_site);
 
         for(int i = 0; i < parameters_per_site; i++){
             site[i] = parameters[j*parameters_per_site + i];
         }
-
+        
         sites[j] = site;
     }
-
+    
     return sites;
 }
 
@@ -757,7 +757,7 @@ vector<double> multi_level_optimization(
                 vector<double> center_point(sites.size()*parameters_per_site);
                 vector<double> scales(sites.size()*parameters_per_site);
 
-
+                
                 for(uint i = 0; i < sites.size(); i++){
                     for(int h = 0; h < parameters_per_site; h++){
                         center_point[i*parameters_per_site + h] = sites[i][h];
