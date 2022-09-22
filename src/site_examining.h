@@ -18,16 +18,16 @@ vector<double> selection_opt::examine_sites(){
     vector<vector<double>> shallow;
     
     vector<double> shallow_short(4);
-    shallow_short[0] = 1;
+    shallow_short[0] = 5;
     shallow_short[1] = 0.03;
     shallow_short[2] = 0.01;
-    shallow_short[3] = 2000;
+    shallow_short[3] = 5;
 
     vector<double> shallow_tall(4);
-    shallow_tall[0] = 1;
+    shallow_tall[0] = 5;
     shallow_tall[1] = 0.03;
     shallow_tall[2] = 0.05;
-    shallow_tall[3] = 20000;
+    shallow_tall[3] = 5;
 
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
@@ -35,16 +35,16 @@ vector<double> selection_opt::examine_sites(){
     vector<vector<double>> deep;
 
     vector<double> deep_short(4);
-    deep_short[0] = 1;
+    deep_short[0] = 5;
     deep_short[1] = 0.01;
     deep_short[2] = 0.005;
-    deep_short[3] = 1000;
+    deep_short[3] = 1;
 
     vector<double> deep_tall(4);
-    deep_tall[0] = 1;
+    deep_tall[0] = 5;
     deep_tall[1] = 0.01;
     deep_tall[2] = 0.01;
-    deep_tall[3] = 1000;
+    deep_tall[3] = 1;
 
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
@@ -165,7 +165,7 @@ vector<double> selection_opt::examine_sites(){
             is_loci.push_back(true);
         }else{
             context.restricted_search_sites.resize(site_count);
-            for(int j = 0; j < site_count; j++){
+            for(int j = 0; j < site_count; j++) {
                 context.restricted_search_sites[j] = options.site_file_morgan_positions[i][j];
             }
             
@@ -310,9 +310,10 @@ vector<double> selection_opt::examine_sites(){
 
             optimizer.init_bounds(parameter_count * 2, 0.01 );
 
+
             for(int j = 0; j < site_count*2; j++){
-                optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
-                optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
+                optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j % site_count];
+                optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j % site_count];
 
                 if(additive){
                     optimizer.min_bounds[j*parameters_per_site + 1] = -1;
@@ -323,8 +324,6 @@ vector<double> selection_opt::examine_sites(){
                     optimizer.min_bounds[j*parameters_per_site + 2] = 0;
                 }
             }
-
-
 
 
 
