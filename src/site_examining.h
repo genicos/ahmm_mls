@@ -494,12 +494,16 @@ vector<double> selection_opt::examine_sites(){
             cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
             cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
 
-            double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
-            
-            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
 
-            cerr << "WAHT" << options.site_file_morgan_positions.size() << " i " << i << "\n";
+
+            //TODO command line option to turn this off!!!!
+            /*
+            double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+
+
+            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
+            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
+            */
 
         }
         
