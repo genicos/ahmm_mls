@@ -14,38 +14,12 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
     options.site_file_options.resize(0);
     options.site_file_low_bounds.resize(0);
     options.site_file_high_bounds.resize(0);
-
-    /*
-    while ( !in.eof() ) {
-        
-        int morgan_or_bp_choice; //morgan:1   bp:0
-
-        double position;
-
-        string option;
-
-        double low_end;
-        double high_end;
-
-        in >> morgan_or_bp_choice >> position >> option >> low_end >> high_end;
-
-
-        morgan_or_bp.push_back(morgan_or_bp_choice);
-        options.site_file_positions.push_back(position);
-        options.site_file_options.push_back(option);
-
-        options.site_file_low_bounds.push_back(low_end);
-        options.site_file_high_bounds.push_back(high_end);
-    }
-    */
-    //cerr << "BBBBBBBBBBBB\n";
+    
 
     string line;
     while (getline(in, line))
     {
         istringstream iss (line);
-
-        //cerr << "THIS IS THE LINE:" << line;
         
         int morgan_or_bp_choice; //morgan:1   bp:0
         if (!( iss >> morgan_or_bp_choice )) { break; }
@@ -62,22 +36,18 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
         if (!( iss >> option )) { break; }
         searches.push_back(option);
 
-        //cerr << "OPTION:" << option << "\n";
-
 
         double entry;
 
-        while ( iss >> entry ){
+        while ( iss >> entry ) {
 
             loci.push_back(entry);
 
             if (!( iss >> option )) { 
-                low_bounds.push_back(-DBL_MAX);
+                low_bounds.push_back(0);
                 high_bounds.push_back(DBL_MAX);
                 break;
             }
-
-            //cerr << "NEXTHING:" << option << "\n";
 
             //check if option is a double
             auto result = double();
@@ -89,13 +59,16 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
                 // if it is a double, its the bounds
 
                 double low_bound = stod(option);
-
                 low_bounds.push_back(low_bound);
 
                 double high_bound;
                 if (!( iss >> high_bound )) { break; }
 
                 high_bounds.push_back(high_bound);
+
+
+                if (!( iss >> option )) { break; }
+                searches.push_back(option);
 
             }else{
                 //if option is not the double, its the next option

@@ -116,12 +116,13 @@ vector<double> selection_opt::examine_sites(){
 
     vector<double> empty(0);
 
-    context.neutral_lnl = to_be_optimized(empty);
-    neutral_lnl = context.neutral_lnl;                  //TODO i dont know where this is declared
+    context.neutral_lnl      = to_be_optimized(empty);
+    context.fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
     
-    double fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
-    
-    cerr << "\nNeutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
+    cerr << "\nNeutral likelihood: " << setprecision(15) << context.neutral_lnl << "\n";
+    cerr << "\nFast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
+    cout << "\nNeutral likelihood: " << setprecision(15) << context.neutral_lnl << "\n";
+    cout << "\nFast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
 
     neutral_transition_matrices = last_calculated_transition_matricies;
 
@@ -237,8 +238,8 @@ vector<double> selection_opt::examine_sites(){
 
             double singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
             
-            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
+            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
 
             for(int j = 0; j < site_count; j++){
                 
@@ -340,8 +341,8 @@ vector<double> selection_opt::examine_sites(){
 
             double double_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (double_optimized_parameters);
             
-            cout << setprecision(15) << "lnl ratio:\t" << double_lnl - neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << double_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "lnl ratio:\t" << double_lnl - context.neutral_lnl << "\n";
+            cerr << setprecision(15) << "lnl ratio:\t" << double_lnl - context.neutral_lnl << "\n";
 
             for(int j = 0; j < site_count * 2; j++){
                 
@@ -490,19 +491,21 @@ vector<double> selection_opt::examine_sites(){
 
             double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
             
-            cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - fast_neutral_lnl<< "\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - fast_neutral_lnl<< "\n";
+            cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
+            cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
 
-            //double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+            double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
             
-            //cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
-            //cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
+            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - neutral_lnl << "\n";
 
-            
+            cerr << "WAHT" << options.site_file_morgan_positions.size() << " i " << i << "\n";
 
         }
         
     }
+
+    cerr << "NOW IM HERE\n";
 
     return ans;
 }

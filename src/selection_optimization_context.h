@@ -14,6 +14,7 @@ public:
     double chrom_size;
 
     double neutral_lnl;
+    double fast_neutral_lnl;
 
 
 
