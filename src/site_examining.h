@@ -430,16 +430,19 @@ vector<double> selection_opt::examine_sites(){
 
 
             for(int j = 0; j < site_count; j++){
-                optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
-                optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
+                if(!restrict_site){
+                    optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
+                    optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
+                }
 
                 if(additive){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = -1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = -1;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0; //TODO REMOVE OR SOLVE
                 }else if (dom0 || dom1){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
                 }else{
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
-                    optimizer.min_bounds[j*parameters_per_site + 2] = 0;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
                 }
             }
 
