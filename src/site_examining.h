@@ -133,7 +133,7 @@ vector<double> selection_opt::examine_sites(){
 
 
     for(int i = 0; i < options.site_file_morgan_positions.size(); i++){
-
+        
         string option = options.site_file_options[i][0];
         
         char two_site_test_op = 't';
@@ -154,6 +154,15 @@ vector<double> selection_opt::examine_sites(){
         
         char dom1_op = 'd';
         bool dom1 = option.find(dom1_op) != string::npos;
+
+
+
+
+
+        //vector<bool> restrict_site_vec(len);
+
+
+
 
 
         int site_count = options.site_file_morgan_positions[i].size();
@@ -206,7 +215,7 @@ vector<double> selection_opt::examine_sites(){
             sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
 
 
-            optimizer.init_bounds(parameter_count, 0.01 );
+            optimizer.init_bounds(parameter_count, 0.001 );
             for(int j = 0; j < site_count; j++){
                 optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
                 optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
@@ -309,7 +318,7 @@ vector<double> selection_opt::examine_sites(){
             sites = parameters_to_sites(double_starting_parameters, parameters_per_site);
 
 
-            optimizer.init_bounds(parameter_count * 2, 0.01 );
+            optimizer.init_bounds(parameter_count * 2, 0.001 );
 
 
             for(int j = 0; j < site_count*2; j++){
@@ -387,17 +396,7 @@ vector<double> selection_opt::examine_sites(){
             cerr << setprecision(15) << "lnl ratio:\t" << double_lnl - singular_lnl << "\n";
             
         }else{
-            
-            
 
-
-
-
-
-
-
-
-            
 
             vector<vector<double>> sites;
 
@@ -426,7 +425,7 @@ vector<double> selection_opt::examine_sites(){
 
             
 
-            optimizer.init_bounds(parameter_count, 0.01 );
+            optimizer.init_bounds(parameter_count, 0.001);
 
 
             for(int j = 0; j < site_count; j++){
@@ -456,9 +455,6 @@ vector<double> selection_opt::examine_sites(){
                 is_loci,
                 parameters_per_site
             );
-
-            cerr << "\n\nCOMPLETED\n";
-            cout << "\n\nCOMPLETED\n";
 
             for(int j = 0; j < site_count; j++){
                 
@@ -511,8 +507,6 @@ vector<double> selection_opt::examine_sites(){
         }
         
     }
-
-    cerr << "NOW IM HERE\n";
 
     return ans;
 }

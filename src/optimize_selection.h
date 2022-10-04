@@ -771,6 +771,7 @@ vector<double> multi_level_optimization(
 
                 opt.populate_points(sites.size()*parameters_per_site, 1, center_point, scales);
 
+                
 
                 //random reflections
                 for(uint i = 0; i < center_point.size(); i++){
@@ -780,8 +781,11 @@ vector<double> multi_level_optimization(
                         }
                     }
                 }
+                
 
                 opt.enforce_bounds();
+
+
 
                 opt.calculate_points(to_be_optimized_function);
 
@@ -800,12 +804,12 @@ vector<double> multi_level_optimization(
                 found_parameters = opt.points[opt.max_index];
 
 
-                cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
-                cout << setprecision(15) << opt.max_value - context.neutral_lnl<< "\n";
+               // cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                //cout << setprecision(15) << opt.max_value - context.fast_neutral_lnl<< "\n";
                 for(uint j = 0; j < found_parameters.size(); j++){
-                    cout << found_parameters[j] << "\n";
+                    //cout << found_parameters[j] << "\n";
                 }
-                cout << "\n";
+                //cout << "\n";
 
                 if(opt.max_value > best_ratio) {
                     best_ratio = opt.max_value;

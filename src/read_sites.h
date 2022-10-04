@@ -55,8 +55,10 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
             i >> result;
 
             
+            
             if (!i.fail() && i.eof()) {
                 // if it is a double, its the bounds
+
 
                 double low_bound = stod(option);
                 low_bounds.push_back(low_bound);
@@ -74,7 +76,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
                 //if option is not the double, its the next option
                 searches.push_back(option);
 
-                low_bounds.push_back(-DBL_MAX);
+                low_bounds.push_back(0);
                 high_bounds.push_back(DBL_MAX);
             }
             
@@ -91,6 +93,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
         options.site_file_low_bounds.push_back(low_bounds);
         options.site_file_high_bounds.push_back(high_bounds);
     }
+
 
 
 
@@ -123,7 +126,6 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
                 for(; j < positions.size(); j++){
                     if (positions[j] >= options.site_file_positions[i][k]) {
                         options.site_file_morgan_positions[i][k] = morgan_position[j];
-                        cerr << options.site_file_morgan_positions[i][k] << "beb\n";
                         break;
                     }
                 }
