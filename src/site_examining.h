@@ -136,8 +136,8 @@ vector<double> selection_opt::examine_sites(){
         
         string option = options.site_file_options[i][0];
         
-        char two_site_test_op = 't';
-        bool two_site_test = option.find(two_site_test_op) != string::npos;
+        char two_site_test_op = 't'; // TODO no longer used
+        bool two_site_test = option.find(two_site_test_op) != string::npos; // TODO no longer used
         
         //bool unrestricted = false;
         //char unrestricted_op = 'o';
@@ -155,9 +155,16 @@ vector<double> selection_opt::examine_sites(){
         char dom1_op = 'd';
         bool dom1 = option.find(dom1_op) != string::npos;
 
+        char sel0_op = '0';
+        bool sel0 = option.find(sel0_op) != string::npos;
+
+        char sel1_op = '1';
+        bool sel1 = option.find(sel1_op) != string::npos;
 
 
 
+
+        //TODO add options 0 and 1, which means we are restricting seleciton towards one direction
 
         //vector<bool> restrict_site_vec(len);
 
@@ -187,324 +194,140 @@ vector<double> selection_opt::examine_sites(){
         }
 
 
-        if(two_site_test) {
-            
-            vector<vector<double>> sites;
 
 
-            
-            vector<double> singular_starting_parameters(0);
+        
 
-            for(int j = 0; j < site_count; j++){
-                if(!restrict_site){ 
-                    singular_starting_parameters.push_back(options.site_file_morgan_positions[i][j]);
-                }
 
-                if(additive){
-                    singular_starting_parameters.push_back(0);
-                }else if (dom0 || dom1){
-                    singular_starting_parameters.push_back(1);
-                }else{
-                    singular_starting_parameters.push_back(1);
-                    singular_starting_parameters.push_back(1);
-                }
+        vector<vector<double>> sites;
+
+
+        
+        vector<double> singular_starting_parameters(0);
+
+        for(int j = 0; j < site_count; j++){
+            if(!restrict_site){ 
+                singular_starting_parameters.push_back(options.site_file_morgan_positions[i][j]);
             }
 
+            if(additive){
+                singular_starting_parameters.push_back(0);
+            }else if (dom0 || dom1){
+                singular_starting_parameters.push_back(1);
+            }else{
+                singular_starting_parameters.push_back(1);
+                singular_starting_parameters.push_back(1);
+            }
+        }
+        
 
-            // single site additive selection testing
-            sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
+        // single site additive selection testing
+        sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
+
+        
+
+        optimizer.init_bounds(parameter_count, 0.001);
 
 
-            optimizer.init_bounds(parameter_count, 0.001 );
-            for(int j = 0; j < site_count; j++){
+        for(int j = 0; j < site_count; j++){
+            if(!restrict_site){
                 optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
                 optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
-
-                if(additive){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = -1;
-                }else if (dom0 || dom1){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
-                }else{
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
-                    optimizer.min_bounds[j*parameters_per_site + 2] = 0;
-                }
             }
 
-
-
-
-
-
-            vector<double> singular_optimized_parameters = multi_level_optimization(
-                chrom_size,
-                optimizer,
-                sites,
-                bottle_necks,
-                to_be_optimized_variations(true, restrict_site, additive, dom0, dom1),
-                is_loci,
-                parameters_per_site
-            );
-
-            double singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
-            
-            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
-
-            for(int j = 0; j < site_count; j++){
-                
-                int index = 0;
-
-                cout << "site:\t";
-                cerr << "site:\t";
-
-                if(restrict_site){
-                    cout << context.restricted_search_sites[j] << "\t";
-                }else{
-                    cout << sites[j][index] << "\t";
-                    index ++;
-                }
-
-                if(additive){
-                    cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
-                }else if(dom0){
-                    cout << "1,1," << sites[j][index] << "\n";
-                }else if(dom1){
-                    cout << sites[j][index] << ",1,1\n";
-                }else{
-                    cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
-                }
-            }
-
-
-
-
-
-
-
-
-
-
-
-            
-            vector<double> double_starting_parameters(0);
-
-            for(int j = 0; j < site_count; j++){
-                
-                double_starting_parameters.push_back(sites[j][0]);
-                
-                if(additive){
-                    double_starting_parameters.push_back(0);
-                }else if (dom0 || dom1){
-                    double_starting_parameters.push_back(1);
-                }else{
-                    double_starting_parameters.push_back(1);
-                    double_starting_parameters.push_back(1);
-                }
-                
-                double_starting_parameters.push_back(2 * options.site_file_morgan_positions[i][j] - sites[j][0]);
-
-                if(additive){
-                    double_starting_parameters.push_back(0);
-                }else if (dom0 || dom1){
-                    double_starting_parameters.push_back(1);
-                }else{
-                    double_starting_parameters.push_back(1);
-                    double_starting_parameters.push_back(1);
-                }
-            }
-
-
-            // single site additive selection testing
-            sites = parameters_to_sites(double_starting_parameters, parameters_per_site);
-
-
-            optimizer.init_bounds(parameter_count * 2, 0.001 );
-
-
-            for(int j = 0; j < site_count*2; j++){
-                optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j % site_count];
-                optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j % site_count];
-
-                if(additive){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = -1;
-                }else if (dom0 || dom1){
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
-                }else{
-                    optimizer.min_bounds[j*parameters_per_site + 1] = 0;
-                    optimizer.min_bounds[j*parameters_per_site + 2] = 0;
-                }
-            }
-
-
-
-
-            vector<double> double_optimized_parameters = multi_level_optimization(
-                chrom_size,
-                optimizer,
-                sites,
-                bottle_necks,
-                to_be_optimized_variations(true, restrict_site, additive, dom0, dom1),
-                is_loci,
-                parameters_per_site
-            );
-
-            double double_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (double_optimized_parameters);
-            
-            cout << setprecision(15) << "lnl ratio:\t" << double_lnl - context.neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << double_lnl - context.neutral_lnl << "\n";
-
-            for(int j = 0; j < site_count * 2; j++){
-                
-                int index = 0;
-
-                cout << "site:\t";
-                cerr << "site:\t";
-
-                if(restrict_site){
-                    cout << context.restricted_search_sites[j] << "\t";
-                    cerr << context.restricted_search_sites[j] << "\t";
-                }else{
-                    cout << sites[j][index] << "\t";
-                    cerr << sites[j][index] << "\t";
-                    index ++;
-                }
-
-                if(additive){
-                    cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
-                    cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
-                }else if(dom0){
-                    cout << "1,1," << sites[j][index] << "\n";
-                    cerr << "1,1," << sites[j][index] << "\n";
-                }else if(dom1){
-                    cout << sites[j][index] << ",1,1\n";
-                    cerr << sites[j][index] << ",1,1\n";
-                }else{
-                    cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
-                    cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
-                }
-            }
-
-            
-            cout << "Completed two site testing \n";
-            cout << setprecision(15) << "Two site lnl:\t" << double_lnl << "\n";
-            cout << setprecision(15) << "single site lnl:\t" << singular_lnl << "\n";
-            cout << setprecision(15) << "lnl ratio:\t" << double_lnl - singular_lnl << "\n";
-
-            cerr << "Completed two site testing \n";
-            cerr << setprecision(15) << "Two site lnl:\t" << double_lnl << "\n";
-            cerr << setprecision(15) << "single site lnl:\t" << singular_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << double_lnl - singular_lnl << "\n";
-            
-        }else{
-
-
-            vector<vector<double>> sites;
-
-
-            
-            vector<double> singular_starting_parameters(0);
-
-            for(int j = 0; j < site_count; j++){
-                if(!restrict_site){ 
-                    singular_starting_parameters.push_back(options.site_file_morgan_positions[i][j]);
-                }
-
-                if(additive){
-                    singular_starting_parameters.push_back(0);
-                }else if (dom0 || dom1){
-                    singular_starting_parameters.push_back(1);
-                }else{
-                    singular_starting_parameters.push_back(1);
-                    singular_starting_parameters.push_back(1);
-                }
-            }
-            
-
-            // single site additive selection testing
-            sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
-
-            
-
-            optimizer.init_bounds(parameter_count, 0.001);
-
-
-            for(int j = 0; j < site_count; j++){
-                if(!restrict_site){
-                    optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
-                    optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
-                }
-
-                if(additive){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = -1;
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0; //TODO REMOVE OR SOLVE
-                }else if (dom0 || dom1){
+            if(additive){
+                if(sel0){
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                }else if(sel1){
                     optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }else{
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }
+            }else if (dom0){
+                if(sel0){
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }else if(sel1){
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 1;
                 }else{
                     optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
                 }
-            }
-
-
-            vector<double> singular_optimized_parameters = multi_level_optimization(
-                chrom_size,
-                optimizer,
-                sites,
-                bottle_necks,
-                to_be_optimized_variations(true, restrict_site, additive, dom0, dom1),
-                is_loci,
-                parameters_per_site
-            );
-
-            for(int j = 0; j < site_count; j++){
-                
-                int index = 0;
-
-                cout << "site:\t";
-                cerr << "site:\t";
-
-                if(restrict_site){
-                    cout << context.restricted_search_sites[j] << "\t";
-                    cerr << context.restricted_search_sites[j] << "\t";
+            }else if (dom1){
+                if(sel0){
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }else if(sel1){
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
                 }else{
-                    cout << sites[j][index] << "\t";
-                    cerr << sites[j][index] << "\t";
-                    index ++;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
                 }
-
-                if(additive){
-                    cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
-                    cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
-                }else if(dom0){
-                    cout << "1,1," << sites[j][index] << "\n";
-                    cerr << "1,1," << sites[j][index] << "\n";
-                }else if(dom1){
-                    cout << sites[j][index] << ",1,1\n";
-                    cerr << sites[j][index] << ",1,1\n";
-                }else{
-                    cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
-                    cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
-                }
+            }else{
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
             }
-            
-
-            double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
-            
-            cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
-
-
-
-            //TODO command line option to turn this off!!!!
-            /*
-            double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
-
-
-            cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
-            cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
-            */
-
         }
+
+
+        vector<double> singular_optimized_parameters = multi_level_optimization(
+            chrom_size,
+            optimizer,
+            sites,
+            bottle_necks,
+            to_be_optimized_variations(true, restrict_site, additive, dom0, dom1),
+            is_loci,
+            parameters_per_site
+        );
+
+        for(int j = 0; j < site_count; j++){
+            
+            int index = 0;
+
+            cout << "site:\t";
+            cerr << "site:\t";
+
+            if(restrict_site){
+                cout << context.restricted_search_sites[j] << "\t";
+                cerr << context.restricted_search_sites[j] << "\t";
+            }else{
+                cout << sites[j][index] << "\t";
+                cerr << sites[j][index] << "\t";
+                index ++;
+            }
+
+            if(additive){
+                cout << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
+                cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]/2) << ",1\n";
+            }else if(dom0){
+                cout << "1,1," << sites[j][index] << "\n";
+                cerr << "1,1," << sites[j][index] << "\n";
+            }else if(dom1){
+                cout << sites[j][index] << ",1,1\n";
+                cerr << sites[j][index] << ",1,1\n";
+            }else{
+                cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
+                cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
+            }
+        }
+        
+
+        double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+        
+        cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
+        cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
+
+
+
+        //TODO command line option to turn this off!!!!
+        /*
+        double singular_lnl = to_be_optimized_variations(false, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+
+
+        cout << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
+        cerr << setprecision(15) << "lnl ratio:\t" << singular_lnl - context.neutral_lnl << "\n";
+        */
+
+        
         
     }
 

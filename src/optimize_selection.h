@@ -404,7 +404,7 @@ double to_be_optimized_pop1_dominant_fast(vector<double> parameters){
 
 
 //each site is two parameters,p[0] p[1], which translates to (p[0], (1-p[1])/(1-p[1]/2), 1/(1-p[1]/2))
-double to_be_optimized_additive_fast(vector<double> parameters){
+double to_be_optimized_additive_fast(vector<double> parameters) {
 
     vector<double> new_parameters;
 
