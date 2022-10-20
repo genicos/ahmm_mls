@@ -54,41 +54,6 @@ vector<double> selection_opt::examine_sites(){
     //////////////////////////////////////////////////
 
 
-    // Defining multi-level optimization parameters ///////
-    vector<vector<vector<double>>> two_site_bottle_necks;//
-
-    
-    shallow_short[0] = 5;
-    shallow_short[1] = 0.005;
-    shallow_short[2] = 0.005;
-    shallow_short[3] = 5;
-
-    
-    shallow_tall[0] = 5;
-    shallow_tall[1] = 0.005;
-    shallow_tall[2] = 0.03;
-    shallow_tall[3] = 5;
-
-    shallow[0] = shallow_short;
-    shallow[1] = shallow_tall;
-
-
-    deep_short[0] = 5;
-    deep_short[1] = 0.002;
-    deep_short[2] = 0.002;
-    deep_short[3] = 1;
-
-    deep_tall[0] = 5;
-    deep_tall[1] = 0.002;
-    deep_tall[2] = 0.005;
-    deep_tall[3] = 1;
-
-    deep[0] = deep_short;
-    deep[1] = deep_tall;
-
-    two_site_bottle_necks.push_back(shallow);
-    two_site_bottle_necks.push_back(deep);               //
-    ///////////////////////////////////////////////////////
 
 
 
@@ -136,11 +101,6 @@ vector<double> selection_opt::examine_sites(){
         
         string option = options.site_file_options[i][0];
         
-        char two_site_test_op = 't'; // TODO no longer used
-        bool two_site_test = option.find(two_site_test_op) != string::npos; // TODO no longer used
-        
-        //bool unrestricted = false;
-        //char unrestricted_op = 'o';
 
         
         char restrict_site_op = 's';
@@ -160,15 +120,6 @@ vector<double> selection_opt::examine_sites(){
 
         char sel1_op = '1';
         bool sel1 = option.find(sel1_op) != string::npos;
-
-
-
-
-        //TODO add options 0 and 1, which means we are restricting seleciton towards one direction
-
-        //vector<bool> restrict_site_vec(len);
-
-
 
 
 
@@ -192,10 +143,7 @@ vector<double> selection_opt::examine_sites(){
         if(!(additive || dom0 || dom1)){
             is_loci.push_back(false);
         }
-
-
-
-
+        
         
 
 

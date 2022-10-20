@@ -316,6 +316,12 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
 
 
+
+
+
+
+
+
 //each site is two parameters,p[0] p[1], which translates to (p[0], 1, p[1])
 double to_be_optimized_pop0_dominant(vector<double> parameters){
 

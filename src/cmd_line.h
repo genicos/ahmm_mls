@@ -111,6 +111,10 @@ public:
     bool verbose_stderr = false;
 
 
+    bool only_fast = false;
+    
+
+
     /// read relevant information
     void read_cmd_line ( int argc, char *argv[] ) ;
 
