@@ -313,8 +313,9 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
 
 
-
-
+/*
+double to_be_optimized_general();
+*/
 
 
 
