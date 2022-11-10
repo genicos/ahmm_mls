@@ -11,85 +11,46 @@ void selection_opt::uninformed_inference(){
     double nelder_mead_shrinkage   = 0.5;
     //////////////////////////////////////////////
 
-    vector<vector<vector<double>>> bottle_necks;
+    // Defining multi-level optimization parameters //
+    vector<vector<vector<double>>> bottle_necks;    //
 
     vector<vector<double>> shallow;
-
+    
     vector<double> shallow_short(4);
     shallow_short[0] = 3;
-    shallow_short[1] = 0.03;
-    shallow_short[2] = 0.01;
-    shallow_short[3] = 20;
-
-    vector<double> shallow_medium(4);
-    shallow_medium[0] = 3;
-    shallow_medium[1] = 0.03;
-    shallow_medium[2] = 0.03;
-    shallow_medium[3] = 20;
+    shallow_short[1] = 0.01;
+    shallow_short[2] = 0.005;
+    shallow_short[3] = 5;
 
     vector<double> shallow_tall(4);
     shallow_tall[0] = 3;
-    shallow_tall[1] = 0.03;
-    shallow_tall[2] = 0.05;
-    shallow_tall[3] = 20;
+    shallow_tall[1] = 0.01;
+    shallow_tall[2] = 0.01;
+    shallow_tall[3] = 5;
 
     shallow.push_back(shallow_short);
-    shallow.push_back(shallow_medium);
     shallow.push_back(shallow_tall);
 
     vector<vector<double>> deep;
 
     vector<double> deep_short(4);
     deep_short[0] = 3;
-    deep_short[1] = 0.01;
-    deep_short[2] = 0.005;
-    deep_short[3] = 5;
+    deep_short[1] = 0.003;
+    deep_short[2] = 0.001;
+    deep_short[3] = 1;
 
     vector<double> deep_tall(4);
     deep_tall[0] = 3;
-    deep_tall[1] = 0.01;
-    deep_tall[2] = 0.01;
-    deep_tall[3] = 5;
+    deep_tall[1] = 0.003;
+    deep_tall[2] = 0.005;
+    deep_tall[3] = 1;
 
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
 
     bottle_necks.push_back(shallow);
-    bottle_necks.push_back(deep);
-
-
-
-    vector<vector<vector<double>>> shallow_bottle_necks;
-
-    vector<vector<double>> shallow1;
-
-    //vector<double> shallow_short(4);
-    shallow_short[0] = 3;
-    shallow_short[1] = 0.03;
-    shallow_short[2] = 0.01;
-    shallow_short[3] = 20;
-
-    //vector<double> shallow_tall(4);
-    shallow_tall[0] = 3;
-    shallow_tall[1] = 0.03;
-    shallow_tall[2] = 0.05;
-    shallow_tall[3] = 20;
-
-    shallow1.push_back(shallow_short);
-    shallow1.push_back(shallow_tall);
-
-    vector<vector<double>> shallow2;
-
-    //vector<double> deep_short(4);
-    deep_short[0] = 3;
-    deep_short[1] = 0.01;
-    deep_short[2] = 0.005;
-    deep_short[3] = 5;
-
-    shallow2.push_back(deep_short);
-
-    shallow_bottle_necks.push_back(shallow1);
-    shallow_bottle_necks.push_back(shallow2);
+    bottle_necks.push_back(deep);                   //
+    //////////////////////////////////////////////////
 
 
     // Create optimizer
@@ -107,13 +68,16 @@ void selection_opt::uninformed_inference(){
     // Calculating lnl for neutral model
     vector<double> empty(0);
     double neutral_lnl = to_be_optimized(empty);
+    double fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
+    
     
 
     cerr << "Neutral likelihood: " << setprecision(15) << neutral_lnl << "\n";
 
     neutral_transition_matrices = last_calculated_transition_matricies;
+    context.fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
 
-    double window_size = 0.001;
+    double window_size = 0.0003;
 
 
 
@@ -128,14 +92,170 @@ void selection_opt::uninformed_inference(){
     vector<double> data_ancestry;
     vector<double> expected_ancestry;  
 
-    //data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+    data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
 
     
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+    vector<bool> is_loci(2);
+    is_loci[0] = true;
+    is_loci[1] = false;
+
+
+    double best_lnl = -DBL_MAX;
+    
+    //So ill be given a list of sites, and ill test them iteratively
+    vector<double> putative_sites(7);
+
+    putative_sites[0] = 0.0199;
+    putative_sites[1] = 0.0338;
+    putative_sites[2] = 0.0409;
+    putative_sites[3] = 0.0084;
+    putative_sites[4] = 0.0460;
+    putative_sites[5] = 0.0152;
+    putative_sites[6] = 0.0513;
+
+    /* panel01
+
+    vector<double> putative_sites(7);
+
+    putative_sites[0] = 0.0199;
+    putative_sites[1] = 0.0338;
+    putative_sites[2] = 0.0409;
+    putative_sites[3] = 0.0084;
+    putative_sites[4] = 0.0460;
+    putative_sites[5] = 0.0152;
+    putative_sites[6] = 0.0513;
+
+    */
+
+    
+
+    vector<double> new_site(2);
+    //new_site[0] = putative_sites[0];
+    //new_site[1] = 0;
+
+    //sites.push_back(new_site);
+
+    
+
+
+
+    
+    for(int i = 0; i < putative_sites.size(); i++) {
+
+        optimizer.init_bounds(2 * sites.size(), 0.001);
+        new_site[0] = putative_sites[i];
+        new_site[1] = 0;
+
+        sites.push_back(new_site);
+        
+
+        optimizer.init_bounds(2 * sites.size(), 0.001);
+        for ( int j = 0; j < sites.size(); j++) {
+            optimizer.min_bounds[j*2 + 0] = sites[j][0] - 0.002;
+            optimizer.max_bounds[j*2 + 0] = sites[j][0] + 0.002;
+
+            //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+            optimizer.max_bounds[j*2 + 1] = 0;
+        }
+
+
+
+        
+
+        vector<vector<double>> unaltered_sites = sites;
+
+
+        vector<double> singular_optimized_parameters = multi_level_optimization(
+            chrom_size,
+            optimizer,
+            sites,
+            bottle_necks,
+            to_be_optimized_variations(true, false, true, false, false),
+            is_loci,
+            2
+        );
+
+        double this_lnl = to_be_optimized_variations(true, false, true, false, false) (singular_optimized_parameters);
+
+
+
+        cerr << "LNL: " << this_lnl  - fast_neutral_lnl << "\n";
+        cout << "lnl ratio: " << this_lnl  - fast_neutral_lnl  << "\n";
+
+        if(this_lnl - best_lnl > 3) {
+            cerr << "Adding putative site " << i << ": " << putative_sites[i] << "\n";
+            cout << "Adding putative site " << i << ": " << putative_sites[i] << "\n";
+
+            
+
+            best_lnl = this_lnl;
+
+            sites = parameters_to_sites(singular_optimized_parameters, 2);
+
+        }else{
+            cerr << "dismissing putative site " << i << ": " << putative_sites[i] << "\n";
+            cout << "dismissing putative site " << i << ": " << putative_sites[i] << "\n";
+            unaltered_sites.pop_back();
+
+            //sites.pop_back();
+            sites = unaltered_sites;
+        }
+
+
+        cerr << "CURRENT SITES:\n";
+        cout << "CURRENT SITES:\n";
+        for ( int j = 0; j < sites.size(); j++) {
+            cerr << sites[j][0] << " " << sites[j][1] << "\n";
+            cout << sites[j][0] << " " << sites[j][1] << "\n";
+        }
+
+    }
+
+    exit(0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
+
+
+
     //STANDARD: for now, only adds 5 sites
-    while(sites.size() < 3){
+    while(sites.size() < 5){
 
         data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
         expected_ancestry = local_ancestries;
@@ -178,10 +298,13 @@ void selection_opt::uninformed_inference(){
         }
 
 
-        vector<double> new_site(3);
+
+
+        
+
+        vector<double> new_site(2);
         new_site[0] = morgan_position[largest_deviator];
         new_site[1] = 1;
-        new_site[2] = 1;
         
 
         cerr << "placing at :\n";
@@ -199,13 +322,19 @@ void selection_opt::uninformed_inference(){
         bool new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = false;
         int site_its_close_to = 0;
         for(int s = 0; s < sites.size(); s++){
-            if( abs(sites[s][0] - new_site[0]) < 0.05 && !site_has_been_deep_searched[s]){
+            if( abs(sites[s][0] - new_site[0]) < 0.002 && !site_has_been_deep_searched[s]){
                 new_site_is_close_to_existing_site_that_hasnt_been_deep_searched = true;
                 site_its_close_to = s;
             }
         }
+
+
+        
         
         cout << "close: " << new_site_is_close_to_existing_site_that_hasnt_been_deep_searched << "\n";
+
+        vector<vector<double>> unaltered_sites = sites;
+
 
         if(new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
             //pop close one from sites and place it at the end
@@ -220,30 +349,41 @@ void selection_opt::uninformed_inference(){
             sites.erase(sites.begin() + site_its_close_to);
             sites.push_back(near_site);
 
-            optimizer.init_bounds(sites.size()*3, 0.01);
-
-            for(int i = 0; i < sites.size(); i++){
-
-                optimizer.min_bounds[i*3 + 0] = 0;
-                optimizer.max_bounds[i*3 + 0] = chrom_size;
-
-                optimizer.min_bounds[i*3 + 1] = 0;
-                optimizer.min_bounds[i*3 + 2] = 0;
 
 
-                
-            }
+
+
 
             
-            /* TODO update this
-            multi_level_optimization(
+            
+            
+
+            optimizer.init_bounds(2 * sites.size(), 0.001);
+            for ( int j = 0; j < sites.size(); j++) {
+                optimizer.min_bounds[j*2 + 0] = 0;
+                optimizer.max_bounds[j*2 + 0] = 1;
+
+                //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+                optimizer.max_bounds[j*2 + 1] = 0;
+            }
+
+
+
+            
+
+            
+
+
+            found_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
                 sites,
                 bottle_necks,
-                &search_sites_fast_fix_all_but_last
+                to_be_optimized_variations(true, false, true, false, false),
+                is_loci,
+                2
             );
-            */
+            
 
             site_has_been_deep_searched[site_has_been_deep_searched.size() - 1] = true;
 
@@ -256,56 +396,75 @@ void selection_opt::uninformed_inference(){
             site_has_been_deep_searched.push_back(false);
 
 
-            optimizer.init_bounds(sites.size()*3, 0.01);
-
-            for(int i = 0; i < sites.size(); i++){
-                optimizer.min_bounds[i*3 + 0] = 0;
-                optimizer.max_bounds[i*3 + 0] = chrom_size;
-
-                optimizer.min_bounds[i*3 + 1] = 0;
-                optimizer.min_bounds[i*3 + 2] = 0;
-            }
             
 
-            // do a bottle_necks search with
-            // search sites fast fix all but last
 
-            //TODO update this one too
-            /*multi_level_optimization(
+
+            
+
+            optimizer.init_bounds(2 * sites.size(), 0.001);
+            for ( int j = 0; j < sites.size(); j++) {
+                optimizer.min_bounds[j*2 + 0] = 0;
+                optimizer.max_bounds[j*2 + 0] = 1;
+
+                //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+                optimizer.max_bounds[j*2 + 1] = 0;
+            }
+
+
+
+            
+
+            
+
+
+            found_parameters = multi_level_optimization(
                 chrom_size,
                 optimizer,
                 sites,
                 bottle_necks,
-                &search_sites_fast_fix_all_but_last
+                to_be_optimized_variations(true, false, true, false, false),
+                is_loci,
+                2
             );
-            */
+
+
         }
+
+        sites = parameters_to_sites(found_parameters, 2);
 
 
         cerr << "\n\nBest sites so far:\n";
+        cerr << sites.size() << "\n";
         for(int k = 0; k < sites.size(); k++){
 
-            cerr << "site:\t" << sites[k][0] << "\t" << sites[k][1] << ",1," << sites[k][2] << " or " << sites[k][1]/max(sites[k][1], sites[k][2]) << ","<< 1/max(sites[k][1], sites[k][2]) <<"," << sites[k][2]/max(sites[k][1], sites[k][2]) << "\n";
+            cerr << "site:\t" << sites[k][0] << "\t" << sites[k][1] << "\n";
         }
         cerr << "\n";
 
-        cout << "\nnew site added:\t" << sites[sites.size() - 1][0]
-        << "\n" << sites[sites.size() - 1][1]
-        << ",1," << sites[sites.size() - 1][2]
-        << " or\n" << sites[sites.size() - 1][1]/max(sites[sites.size() - 1][1], sites[sites.size() - 1][2])
-        << ","<< 1/max(sites[sites.size() - 1][1], sites[sites.size() - 1][2])
-        << "," << sites[sites.size() - 1][2]/max(sites[sites.size() - 1][1], sites[sites.size() - 1][2]) << "\n";
+        cout << "\nnew site added:\t" << sites[sites.size() - 1][0] << " " << sites[sites.size() - 1][1] << "\n";
 
-        best_parameters = sites_to_parameters(sites);
-        double new_lnl = to_be_optimized(best_parameters);
+        best_parameters = sites_to_parameters(sites, 2);
+
+
+
+
+        double new_fast_lnl = to_be_optimized_variations(true, false, true, false, false) (best_parameters);
+        double new_lnl = to_be_optimized_variations(false, false, true, false, false) (best_parameters);
+
+
+
 
         cout <<"lnl after new site\t" << setprecision(15) << new_lnl << "\n";
+        cout <<"fast lnl after new site\t" << setprecision(15) << new_fast_lnl << "\n";
         
 
         cerr << "lnl: " << new_lnl << "\n";
+        cerr << "lnl: " << new_fast_lnl << "\n";
 
-        if(new_lnl - last_lnl < 6 && !new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
+        if(new_lnl - last_lnl < 3 && !new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
             sites.pop_back();
+            sites = unaltered_sites;
             break;
         }
         last_lnl = new_lnl;
@@ -322,11 +481,12 @@ void selection_opt::uninformed_inference(){
         
 
     cerr << "Found sites:\n\n";
-    for(int k = 0; k < sites.size(); k++){
-        cout << "site:\t" << sites[k][0] << "\t" << sites[k][1] << ",1," << sites[k][2] << " or " << sites[k][1]/max(sites[k][1], sites[k][2]) << ","<< 1/max(sites[k][1], sites[k][2]) <<"," << sites[k][2]/max(sites[k][1], sites[k][2]) << "\n";
-        cerr << "site:\t" << sites[k][0] << "\t" << sites[k][1] << ",1," << sites[k][2] << " or " << sites[k][1]/max(sites[k][1], sites[k][2]) << ","<< 1/max(sites[k][1], sites[k][2]) <<"," << sites[k][2]/max(sites[k][1], sites[k][2]) << "\n";
+    for(int k = 0; k < sites.size(); k++ ) {
+        cout << "site:\t" << sites[k][0] << "\t" << sites[k][1] << "\n";
+        cerr << "site:\t" << sites[k][0] << "\t" << sites[k][1] << "\n";
     }
 
+    */
 }
 
 #endif

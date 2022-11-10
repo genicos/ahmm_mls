@@ -249,9 +249,9 @@ double to_be_optimized (vector<double> parameters) {
         cores
     );
     
-    if(parameters.size() == 0){
+    //if(parameters.size() == 0){
         last_calculated_transition_matricies = transition_matrices;
-    }
+    //}
     
     
     double lnl = compute_lnl(transition_matrices);
@@ -300,10 +300,10 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     
 
     if(context.options.verbose_stderr) {
-        cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
+        cerr << "lnl ratio = " << setprecision(15) << lnl - context.fast_neutral_lnl<< "\n";
         cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
     }else{
-        cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
+        cerr << "lnl ratio\t" << setprecision(15) << lnl - context.fast_neutral_lnl<< "\n";
     }
     
     return lnl;
@@ -756,9 +756,10 @@ vector<double> multi_level_optimization(
     for(int j = 0; j < bottle_necks.size(); j++){
         for(int k = 0; k < bottle_necks[j].size(); k++){
             for(int l = 0; l < bottle_necks[j][k][0]; l++){
-                if(context.options.verbose_stderr){
+                
+                //if(context.options.verbose_stderr){
                     cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
-                }
+                //}
                 
 
                 vector<double> center_point(sites.size()*parameters_per_site);
