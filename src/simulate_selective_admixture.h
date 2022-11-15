@@ -371,7 +371,7 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
 
 
 //TODO parameterize this!!!!
-double fast_transitions_radius_in_morgans = 0.005;
+double fast_transitions_radius_in_morgans = 0.02;
 
 //TODO probably delete this method, im not using it
 void *single_fast_window_process(void *void_info){

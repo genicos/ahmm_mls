@@ -132,15 +132,28 @@ void selection_opt::uninformed_inference(){
 
     vector<double> putative_sites(7);
 
-    putative_sites[0] = 0.0199;
+    putative_sites[0] = 0.0200;
     putative_sites[1] = 0.0338;
     putative_sites[2] = 0.0409;
-    putative_sites[3] = 0.0084;
-    putative_sites[4] = 0.0460;
-    putative_sites[5] = 0.0152;
-    putative_sites[6] = 0.0513;
+    putative_sites[3] = 0.0093;
+    putative_sites[4] = 0.0151;
+    putative_sites[5] = 0.0460;
+    putative_sites[6] = 0.0525;
+
+    /panel 2
+    vector<double> putative_sites(5);
+
+    putative_sites[0] = 0.01821;
+    putative_sites[1] = 0.02183;
+    putative_sites[2] = 0.03295;
+    putative_sites[3] = 0.04846;
+    putative_sites[4] = 0.06078;
+
+    
 
     */
+
+    
 
     
 
@@ -152,7 +165,9 @@ void selection_opt::uninformed_inference(){
 
     
 
+    double cut_off = 0;
 
+    
 
     
     for(int i = 0; i < putative_sites.size(); i++) {
@@ -194,10 +209,29 @@ void selection_opt::uninformed_inference(){
 
 
 
-        cerr << "LNL: " << this_lnl  - fast_neutral_lnl << "\n";
-        cout << "lnl ratio: " << this_lnl  - fast_neutral_lnl  << "\n";
+        cerr << "LNL: " << this_lnl  - fast_neutral_lnl << "\n\n";
+        cout << "lnl ratio: " << this_lnl  - fast_neutral_lnl  << "\n\n";
 
-        if(this_lnl - best_lnl > 3) {
+
+        cerr << "CURRENT SITES:\n";
+        cout << "CURRENT SITES:\n";
+        for ( int j = 0; j < sites.size(); j++) {
+            cerr << sites[j][0] << " " << sites[j][1] << "\n";
+            cout << sites[j][0] << " " << sites[j][1] << "\n";
+        }
+        cerr << "PREV SITES:\n";
+        cout << "PREV SITES:\n";
+        for ( int j = 0; j < unaltered_sites.size(); j++) {
+            cerr << unaltered_sites[j][0] << " " << unaltered_sites[j][1] << "\n";
+            cout << unaltered_sites[j][0] << " " << unaltered_sites[j][1] << "\n";
+        }
+        
+        cerr << "LNL diff: " << this_lnl - best_lnl << "\n";
+        cout << "LNL diff: " << this_lnl - best_lnl << "\n";
+        
+
+
+        if(this_lnl - best_lnl > cut_off) {
             cerr << "Adding putative site " << i << ": " << putative_sites[i] << "\n";
             cout << "Adding putative site " << i << ": " << putative_sites[i] << "\n";
 
@@ -206,6 +240,10 @@ void selection_opt::uninformed_inference(){
             best_lnl = this_lnl;
 
             sites = parameters_to_sites(singular_optimized_parameters, 2);
+            
+
+            // at this do the iterated removal of all except last
+            //
 
         }else{
             cerr << "dismissing putative site " << i << ": " << putative_sites[i] << "\n";
@@ -223,6 +261,10 @@ void selection_opt::uninformed_inference(){
             cerr << sites[j][0] << " " << sites[j][1] << "\n";
             cout << sites[j][0] << " " << sites[j][1] << "\n";
         }
+        cerr << "i: " << i << "\n";
+        cout << "i: " << i << "\n";
+
+        exit(0);
 
     }
 
