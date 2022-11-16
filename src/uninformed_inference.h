@@ -164,12 +164,76 @@ void selection_opt::uninformed_inference(){
     //sites.push_back(new_site);
 
     
+    vector<double> null_model{0.0201988409220236, -0.00973395535426419};
 
     double cut_off = 0;
+    
+    vector<double> alt_model_center{
+        0.0182, 0,
+        0.0218, 0,
+    };
 
+
+
+
+
+    cerr << "Null model\n";
+    cout << "Null model\n";
+
+    for(int i = 0; i < null_model.size()/2 ; i++){
+        cerr << null_model[i*2 + 0] << ", " << null_model[i*2 + 1] << ",\n";
+        cout << null_model[i*2 + 0] << ", " << null_model[i*2 + 1] << ",\n";
+    }
+
+
+    double null_model_lnl = to_be_optimized_variations(true, false, true, false, false) (null_model);
+
+    cerr << "Null lnl: " << null_model_lnl << "\n\n";
+    cout << "Null lnl: " << null_model_lnl << "\n\n";
+
+
+
+
+    vector<vector<double>> alt_model_sites = parameters_to_sites(alt_model_center, 2);
+    
+    vector<double> alt_optimized_parameters = multi_level_optimization(
+        chrom_size,
+        optimizer,
+        sites,
+        bottle_necks,
+        to_be_optimized_variations(true, false, true, false, false),
+        is_loci,
+        2
+    );
+
+    cerr << "Alt  model\n";
+    cout << "Alt  model\n";
+
+    for(int i = 0; i < alt_optimized_parameters.size()/2 ; i++) {
+        cerr << alt_optimized_parameters[i*2 + 0] << ", " << alt_optimized_parameters[i*2 + 1] << ",\n";
+        cout << alt_optimized_parameters[i*2 + 0] << ", " << alt_optimized_parameters[i*2 + 1] << ",\n";
+    }
+
+    double alt_lnl = to_be_optimized_variations(true, false, true, false, false) (alt_optimized_parameters);
+
+    cerr << "Alt  lnl: " << null_model_lnl << "\n\n";
+    cout << "Alt  lnl: " << null_model_lnl << "\n\n";
+
+    double diff = alt_lnl - null_model_lnl;
+
+    cerr << "diff: " << diff << "\n\n";
+    cout << "diff: " << diff << "\n\n";
+
+    if(diff > cut_off){
+        cerr << "ACCEPTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
+        cout << "ACCEPTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
+    }else{
+        cerr << "REJECTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
+        cout << "REJECTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
+    }
     
 
-    
+    /*
     for(int i = 0; i < putative_sites.size(); i++) {
 
         optimizer.init_bounds(2 * sites.size(), 0.001);
@@ -267,6 +331,7 @@ void selection_opt::uninformed_inference(){
         exit(0);
 
     }
+    */
 
     exit(0);
 
