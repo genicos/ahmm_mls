@@ -197,7 +197,7 @@ void selection_opt::uninformed_inference(){
     vector<vector<double>> alt_model_sites = parameters_to_sites(alt_model_center, 2);
 
     optimizer.init_bounds(2 * alt_model_sites.size(), 0.001);
-    for ( int j = 0; j < sites.size(); j++) {
+    for ( int j = 0; j < alt_model_sites.size(); j++) {
         optimizer.min_bounds[j*2 + 0] = alt_model_sites[j][0] - 0.002;
         optimizer.max_bounds[j*2 + 0] = alt_model_sites[j][0] + 0.002;
 
