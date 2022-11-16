@@ -143,11 +143,11 @@ void selection_opt::uninformed_inference(){
     /panel 2
     vector<double> putative_sites(5);
 
-    putative_sites[0] = 0.01821;
-    putative_sites[1] = 0.02183;
-    putative_sites[2] = 0.03295;
-    putative_sites[3] = 0.04846;
-    putative_sites[4] = 0.06078;
+    putative_sites[0] = 0.0182;
+    putative_sites[1] = 0.0218;
+    putative_sites[2] = 0.0329;
+    putative_sites[3] = 0.0484;
+    putative_sites[4] = 0.0607;
 
     
 
