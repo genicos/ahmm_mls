@@ -112,6 +112,8 @@ public:
 
 
     bool only_fast = false;
+
+    double fast_transitions_radius_in_morgans = 0.02;
     
 
 

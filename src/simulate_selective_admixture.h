@@ -249,6 +249,7 @@ struct intra_model_shared_info{
     vector<mat> *transition_matrices;
     int cores;
     vector<double> *selected_sites;
+    double fast_transitions_radius_in_morgans;
 };
 
 void *single_window_process(void *void_info) {
@@ -540,7 +541,7 @@ void *alt_single_fast_window_process(void *void_info) {
 
         for(uint j = 0; j < (*info->selected_sites).size(); j++){
             double distance = (*info->neutral_sites)[i] - (*info->selected_sites)[j];
-            if(distance <= fast_transitions_radius_in_morgans && distance >= -fast_transitions_radius_in_morgans){
+            if(distance <= info->fast_transitions_radius_in_morgans && distance >= -info->fast_transitions_radius_in_morgans){
                 pertinent_selected_sites.push_back((*info->selected_sites)[j]);
                 pertinent_fitnesses.push_back((*info->fitnesses)[j]);
             }
@@ -605,7 +606,8 @@ vector<mat> alternative_fast_transition_rates (
   vector<vector<double>> &fitnesses,
   double m,
   int generations,
-  int cores
+  int cores,
+  double fast_transitions_radius_in_morgans
 ) {
     vector<mat> transition_matrices(recomb_rates_around_neutral_sites.size());
     
@@ -647,6 +649,7 @@ vector<mat> alternative_fast_transition_rates (
         this_threads_info->generations = generations;
         this_threads_info->transition_matrices = &transition_matrices;
         this_threads_info->cores = cores;
+        this_threads_info->fast_transitions_radius_in_morgans = fast_transitions_radius_in_morgans;
         
         this_threads_info->selected_sites = &selected_sites;
 

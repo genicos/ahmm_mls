@@ -259,7 +259,10 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             verbose_stdout = true;
         }
 
+        if ( strcmp(argv[i], "-R") == 0 ){
 
+            fast_transitions_radius_in_morgans = stod(argv[++i]);
+        }
         
 
     }

@@ -293,7 +293,8 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
         fitnesses,
         context.options.m,
         context.options.generations,
-        cores
+        cores,
+        context.options.fast_transitions_radius_in_morgans
     );
 
     double lnl = compute_lnl(transition_matrices);
