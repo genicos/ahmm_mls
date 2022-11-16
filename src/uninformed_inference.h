@@ -166,7 +166,7 @@ void selection_opt::uninformed_inference(){
     
     vector<double> null_model{0.0201988409220236, -0.00973395535426419};
 
-    double cut_off = 0;
+    double cut_off = 1.7743968088179969;
     
     vector<double> alt_model_center{
         0.0182, 0,
@@ -188,18 +188,27 @@ void selection_opt::uninformed_inference(){
 
     double null_model_lnl = to_be_optimized_variations(true, false, true, false, false) (null_model);
 
-    cerr << "Null lnl: " << null_model_lnl << "\n\n";
-    cout << "Null lnl: " << null_model_lnl << "\n\n";
+    cerr << "Null lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
+    cout << "Null lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
 
 
 
 
     vector<vector<double>> alt_model_sites = parameters_to_sites(alt_model_center, 2);
+
+    optimizer.init_bounds(2 * alt_model_sites.size(), 0.001);
+    for ( int j = 0; j < sites.size(); j++) {
+        optimizer.min_bounds[j*2 + 0] = alt_model_sites[j][0] - 0.002;
+        optimizer.max_bounds[j*2 + 0] = alt_model_sites[j][0] + 0.002;
+
+        //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+        optimizer.max_bounds[j*2 + 1] = 0;
+    }
     
     vector<double> alt_optimized_parameters = multi_level_optimization(
         chrom_size,
         optimizer,
-        sites,
+        alt_model_sites,
         bottle_necks,
         to_be_optimized_variations(true, false, true, false, false),
         is_loci,
@@ -216,8 +225,8 @@ void selection_opt::uninformed_inference(){
 
     double alt_lnl = to_be_optimized_variations(true, false, true, false, false) (alt_optimized_parameters);
 
-    cerr << "Alt  lnl: " << null_model_lnl << "\n\n";
-    cout << "Alt  lnl: " << null_model_lnl << "\n\n";
+    cerr << "Alt  lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
+    cout << "Alt  lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
 
     double diff = alt_lnl - null_model_lnl;
 
@@ -231,7 +240,7 @@ void selection_opt::uninformed_inference(){
         cerr << "REJECTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
         cout << "REJECTING SITE :" << alt_model_center[alt_model_center.size() - 2] << "\n";
     }
-    
+
 
     /*
     for(int i = 0; i < putative_sites.size(); i++) {
