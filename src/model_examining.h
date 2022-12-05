@@ -55,7 +55,7 @@ void selection_opt::test_models(){
 
 
     
-    vector<pthread_t> threads(cores);
+    vector<pthread_t> threads(cores); //TODO, change how core count interacts with this
 
     for(long t = 0; t < cores; t++){
         int rc = pthread_create(&threads[t], NULL, single_thread_model_evaluation, (void *)t);

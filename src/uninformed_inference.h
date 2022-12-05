@@ -85,9 +85,10 @@ void selection_opt::uninformed_inference(){
     vector<vector<double>> sites;
     vector<bool> site_has_been_deep_searched; 
 
-    double last_lnl = neutral_lnl;
+    double last_lnl = fast_neutral_lnl;
 
     cout << "Neutral lnl\t" << setprecision(15) << neutral_lnl << "\n";
+    cout << "fast neutral lnl\t" << setprecision(15) << fast_neutral_lnl << "\n";
 
     vector<double> data_ancestry;
     vector<double> expected_ancestry;  
@@ -156,7 +157,7 @@ void selection_opt::uninformed_inference(){
     
 
     
-
+    /*
     vector<double> new_site(2);
     //new_site[0] = putative_sites[0];
     //new_site[1] = 0;
@@ -225,8 +226,8 @@ void selection_opt::uninformed_inference(){
 
     double alt_lnl = to_be_optimized_variations(true, false, true, false, false) (alt_optimized_parameters);
 
-    cerr << "Alt  lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
-    cout << "Alt  lnl: " << null_model_lnl - context.fast_neutral_lnl<< "\n\n";
+    cerr << "Alt  lnl: " << alt_lnl - context.fast_neutral_lnl<< "\n\n";
+    cout << "Alt  lnl: " << alt_lnl - context.fast_neutral_lnl<< "\n\n";
 
     double diff = alt_lnl - null_model_lnl;
 
@@ -340,9 +341,10 @@ void selection_opt::uninformed_inference(){
         exit(0);
 
     }
-    */
+    
 
     exit(0);
+    */
 
 
 
@@ -365,10 +367,7 @@ void selection_opt::uninformed_inference(){
 
 
 
-
-    /*
-
-
+    
 
     //STANDARD: for now, only adds 5 sites
     while(sites.size() < 5){
@@ -420,7 +419,7 @@ void selection_opt::uninformed_inference(){
 
         vector<double> new_site(2);
         new_site[0] = morgan_position[largest_deviator];
-        new_site[1] = 1;
+        new_site[1] = 0;
         
 
         cerr << "placing at :\n";
@@ -479,8 +478,8 @@ void selection_opt::uninformed_inference(){
                 optimizer.min_bounds[j*2 + 0] = 0;
                 optimizer.max_bounds[j*2 + 0] = 1;
 
-                //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
-                optimizer.max_bounds[j*2 + 1] = 0;
+                optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+                //optimizer.max_bounds[j*2 + 1] = 0;
             }
 
 
@@ -523,8 +522,8 @@ void selection_opt::uninformed_inference(){
                 optimizer.min_bounds[j*2 + 0] = 0;
                 optimizer.max_bounds[j*2 + 0] = 1;
 
-                //optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
-                optimizer.max_bounds[j*2 + 1] = 0;
+                optimizer.max_bounds[j*2 + 1] = 1; // for 0 and 1
+                //optimizer.max_bounds[j*2 + 1] = 0;
             }
 
 
@@ -573,17 +572,82 @@ void selection_opt::uninformed_inference(){
 
         cout <<"lnl after new site\t" << setprecision(15) << new_lnl << "\n";
         cout <<"fast lnl after new site\t" << setprecision(15) << new_fast_lnl << "\n";
+        cout <<"fast lnl neutral ratio\t" << setprecision(15) << new_fast_lnl - fast_neutral_lnl << "\n";
+        cout <<"fast lnl ratio\t" << setprecision(15) << new_fast_lnl - last_lnl << "\n";
         
 
         cerr << "lnl: " << new_lnl << "\n";
         cerr << "lnl: " << new_fast_lnl << "\n";
 
-        if(new_lnl - last_lnl < 3 && !new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
+        if(new_fast_lnl - last_lnl < 3 && !new_site_is_close_to_existing_site_that_hasnt_been_deep_searched){
             sites.pop_back();
             sites = unaltered_sites;
+
+
+
+
+
+
+
+
+
+
+
+
+
+            data_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+            expected_ancestry = local_ancestries;
+
+            vector<double> smoothed_data_ancestry(data_ancestry.size());
+
+            double largest_deviation = 0;
+            int largest_deviator = 0;
+            cerr << "expected\tdata\tmorgan pos\n";
+
+            double tot = window_size;
+
+            for(int i = 1; i < n_recombs.size() - 1; i++){
+
+                double total = 0;
+                double count = 0;
+                for(int j = i; morgan_position[i] - morgan_position[j] < 0.001 && j >= 0; j--){
+                    total += data_ancestry[j];
+                    count ++;
+                }
+                for(int j = i + 1; morgan_position[j] - morgan_position[i] < 0.001 && j < expected_ancestry.size(); j++){
+                    total += data_ancestry[j];
+                    count ++;
+                }
+                smoothed_data_ancestry[i] = total/count;
+
+
+                if (abs(smoothed_data_ancestry[i] - expected_ancestry[i]) > largest_deviation){
+                    largest_deviation = abs(smoothed_data_ancestry[i] - expected_ancestry[i]);
+                    largest_deviator = i;
+                    
+                    //cerr << "largestdeviator" << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] << "\t" << morgan_position[i] <<"\n";
+                    
+                }
+                if(morgan_position[i] > tot){
+                    cerr << setprecision(5) << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] << "\t" << morgan_position[i] << "\n";
+                    cout << morgan_position[i]  << "\t" << expected_ancestry[i] << "\t" << smoothed_data_ancestry[i] <<"\n";
+                    tot += window_size;
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
             break;
         }
-        last_lnl = new_lnl;
+        last_lnl = new_fast_lnl;
 
         //expected_ancestry = local_ancestries;
 
@@ -601,8 +665,8 @@ void selection_opt::uninformed_inference(){
         cout << "site:\t" << sites[k][0] << "\t" << sites[k][1] << "\n";
         cerr << "site:\t" << sites[k][0] << "\t" << sites[k][1] << "\n";
     }
-
-    */
+    
+    
 }
 
 #endif

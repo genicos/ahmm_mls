@@ -284,7 +284,7 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     int cores = context.options.cores;
     
 
-    if(context.options.use_model_file)
+    if(context.options.use_model_file) // TODO, chnage how cores affects model files
         cores = 1;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
@@ -815,9 +815,9 @@ vector<double> multi_level_optimization(
 
                // cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
                 //cout << setprecision(15) << opt.max_value - context.fast_neutral_lnl<< "\n";
-                for(uint j = 0; j < found_parameters.size(); j++){
+                //for(uint j = 0; j < found_parameters.size(); j++){
                     //cout << found_parameters[j] << "\n";
-                }
+                //}
                 //cout << "\n";
 
                 if(opt.max_value > best_ratio) {
