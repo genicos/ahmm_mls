@@ -357,15 +357,15 @@ double to_be_optimized_pop1_dominant(vector<double> parameters){
 }
 
 //each site is two parameters,p[0] p[1], which translates to (p[0], (1-p[1])/(1-p[1]/2), 1/(1-p[1]/2))
-double to_be_optimized_additive(vector<double> parameters){
+double to_be_optimized_additive(vector<double> parameters) {
 
     vector<double> new_parameters;
 
     int selected_sites_count = parameters.size() / 2;
-    for(int i = 0; i < parameters.size(); i++){
-        if(i % 2 == 0){
+    for(int i = 0; i < parameters.size(); i++) {
+        if(i % 2 == 0) {
             new_parameters.push_back(parameters[i]);
-        }else{
+        } else {
             new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
             new_parameters.push_back(1/(1-parameters[i]/2));
         }
