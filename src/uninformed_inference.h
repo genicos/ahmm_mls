@@ -172,15 +172,12 @@ void selection_opt::uninformed_inference(){
 
 
     vector<double> accepted_model{
-        0.01999, -0.00799910098415,
-        0.0336, -0.00231686041166, 
-        0.0399, -0.00310344546034,
-        0.0084, -0.00538778617168,
-        0.0457, -0.00678901346879,
+        0.10, -0.0050251256281406,
+        0.11, -0.0101010101010102,
     };
 
     cerr << "STARING CALCULATION\n";
-    double full_lnl = to_be_optimized_variations(false, false, true, false, false) (accepted_model);
+    double full_lnl = to_be_optimized_variations(false, false, true, false, false, false, false) (accepted_model);
 
     cerr << "lnl:" << full_lnl-neutral_lnl << "\n";
     cout << "lnl:" << full_lnl-neutral_lnl << "\n";

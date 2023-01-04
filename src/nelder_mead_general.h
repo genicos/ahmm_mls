@@ -99,8 +99,6 @@ void nelder_mead::init_bounds(int dimensions, double reb){
 
 void nelder_mead::enforce_bounds(){
 
-
-
     for(uint i = 0; i < points.size(); i++){
         for(int d = 0; d < points[i].size(); d++) {
             if(points[i][d] >= max_bounds[d]){

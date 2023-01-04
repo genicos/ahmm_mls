@@ -121,33 +121,44 @@ vector<double> selection_opt::examine_sites(){
         char sel1_op = '1';
         bool sel1 = option.find(sel1_op) != string::npos;
 
+        char hsch_op = 'h';
+        bool hsch = option.find(hsch_op) != string::npos;
+
+        char time_op = 't';
+        bool time = option.find(time_op) != string::npos;
+        //
+
+
 
         char nsch_op = 'n';
         bool nsch = option.find(nsch_op) != string::npos;
-
 
 
         int site_count = options.site_file_morgan_positions[i].size();
         int parameters_per_site = ( !restrict_site + !(additive || dom0 || dom1) + 1);
         int parameter_count = parameters_per_site * site_count;
 
+        
 
-        vector<bool> is_loci(0);
+        vector<parameter_type> parameter_types(0);
         if(!restrict_site){
-            is_loci.push_back(true);
+            parameter_types.push_back(location);
         }else{
             context.restricted_search_sites.resize(site_count);
             for(int j = 0; j < site_count; j++) {
                 context.restricted_search_sites[j] = options.site_file_morgan_positions[i][j];
             }
+        }
+
+        parameter_types.push_back(selection_coeff);
+        if(!(additive || dom0 || dom1)){
+            if (hsch) {
+                parameter_types.push_back(dominance_coeff);
+            }else{
+                parameter_types.push_back(selection_coeff);
+            }
             
         }
-
-        is_loci.push_back(false);
-        if(!(additive || dom0 || dom1)){
-            is_loci.push_back(false);
-        }
-
 
 
         if(nsch) { //If we have the no search option, then we skip to directly computing the likelihood
@@ -193,13 +204,16 @@ vector<double> selection_opt::examine_sites(){
                 }else if(dom1){
                     cout << sites[j][index] << ",1,1\n";
                     cerr << sites[j][index] << ",1,1\n";
+                }else if(hsch){
+                    cout << (1-sites[j][index]) << ","<< (1-sites[j][index]*sites[j][index+1]) <<",1 or s="<<sites[j][index]<<" h="<<sites[j][index+1]<<"\n";
+                    cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]*sites[j][index+1]) <<",1 or s="<<sites[j][index]<<" h="<<sites[j][index+1]<<"\n";
                 }else{
                     cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
                     cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
                 }
             }
 
-            double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (parameters);
+            double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1, hsch, false) (parameters);
 
             cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
             cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
@@ -221,6 +235,9 @@ vector<double> selection_opt::examine_sites(){
                 singular_starting_parameters.push_back(0);
             }else if (dom0 || dom1){
                 singular_starting_parameters.push_back(1);
+            }else if(hsch){
+                singular_starting_parameters.push_back(0);
+                singular_starting_parameters.push_back(0.5);
             }else{
                 singular_starting_parameters.push_back(1);
                 singular_starting_parameters.push_back(1);
@@ -235,12 +252,13 @@ vector<double> selection_opt::examine_sites(){
 
         optimizer.init_bounds(parameter_count, 0.001);
 
-
+        
         for(int j = 0; j < site_count; j++){
             if(!restrict_site){
                 optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
                 optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
             }
+
 
             if(additive){
                 if(sel0){
@@ -269,24 +287,35 @@ vector<double> selection_opt::examine_sites(){
                 }else{
                     optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
                 }
+            }else if(hsch){
+                if(sel0){
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                }else if(sel1){
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }else{
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                }
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
+                optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + 1] = 1;
             }else{
                 optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
                 optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
             }
         }
-
-
+        
+        
         vector<double> singular_optimized_parameters = multi_level_optimization(
             chrom_size,
             optimizer,
             sites,
             bottle_necks,
-            to_be_optimized_variations(true, restrict_site, additive, dom0, dom1),
-            is_loci,
+            to_be_optimized_variations(true, restrict_site, additive, dom0, dom1, hsch, time),
+            parameter_types,
             parameters_per_site
         );
 
-
+        
         for(int j = 0; j < site_count; j++){
             
             int index = 0;
@@ -312,6 +341,9 @@ vector<double> selection_opt::examine_sites(){
             }else if(dom1){
                 cout << sites[j][index] << ",1,1\n";
                 cerr << sites[j][index] << ",1,1\n";
+            }else if(hsch){
+                cout << (1-sites[j][index]) << ","<< (1-sites[j][index]*sites[j][index+1]) <<",1 or s="<<sites[j][index]<<" h="<<sites[j][index+1]<<"\n";
+                cerr << (1-sites[j][index]) << ","<< (1-sites[j][index]*sites[j][index+1]) <<",1 or s="<<sites[j][index]<<" h="<<sites[j][index+1]<<"\n";
             }else{
                 cout << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
                 cerr << sites[j][index] << ",1," << sites[j][index + 1] << "\n";
@@ -319,10 +351,13 @@ vector<double> selection_opt::examine_sites(){
         }
         
 
-        double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1) (singular_optimized_parameters);
+        double fast_singular_lnl = to_be_optimized_variations(true, restrict_site, additive, dom0, dom1, hsch, time) (singular_optimized_parameters);
         
         cout << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
         cerr << setprecision(15) << "fast lnl ratio:\t" << fast_singular_lnl - context.fast_neutral_lnl<< "\n";
+
+
+        //TODO TODO it should be 1,1-s/2,1-s  not 1-s,1-s/2,1
 
 
 
