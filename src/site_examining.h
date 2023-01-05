@@ -126,7 +126,7 @@ vector<double> selection_opt::examine_sites(){
 
         char time_op = 't';
         bool time = option.find(time_op) != string::npos;
-        //
+        
 
 
 
@@ -136,7 +136,7 @@ vector<double> selection_opt::examine_sites(){
 
         int site_count = options.site_file_morgan_positions[i].size();
         int parameters_per_site = ( !restrict_site + !(additive || dom0 || dom1) + 1);
-        int parameter_count = parameters_per_site * site_count;
+        int parameter_count = parameters_per_site * site_count + time;
 
         
 
@@ -150,6 +150,8 @@ vector<double> selection_opt::examine_sites(){
             }
         }
 
+        
+
         parameter_types.push_back(selection_coeff);
         if(!(additive || dom0 || dom1)){
             if (hsch) {
@@ -159,6 +161,8 @@ vector<double> selection_opt::examine_sites(){
             }
             
         }
+
+        
 
 
         if(nsch) { //If we have the no search option, then we skip to directly computing the likelihood
@@ -176,7 +180,7 @@ vector<double> selection_opt::examine_sites(){
                     parameters.push_back(options.site_file_high_bounds[i][j]);
                 }
             }
-
+            
             vector<vector<double>> sites = parameters_to_sites(parameters, parameters_per_site);
 
             for(int j = 0; j < site_count; j++){
@@ -226,6 +230,10 @@ vector<double> selection_opt::examine_sites(){
         
         vector<double> singular_starting_parameters(0);
 
+        if (time) {
+            singular_starting_parameters.push_back(options.generations);
+        }
+
         for(int j = 0; j < site_count; j++){
             if(!restrict_site){ 
                 singular_starting_parameters.push_back(options.site_file_morgan_positions[i][j]);
@@ -244,77 +252,83 @@ vector<double> selection_opt::examine_sites(){
             }
         }
         
-
-        // single site additive selection testing
-        sites = parameters_to_sites(singular_starting_parameters, parameters_per_site);
-
         
-
         optimizer.init_bounds(parameter_count, 0.001);
 
+        if (time) {
+            optimizer.min_bounds[0] = 1;
+            optimizer.max_bounds[0] = 10000;
+        }
         
         for(int j = 0; j < site_count; j++){
             if(!restrict_site){
-                optimizer.min_bounds[j*parameters_per_site] = options.site_file_low_bounds[i][j];
-                optimizer.max_bounds[j*parameters_per_site] = options.site_file_high_bounds[i][j];
+                optimizer.min_bounds[j*parameters_per_site + time] = options.site_file_low_bounds[i][j];
+                optimizer.max_bounds[j*parameters_per_site + time] = options.site_file_high_bounds[i][j];
             }
 
 
             if(additive){
                 if(sel0){
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
                 }else if(sel1){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else{
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }
             }else if (dom0){
                 if(sel0){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else if(sel1){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else{
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
                 }
             }else if (dom1){
                 if(sel0){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else if(sel1){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else{
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
                 }
             }else if(hsch){
                 if(sel0){
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
                 }else if(sel1){
-                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }else{
-                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site)] = 1;
+                    optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + time] = 1;
                 }
-                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
-                optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + 1] = 1;
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1 + time] = 0;
+                optimizer.max_bounds[j*parameters_per_site + (!restrict_site) + 1 + time] = 1;
             }else{
-                optimizer.min_bounds[j*parameters_per_site + (!restrict_site)] = 0;
-                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1] = 0;
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + time] = 0;
+                optimizer.min_bounds[j*parameters_per_site + (!restrict_site) + 1 + time] = 0;
             }
         }
         
-        
+
         vector<double> singular_optimized_parameters = multi_level_optimization(
             chrom_size,
             optimizer,
-            sites,
+            singular_starting_parameters,
             bottle_necks,
             to_be_optimized_variations(true, restrict_site, additive, dom0, dom1, hsch, time),
             parameter_types,
             parameters_per_site
         );
 
+
+        sites = parameters_to_sites(singular_optimized_parameters, parameters_per_site);
+
+        if(time) {
+            cout << "Time estimated: " << singular_optimized_parameters[0] << "\n";
+            cerr << "Time estimated: " << singular_optimized_parameters[0] << "\n";
+        }
         
         for(int j = 0; j < site_count; j++){
             

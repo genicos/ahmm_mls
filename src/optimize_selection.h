@@ -23,6 +23,7 @@ void selection_opt::set_context() {
     context = *this;
 }
 
+bool searching_time = false;
 
 
 vector<double> get_local_ancestry (vector<mat> neutral_model) {
@@ -133,14 +134,21 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
     if(selected_sites_count > 0){
         
+
         if(context.options.verbose_stderr) {
             cerr << "\nTesting parameters:\n";
+            if (searching_time){
+                cerr << "Time: " << parameters[0] << "\n";
+            }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << "selection site: " << parameters[3*i + 0] << " with fitness: " << parameters[3*i + 1] << ",1," << parameters[3*i + 2] << "\n";
+                cerr << "selection site: " << parameters[3*i + 0 + searching_time] << " with fitness: " << parameters[3*i + 1 + searching_time] << ",1," << parameters[3*i + 2 + searching_time] << "\n";
             }
         }else{
+            if (searching_time){
+                cerr << "Time: " << parameters[0] << "\n";
+            }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << parameters[3*i + 0] << "\t" << parameters[3*i + 1] << "\t" << parameters[3*i + 2] << "\n";
+                cerr << parameters[3*i + 0 + searching_time] << "\t" << parameters[3*i + 1 + searching_time] << "\t" << parameters[3*i + 2 + searching_time] << "\n";
             }
         }
 
@@ -157,11 +165,11 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         vector<Selected_pair> selected_pairs(selected_sites_count);
         for(int i = 0; i < selected_sites_count; i++){
             Selected_pair ss;
-            ss.site = parameters[i*3];
+            ss.site = parameters[i*3 + searching_time];
             ss.fitness.resize(3);
-            ss.fitness[0] = parameters[i*3 + 1];
+            ss.fitness[0] = parameters[i*3 + 1 + searching_time];
             ss.fitness[1] = 1;
-            ss.fitness[2] = parameters[i*3 + 2];
+            ss.fitness[2] = parameters[i*3 + 2 + searching_time];
 
             selected_pairs[i] = ss;
         }
@@ -221,7 +229,7 @@ double compute_lnl(vector<mat> &transition_matrices){
 }
 
 
-bool searching_time = false;
+
 
 
 vector<mat> last_calculated_transition_matricies;
@@ -894,7 +902,7 @@ lnl_function to_be_optimized_variations (bool fast, bool restricted_site, bool a
 
 
 
-
+//sites to parameters cannot account for time parameter
 vector<double> sites_to_parameters(vector<vector<double>> sites, int parameters_per_site = 3){
     if(parameters_per_site == 0){
         parameters_per_site = 3;
@@ -917,7 +925,7 @@ vector<vector<double>> parameters_to_sites(vector<double> parameters, int parame
         vector<double> site(parameters_per_site);
 
         for(int i = 0; i < parameters_per_site; i++){
-            site[i] = parameters[j*parameters_per_site + i];
+            site[i] = parameters[j*parameters_per_site + i + searching_time];
         }
         
         sites[j] = site;
@@ -941,7 +949,7 @@ vector<double> search_sites_fast                 (double chrom_size, nelder_mead
 vector<double> multi_level_optimization(
     double chrom_size,
     nelder_mead &opt,
-    vector<vector<double>> &sites,
+    vector<double> &given_parameters,
     vector<vector<vector<double>>> &bottle_necks,
     double (*to_be_optimized_function) (vector<double>),
     vector<parameter_type> parameter_types,
@@ -962,24 +970,31 @@ vector<double> multi_level_optimization(
                 //}
                 
 
-                vector<double> center_point(sites.size()*parameters_per_site);
-                vector<double> scales(sites.size()*parameters_per_site);
+                vector<double> center_point(given_parameters.size());
+                vector<double> scales(given_parameters.size());
 
-                
-                for(uint i = 0; i < sites.size(); i++){
+                int number_of_sites = (given_parameters.size() - searching_time)/parameters_per_site;
+                if(searching_time){
+                    scales[0] = bottle_necks[j][k][1] * 1000;
+                    center_point[0] = given_parameters[0];
+                }
+
+                for(uint i = 0; i < number_of_sites; i++){
                     for(int h = 0; h < parameters_per_site; h++){
-                        center_point[i*parameters_per_site + h] = sites[i][h];
-                        if(parameter_types[h] == location){
-                            scales[i*parameters_per_site + h] = bottle_necks[j][k][1];
+
+                        center_point[i*parameters_per_site + h + searching_time] = given_parameters[i*parameters_per_site + h + searching_time];
+
+                        if(parameter_types[h] == location) {
+                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][1];
                         }else if(parameter_types[h] == selection_coeff){
-                            scales[i*parameters_per_site + h] = bottle_necks[j][k][2];
+                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][2];
                         }else if(parameter_types[h] == dominance_coeff){
-                            scales[i*parameters_per_site + h] = bottle_necks[j][k][2] * 5;
+                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][2] * 5;
                         }
                     }
                 }
 
-                opt.populate_points(sites.size()*parameters_per_site, 1, center_point, scales);
+                opt.populate_points(given_parameters.size(), 1, center_point, scales);
 
                 
 
@@ -1027,7 +1042,9 @@ vector<double> multi_level_optimization(
                 }
             }
         }
-        sites = parameters_to_sites(best_parameters, parameters_per_site);
+
+        given_parameters = best_parameters;
+
         best_ratio = -DBL_MAX;
     }
 
