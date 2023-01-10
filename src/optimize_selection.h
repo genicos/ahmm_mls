@@ -24,6 +24,7 @@ void selection_opt::set_context() {
 }
 
 bool searching_time = false;
+bool searching_m    = false;
 
 
 vector<double> get_local_ancestry (vector<mat> neutral_model) {
@@ -99,26 +100,6 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
     for( int i = 0; i < data_ancestry.size(); i++){
         data_ancestry[i] /= sample_count;
     }
-
-
-    vector<double> smoothed_data_ancestry(data_ancestry.size());
-    
-    for(int i = 1; i < smoothed_data_ancestry.size() - 1; i++){
-
-        double total = 0;
-        double count = 0;
-        
-        for(int j = i; context.morgan_position[i] - context.morgan_position[j] < 0.001 && j >= 0; j--){
-            total += data_ancestry[j];
-            count ++;
-        }
-        for(int j = i + 1; context.morgan_position[j] - context.morgan_position[i] < 0.001 && j < smoothed_data_ancestry.size(); j++){
-            total += data_ancestry[j];
-            count ++;
-        }
-        
-        smoothed_data_ancestry[i] = total/count;
-    }
     
     return data_ancestry;
 }
@@ -140,15 +121,21 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
             if (searching_time){
                 cerr << "Time: " << parameters[0] << "\n";
             }
+            if (searching_m){
+                cerr << "m:    " << parameters[searching_time] << "\n";
+            }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << "selection site: " << parameters[3*i + 0 + searching_time] << " with fitness: " << parameters[3*i + 1 + searching_time] << ",1," << parameters[3*i + 2 + searching_time] << "\n";
+                cerr << "selection site: " << parameters[3*i + 0 + searching_time + searching_m] << " with fitness: " << parameters[3*i + 1 + searching_time + searching_m] << ",1," << parameters[3*i + 2 + searching_time + searching_m] << "\n";
             }
         }else{
             if (searching_time){
                 cerr << "Time: " << parameters[0] << "\n";
             }
+            if (searching_m){
+                cerr << "m:    " << parameters[searching_time] << "\n";
+            }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << parameters[3*i + 0 + searching_time] << "\t" << parameters[3*i + 1 + searching_time] << "\t" << parameters[3*i + 2 + searching_time] << "\n";
+                cerr << parameters[3*i + 0 + searching_time + searching_m] << "\t" << parameters[3*i + 1 + searching_time + searching_m] << "\t" << parameters[3*i + 2 + searching_time + searching_m] << "\n";
             }
         }
 
@@ -165,11 +152,11 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         vector<Selected_pair> selected_pairs(selected_sites_count);
         for(int i = 0; i < selected_sites_count; i++){
             Selected_pair ss;
-            ss.site = parameters[i*3 + searching_time];
+            ss.site = parameters[i*3 + searching_time + searching_m];
             ss.fitness.resize(3);
-            ss.fitness[0] = parameters[i*3 + 1 + searching_time];
+            ss.fitness[0] = parameters[i*3 + 1 + searching_time + searching_m];
             ss.fitness[1] = 1;
-            ss.fitness[2] = parameters[i*3 + 2 + searching_time];
+            ss.fitness[2] = parameters[i*3 + 2 + searching_time + searching_m];
 
             selected_pairs[i] = ss;
         }
@@ -250,19 +237,20 @@ double to_be_optimized (vector<double> parameters) {
         cores = 1;
 
     int generations = (searching_time) ? (int)parameters[0] : context.options.generations;
+    double m = (searching_m) ? parameters[searching_time] : context.options.m;
 
     vector<mat> transition_matrices = calculate_transition_rates(
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
-        context.options.m,
+        m,
         generations,
         cores
     );
     
-    //if(parameters.size() == 0){
-        last_calculated_transition_matricies = transition_matrices;
-    //}
+    
+    last_calculated_transition_matricies = transition_matrices;
+    
     
     
     double lnl = compute_lnl(transition_matrices);
@@ -299,12 +287,13 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
         cores = 1;
 
     int generations = (searching_time) ? (int)parameters[0] : context.options.generations;
+    double m = (searching_m) ? parameters[searching_time] : context.options.m;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
-        context.options.m,
+        m,
         generations,
         cores,
         context.options.fast_transitions_radius_in_morgans
@@ -348,12 +337,15 @@ double to_be_optimized_pop0_dominant(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         new_parameters.push_back(parameters[i]);
-        if((i-searching_time) % 2 == 0){
+        if((i-start) % 2 == 0){
             new_parameters.push_back(1);
         }
     }
@@ -372,12 +364,15 @@ double to_be_optimized_pop1_dominant(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         new_parameters.push_back(parameters[i]);
-        if((i-searching_time) % 2 == 1){
+        if((i-start) % 2 == 1){
             new_parameters.push_back(1);
         }
     }
@@ -396,8 +391,11 @@ double to_be_optimized_additive(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
     
     for(; i < parameters.size(); i+=2) {
         new_parameters.push_back(parameters[i]);
@@ -420,8 +418,13 @@ double to_be_optimized_h(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
-    int selected_sites_count = parameters.size() / 3;
+    
     for(; i < parameters.size(); i+=3){
         new_parameters.push_back(parameters[i]);
         new_parameters.push_back((1-parameters[i+1])/(1-parameters[i+1]*parameters[i+2]));
@@ -448,12 +451,15 @@ double to_be_optimized_pop0_dominant_fast(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         new_parameters.push_back(parameters[i]);
-        if((i-searching_time) % 2 == 0){
+        if((i-start) % 2 == 0){
             new_parameters.push_back(1);
         }
     }
@@ -472,12 +478,15 @@ double to_be_optimized_pop1_dominant_fast(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         new_parameters.push_back(parameters[i]);
-        if((i-searching_time) % 2 == 1){
+        if((i-start) % 2 == 1){
             new_parameters.push_back(1);
         }
     }
@@ -497,8 +506,10 @@ double to_be_optimized_additive_fast(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 2;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
 
     for(; i < parameters.size(); i+=2){
         new_parameters.push_back(parameters[i]);
@@ -521,8 +532,10 @@ double to_be_optimized_h_fast(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
-
-    int selected_sites_count = parameters.size() / 3;
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
 
     for(; i < parameters.size(); i+=3){
         new_parameters.push_back(parameters[i]);
@@ -547,12 +560,17 @@ double to_be_optimized_restricted(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size()/2; i++){
         
-        new_parameters.push_back(context.restricted_search_sites[i - searching_time]);
-        new_parameters.push_back(parameters[(i-searching_time)*2 + 0 + searching_time]);
-        new_parameters.push_back(parameters[(i-searching_time)*2 + 1 + searching_time]);
+        new_parameters.push_back(context.restricted_search_sites[i - start]);
+        new_parameters.push_back(parameters[(i-start)*2 + 0 + start]);
+        new_parameters.push_back(parameters[(i-start)*2 + 1 + start]);
         
     }
 
@@ -570,12 +588,17 @@ double to_be_optimized_restricted_fast(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size()/2; i++){
         
-        new_parameters.push_back(context.restricted_search_sites[i - searching_time]);
-        new_parameters.push_back(parameters[(i-searching_time)*2 + 0 + searching_time]);
-        new_parameters.push_back(parameters[(i-searching_time)*2 + 1 + searching_time]);
+        new_parameters.push_back(context.restricted_search_sites[i - start]);
+        new_parameters.push_back(parameters[(i-start)*2 + 0 + start]);
+        new_parameters.push_back(parameters[(i-start)*2 + 1 + start]);
         
     }
 
@@ -603,10 +626,15 @@ double to_be_optimized_restricted_additive(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         
-        new_parameters.push_back(context.restricted_search_sites[i - searching_time]);
+        new_parameters.push_back(context.restricted_search_sites[i - start]);
         new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
         new_parameters.push_back(1/(1-parameters[i]/2));
         
@@ -626,10 +654,15 @@ double to_be_optimized_restricted_additive_fast(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i++){
         
-        new_parameters.push_back(context.restricted_search_sites[i - searching_time]);
+        new_parameters.push_back(context.restricted_search_sites[i - start]);
         new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
         new_parameters.push_back(1/(1-parameters[i]/2));
         
@@ -650,9 +683,15 @@ double to_be_optimized_restricted_h(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
+    
 
     for(; i < parameters.size(); i+=2){
-        new_parameters.push_back(context.restricted_search_sites[i/2]);
+        new_parameters.push_back(context.restricted_search_sites[(i-start)/2]);
         new_parameters.push_back((1-parameters[i])/(1-parameters[i]*parameters[i+1]));
         new_parameters.push_back(1/(1-parameters[i]*parameters[i+1]));   
     }
@@ -670,9 +709,14 @@ double to_be_optimized_restricted_h_fast(vector<double> parameters) {
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
+    int start = searching_time + searching_m;
 
     for(; i < parameters.size(); i+=2){
-        new_parameters.push_back(context.restricted_search_sites[i/2]);
+        new_parameters.push_back(context.restricted_search_sites[(i - start)/2]);
         new_parameters.push_back((1-parameters[i])/(1-parameters[i]*parameters[i+1]));
         new_parameters.push_back(1/(1-parameters[i]*parameters[i+1]));   
     }
@@ -697,6 +741,10 @@ double to_be_optimized_restricted_dom0(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
 
     for(; i < parameters.size(); i++){
         
@@ -718,6 +766,10 @@ double to_be_optimized_restricted_dom0_fast(vector<double> parameters) {
 
     if(searching_time){
         new_parameters.push_back(parameters[0]); 
+        i++;
+    }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
         i++;
     }
 
@@ -747,6 +799,10 @@ double to_be_optimized_restricted_dom1(vector<double> parameters){
         new_parameters.push_back(parameters[0]); 
         i++;
     }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
+        i++;
+    }
 
     for(; i < parameters.size(); i++){
         
@@ -768,6 +824,10 @@ double to_be_optimized_restricted_dom1_fast(vector<double> parameters) {
 
     if(searching_time){
         new_parameters.push_back(parameters[0]); 
+        i++;
+    }
+    if(searching_m){
+        new_parameters.push_back(parameters[searching_time]); 
         i++;
     }
 
@@ -816,9 +876,10 @@ double to_be_optimized_restricted_dom1_fast(vector<double> parameters) {
 typedef double (*lnl_function)(vector<double> parameters);
 
 
-lnl_function to_be_optimized_variations (bool fast, bool restricted_site, bool additive, bool dom0, bool dom1, bool search_h, bool time) {
+lnl_function to_be_optimized_variations (bool fast, bool restricted_site, bool additive, bool dom0, bool dom1, bool search_h, bool time, bool mixf) {
 
     searching_time = time;
+    searching_m    = mixf;
 
     if(restricted_site){
         if(fast){
@@ -925,7 +986,7 @@ vector<vector<double>> parameters_to_sites(vector<double> parameters, int parame
         vector<double> site(parameters_per_site);
 
         for(int i = 0; i < parameters_per_site; i++){
-            site[i] = parameters[j*parameters_per_site + i + searching_time];
+            site[i] = parameters[j*parameters_per_site + i + searching_time + searching_m];
         }
         
         sites[j] = site;
@@ -973,23 +1034,27 @@ vector<double> multi_level_optimization(
                 vector<double> center_point(given_parameters.size());
                 vector<double> scales(given_parameters.size());
 
-                int number_of_sites = (given_parameters.size() - searching_time)/parameters_per_site;
+                int number_of_sites = (given_parameters.size() - searching_time - searching_m)/parameters_per_site;
                 if(searching_time){
                     scales[0] = bottle_necks[j][k][1] * 1000;
                     center_point[0] = given_parameters[0];
+                }
+                if(searching_m){
+                    scales[searching_time] = bottle_necks[j][k][2];
+                    center_point[searching_time] = given_parameters[searching_time];
                 }
 
                 for(uint i = 0; i < number_of_sites; i++){
                     for(int h = 0; h < parameters_per_site; h++){
 
-                        center_point[i*parameters_per_site + h + searching_time] = given_parameters[i*parameters_per_site + h + searching_time];
+                        center_point[i*parameters_per_site + h + searching_time + searching_m] = given_parameters[i*parameters_per_site + h + searching_time + searching_m];
 
                         if(parameter_types[h] == location) {
-                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][1];
+                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][1];
                         }else if(parameter_types[h] == selection_coeff){
-                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][2];
+                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][2];
                         }else if(parameter_types[h] == dominance_coeff){
-                            scales[i*parameters_per_site + h + searching_time] = bottle_necks[j][k][2] * 5;
+                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][2] * 5;
                         }
                     }
                 }

@@ -79,8 +79,6 @@ public:
     // given generations
     int generations;
     
-    //learned generations
-    int generations_parameter;
 
     
 

@@ -177,7 +177,7 @@ void selection_opt::uninformed_inference(){
     };
 
     cerr << "STARING CALCULATION\n";
-    double full_lnl = to_be_optimized_variations(false, false, true, false, false, false, false) (accepted_model);
+    double full_lnl = to_be_optimized_variations(false, false, true, false, false, false, false, false) (accepted_model);
 
     cerr << "lnl:" << full_lnl-neutral_lnl << "\n";
     cout << "lnl:" << full_lnl-neutral_lnl << "\n";
