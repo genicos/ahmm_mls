@@ -15,6 +15,7 @@
 
 #define EPSILON 0.0000001
 
+#include <sys/time.h>
 
 using namespace arma;
 using namespace std;

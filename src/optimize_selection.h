@@ -3,10 +3,10 @@
 #include <vector>
 #include <math.h>
 
-enum parameter_type {location, selection_coeff, dominance_coeff, time_since_admix};
+enum parameter_type {location, selection_coeff, dominance_coeff};
 
 #include <time.h>
-#include <sys/time.h>
+
 double get_wall_time() {
     struct timeval time;
     if (gettimeofday(&time,NULL)){
