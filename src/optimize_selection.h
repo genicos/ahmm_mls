@@ -448,7 +448,7 @@ double to_be_optimized_pop0_dominant_fast(vector<double> parameters){
     int i = 0;
 
     if(searching_time){
-        new_parameters.push_back(parameters[0]); 
+        new_parameters.push_back(parameters[0]);
         i++;
     }
     if(searching_m){
