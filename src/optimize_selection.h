@@ -89,7 +89,7 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
             //TODO generalize ploidy here
             /*
             data_ancestry[i] += smoothed_probs[0];
-            for(int i = 1; i < smoothed_probs.size() - 1; i++){
+            for(int i = 1; i < smoothed_probs.size() - 1; i++) {
                 data_ancestry[i] += smoothed_probs[i] * (smoothed_probs.size() - i)/(smoothed_probs.size() - 1);
             }
             */
@@ -199,6 +199,7 @@ double compute_lnl(vector<mat> &transition_matrices){
         for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
             alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs, context.position, context.markov_chain_information[m].ploidy_switch[p], transition_matrices ) ;
         }
+
     }
     
     
@@ -209,6 +210,7 @@ double compute_lnl(vector<mat> &transition_matrices){
     
     // Sum up log likelihoods for each panel
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        
         lnl += context.markov_chain_information[m].compute_lnl( transition_matrix, interploidy_transitions) ;
     }
     

@@ -124,6 +124,14 @@ void selection_read_file ( cmd_line &options, vector<markov_chain> &markov_chain
             for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
                 vec emissions ;
                 create_emissions_matrix( markov_chain_information[m].sample_ploidy_path[path_index[m]].ploidy, new_line, options.ancestral_fixed, state_list[markov_chain_information.at(m).sample_ploidy_path[path_index[m]].ploidy], m, options.ancestry_pulses, emissions ) ;
+
+                for ( int i = 0 ; i < emissions.size() ; i ++ ) {
+                    if ( emissions(i) == 0 ) {
+                        emissions(i) = 1.17549e-38 ;
+                    }
+                }
+    
+
                 markov_chain_information[m].emission_probabilities.push_back( emissions ) ;
             }
         }
@@ -133,6 +141,13 @@ void selection_read_file ( cmd_line &options, vector<markov_chain> &markov_chain
             for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
                 vec emissions ;
                 create_emissions_matrix_genotype( markov_chain_information[m].sample_ploidy_path[path_index[m]].ploidy, new_line, options.ancestral_fixed, state_list[markov_chain_information.at(m).sample_ploidy_path[path_index[m]].ploidy], m, options.ancestry_pulses, emissions ) ;
+
+                for ( int i = 0 ; i < emissions.size() ; i ++ ) {
+                    if ( emissions(i) == 0 ) {
+                        emissions(i) = 1.17549e-38 ;
+                    }
+                }
+
                 markov_chain_information[m].emission_probabilities.push_back( emissions ) ;
             }
         }

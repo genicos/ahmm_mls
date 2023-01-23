@@ -150,6 +150,7 @@ double markov_chain::compute_lnl( map<int, vector<mat> > &transition_probabilite
     
     /// get initial state set
     alphas[0] = emission_probabilities[0] * start_prob ;
+    
     lnl += normalize( alphas[0] ) ;
 
     /// do all other sites
@@ -157,7 +158,7 @@ double markov_chain::compute_lnl( map<int, vector<mat> > &transition_probabilite
         
         /// if we're at or past the next switch position
         bool ploidy_change = false ;
-        if ( i >= ploidy_switch_position[ploidy_index+1] ) {
+        if ( i >= ploidy_switch_position[ploidy_index + 1] ) {
             ploidy_index ++ ;
             if ( ploidy_switch[ploidy_index] != ploidy_switch[ploidy_index-1] ) {
                 ploidy_change = true ;
@@ -188,6 +189,8 @@ double markov_chain::compute_lnl( map<int, vector<mat> > &transition_probabilite
             alphas[i] = transition_probabilites[ploidy_switch[ploidy_index]][i] * alphas[i-1] % emission_probabilities[i] ;
         }
         /// normalize and updated likelihood
+
+
         lnl += normalize( alphas[i] ) ;
     }
     
