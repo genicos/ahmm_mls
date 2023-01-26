@@ -77,67 +77,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
             }
 
         }   
-        /*
-        string option;
-        if (!( iss >> option )) { break; }
-        searches.push_back(option);
-
-
-        double entry;
-
-        while ( iss >> entry ) {
-
-            loci.push_back(entry);
-
-            if (!( iss >> option )) { 
-                low_bounds.push_back(0);
-                high_bounds.push_back(DBL_MAX);
-                break;
-            }
-
-            //check if option is a double
-            auto result = double();
-            auto i = std::istringstream(option);
-            i >> result;
-
-            
-            
-            if (!i.fail() && i.eof()) {
-                // if it is a double, its the bounds
-
-
-                double low_bound = stod(option);
-                low_bounds.push_back(low_bound);
-
-                
-                string next_entry;
-                if (!( iss >> next_entry )) { break; }
-                result = double();
-                i = std::istringstream(next_entry);
-                i >> result;
-
-                if (!i.fail() && i.eof()) {
-
-                    double high_bound = stod(next_entry);
-                    high_bounds.push_back(high_bound);
-
-                } else {
-                    high_bounds.push_back(DBL_MAX);
-                    searches.push_back(next_entry);
-                }
-
-
-            }else{
-                //if option is not the double, its the next option
-                low_bounds.push_back(0);
-                high_bounds.push_back(DBL_MAX);
-
-                searches.push_back(option);
-            }
-
-            
-        }
-        */
+        
 
         
         

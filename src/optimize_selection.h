@@ -318,9 +318,86 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
 
 
-/*
-double to_be_optimized_general();
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+Search global_search;
+
+
+void setup_searches(Search this_search) {
+    global_search = this_search;
+}
+
+vector<double> convert_parameters_to_long_form(vector<double> parameters) {
+    vector<double> new_params(0);
+
+    int i = 0;
+    if (global_search.search_m){
+        global_search.start_m = parameters[i++];
+    }
+
+    if(global_search.search_t){
+        global_search.start_t = parameters[i++];
+    }
+
+    for(int j = 0; j < global_seach.search_l.size(); j++){
+        if(global_search.search_l[j]) {
+            new_params.push_back(parameters[i++]);
+        }else{
+            new_params.push_back(global_search.start_l[j]);
+        }
+
+        bool h_and_s = true; // Not all fitnesses can be expressed in terms of h and s
+        double h = 0;
+        double s = 0;
+
+        if(global_search.search_h[j]){
+            h = parameters[i++];
+        }else{
+            h = global_search.start_h[j];
+        }
+
+        if(global_search.search_s[j]){
+            s = parameters[i++];
+        }else{
+            s = global_search.start_s[j];
+        }
+
+        if(h_and_s){
+            new_params.push_back(1 / (1 - h * s));
+            new_params.push_back(1 - s);
+        }
+    }
+
+    return new_params;
+}
+
+double general_to_be_optimized(vector<double> parameters){
+    parameters = convert_parameters_to_long_form(parameters);
+
+    return to_be_optimized(parameters);
+}
+
+double general_to_be_optimized_fast(vector<double> parameters){
+    parameters = convert_parameters_to_long_form(parameters);
+
+    return to_be_optimized_only_near_sites(parameters);
+}
+
+
+
+
+
+
 
 
 

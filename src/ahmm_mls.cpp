@@ -44,6 +44,7 @@ using namespace arma ;
 #include "viterbi.h" 
 #include "transition_information.h"
 #include "exponentiate_matrix.h"
+#include "searches.h"
 #include "cmd_line.h"
 #include "create_transition_rates.h"
 #include "read_cmd_line.h"
@@ -53,14 +54,14 @@ using namespace arma ;
 #include "create_pulses.h" 
 #include "create_states.h"
 #include "input_line.h"
-#include "distribute_alleles.h" 
+#include "distribute_alleles.h"
 #include "binomial.h"
 #include "read_emissions.h"
 #include "genotype_emissions.h"
 #include "read_input.h"
 #include "nelder_mead.h"
 #include "golden_search.h"
-#include "bootstrap.h" 
+#include "bootstrap.h"
 #include <iomanip>
 
 #include "selection_optimization_context.h"
@@ -72,6 +73,7 @@ using namespace arma ;
 
 
 #include "read_sites.h"
+#include "read_config.h"
 #include "grid_search.h"
 #include "site_examining.h"
 
@@ -182,7 +184,8 @@ int main ( int argc, char *argv[] ) {
     
     
     if(options.use_site_file){
-        read_site_file(options, recombination_rate, position);
+        //read_site_file(options, recombination_rate, position);
+        read_config_file(options, recombination_rate, position);
 
         selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
         

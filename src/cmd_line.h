@@ -98,6 +98,9 @@ public:
     vector<vector<double>> site_file_low_bounds;
     vector<vector<double>> site_file_high_bounds;
 
+    vector<Search> mls_searches;
+
+
     
     // calculate likelihoods for models
     bool use_model_file = false;
