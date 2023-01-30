@@ -3,6 +3,8 @@
 
 class Search{
 public:
+    string search_string;
+    
     bool search_m;
     double start_m;
 

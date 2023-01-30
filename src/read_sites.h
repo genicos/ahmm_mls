@@ -152,7 +152,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
                     //Converting high bounds to morgan postion, 
                     //if I cant find the bp position, leave it as is
                     j = 0;
-                    for(; j < positions.size(); j++){
+                    for(; j < positions.size(); j++) {
                         if (positions[j] >= options.site_file_high_bounds[i][k]) {
                             options.site_file_high_bounds[i][k] = morgan_position[j];
                             break;
@@ -161,7 +161,7 @@ void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int
                 }
             }
 
-        }else{
+        } else {
             options.site_file_morgan_positions[i] = options.site_file_positions[i];
         }
 

@@ -74,8 +74,7 @@ using namespace arma ;
 
 #include "read_sites.h"
 #include "read_config.h"
-#include "grid_search.h"
-#include "site_examining.h"
+#include "examine_models.h"
 
 #include "read_model_file.h"
 #include "model_examining.h"
@@ -189,7 +188,8 @@ int main ( int argc, char *argv[] ) {
 
         selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
         
-        selection_optimizer.examine_sites();
+        selection_optimizer.examine_models();
+        //selection_optimizer.examine_sites();
     }
 
 

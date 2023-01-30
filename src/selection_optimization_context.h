@@ -45,6 +45,8 @@ public:
 
     vector<double> examine_sites();
 
+    void examine_models();
+
     
     vector<double> grid_search(vector<double> center_point, double width, double height, int x_ticks, int y_ticks);
     vector<double> grid_search_additive(vector<double> center_point, double width, double height, int x_point_sep, int y_point_sep);

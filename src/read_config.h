@@ -34,6 +34,8 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
 
         Search this_line;
 
+        this_line.search_string = line;
+
         int morgan_or_bp_choice; //morgan:1   bp:0
         if (!( iss >> morgan_or_bp_choice )) { error_string(); }
         morgan_or_bp.push_back(morgan_or_bp_choice);
@@ -223,7 +225,9 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
         }
     }
 
-    exit(0);
+    options.mls_searches = config_searches;
+
+    //exit(0);
 }
 //s start is not present
 #endif

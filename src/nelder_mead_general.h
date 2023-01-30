@@ -252,7 +252,7 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
     }
     
     
-    // meta optimizing transformed point
+    // meta optimizing transformed point TODO REMOVE METAOPTS
     if (ground_truth.size() > 0){
         
         best_reflections.push_back( -meta_optimize(best_centroid, points[min_index]) );

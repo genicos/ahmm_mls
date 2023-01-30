@@ -3,7 +3,7 @@
 #include <vector>
 #include <math.h>
 
-enum parameter_type {location, selection_coeff, dominance_coeff};
+enum parameter_type {admix_frac, time_since_admix, location, dominance_coeff, selection_coeff};
 
 #include <time.h>
 
@@ -25,6 +25,8 @@ void selection_opt::set_context() {
 
 bool searching_time = false;
 bool searching_m    = false;
+
+Search global_search;
 
 
 vector<double> get_local_ancestry (vector<mat> neutral_model) {
@@ -109,33 +111,33 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
 
 void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses){
 
-    int selected_sites_count = parameters.size()/3;
+    int selected_sites_count = parameters.size() / 3;
     selection_recomb_rates.resize(selected_sites_count + 1);
     fitnesses.resize(selected_sites_count);
-
-    if(selected_sites_count > 0){
+    
+    if(parameters.size() > 0){
         
 
         if(context.options.verbose_stderr) {
             cerr << "\nTesting parameters:\n";
-            if (searching_time){
-                cerr << "Time: " << parameters[0] << "\n";
+            if (global_search.search_m) {
+                cerr << "m: " << parameters[0] << "\n";
             }
-            if (searching_m){
-                cerr << "m:    " << parameters[searching_time] << "\n";
+            if (global_search.search_t) {
+                cerr << "time:    " << parameters[global_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << "selection site: " << parameters[3*i + 0 + searching_time + searching_m] << " with fitness: " << parameters[3*i + 1 + searching_time + searching_m] << ",1," << parameters[3*i + 2 + searching_time + searching_m] << "\n";
+                cerr << "selection site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with fitness: " << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << ",1," << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
             }
         }else{
-            if (searching_time){
-                cerr << "Time: " << parameters[0] << "\n";
+            if (searching_time) {
+                cerr << "m: " << parameters[0] << "\n";
             }
-            if (searching_m){
-                cerr << "m:    " << parameters[searching_time] << "\n";
+            if (searching_m) {
+                cerr << "time:    " << parameters[global_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << parameters[3*i + 0 + searching_time + searching_m] << "\t" << parameters[3*i + 1 + searching_time + searching_m] << "\t" << parameters[3*i + 2 + searching_time + searching_m] << "\n";
+                cerr << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
             }
         }
 
@@ -152,11 +154,11 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         vector<Selected_pair> selected_pairs(selected_sites_count);
         for(int i = 0; i < selected_sites_count; i++){
             Selected_pair ss;
-            ss.site = parameters[i*3 + searching_time + searching_m];
+            ss.site = parameters[i*3 + global_search.search_m + global_search.search_t];
             ss.fitness.resize(3);
-            ss.fitness[0] = parameters[i*3 + 1 + searching_time + searching_m];
+            ss.fitness[0] = parameters[i*3 + 1 + global_search.search_m + global_search.search_t];
             ss.fitness[1] = 1;
-            ss.fitness[2] = parameters[i*3 + 2 + searching_time + searching_m];
+            ss.fitness[2] = parameters[i*3 + 2 + global_search.search_m + global_search.search_t];
 
             selected_pairs[i] = ss;
         }
@@ -165,6 +167,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         sort(selected_pairs.begin(), selected_pairs.end());         //
         //////////////////////////////////////////////////////////////
 
+        selection_recomb_rates[0] = 1;
 
         double last = 0;
         for (uint i = 0; i < selected_pairs.size(); i++){
@@ -235,13 +238,10 @@ double to_be_optimized (vector<double> parameters) {
 
     int cores = context.options.cores;
 
-    if(context.options.use_model_file) // TODO mayhaps delete this
-        cores = 1;
+    double m        = (global_search.search_m) ?      parameters[0] : context.options.m;
+    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : context.options.generations;
 
-    int generations = (searching_time) ? (int)parameters[0] : context.options.generations;
-    double m = (searching_m) ? parameters[searching_time] : context.options.m;
-
-    vector<mat> transition_matrices = calculate_transition_rates(
+    vector<mat> transition_matrices = calculate_transition_rates (
         context.n_recombs,
         selection_recomb_rates,
         fitnesses,
@@ -250,10 +250,7 @@ double to_be_optimized (vector<double> parameters) {
         cores
     );
     
-    
     last_calculated_transition_matricies = transition_matrices;
-    
-    
     
     double lnl = compute_lnl(transition_matrices);
 
@@ -288,8 +285,9 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     if(context.options.use_model_file) // TODO, chnage how cores affects model files
         cores = 1;
 
-    int generations = (searching_time) ? (int)parameters[0] : context.options.generations;
-    double m = (searching_m) ? parameters[searching_time] : context.options.m;
+    
+    double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
+    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
         context.n_recombs,
@@ -305,10 +303,10 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
     
 
     if(context.options.verbose_stderr) {
-        cerr << "lnl ratio = " << setprecision(15) << lnl - context.fast_neutral_lnl<< "\n";
+        cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
         cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
     }else{
-        cerr << "lnl ratio\t" << setprecision(15) << lnl - context.fast_neutral_lnl<< "\n";
+        cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
     }
     
     return lnl;
@@ -326,13 +324,6 @@ double to_be_optimized_only_near_sites(vector<double> parameters) {
 
 
 
-
-
-
-
-Search global_search;
-
-
 void setup_searches(Search this_search) {
     global_search = this_search;
 }
@@ -341,15 +332,16 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
     vector<double> new_params(0);
 
     int i = 0;
-    if (global_search.search_m){
-        global_search.start_m = parameters[i++];
+    if (global_search.search_m) {
+        new_params.push_back(parameters[i++]);
     }
 
-    if(global_search.search_t){
-        global_search.start_t = parameters[i++];
+    if(global_search.search_t) {
+        new_params.push_back(parameters[i++]);
     }
 
-    for(int j = 0; j < global_seach.search_l.size(); j++){
+    for(int j = 0; j < global_search.search_l.size(); j++) {
+
         if(global_search.search_l[j]) {
             new_params.push_back(parameters[i++]);
         }else{
@@ -374,9 +366,10 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
 
         if(h_and_s){
             new_params.push_back(1 / (1 - h * s));
-            new_params.push_back(1 - s);
+            new_params.push_back((1 - s) / (1 - h * s));
         }
     }
+
 
     return new_params;
 }
@@ -403,697 +396,13 @@ double general_to_be_optimized_fast(vector<double> parameters){
 
 
 
-
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], 1, p[1])
-double to_be_optimized_pop0_dominant(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        new_parameters.push_back(parameters[i]);
-        if((i-start) % 2 == 0){
-            new_parameters.push_back(1);
-        }
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], p[1], 1)
-double to_be_optimized_pop1_dominant(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        new_parameters.push_back(parameters[i]);
-        if((i-start) % 2 == 1){
-            new_parameters.push_back(1);
-        }
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], (1-p[1])/(1-p[1]/2), 1/(1-p[1]/2))
-double to_be_optimized_additive(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-    
-    for(; i < parameters.size(); i+=2) {
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back((1-parameters[i+1])/(1-parameters[i+1]/2));
-        new_parameters.push_back(1/(1-parameters[i+1]/2));
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-
-//each site is three parameters,p[0] p[1] p[2], which translates to (p[0], (1-p[1])/(1-p[1]*p[2]), 1/(1-p[1]*p[2]))
-double to_be_optimized_h(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    
-    for(; i < parameters.size(); i+=3){
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back((1-parameters[i+1])/(1-parameters[i+1]*parameters[i+2]));
-        new_parameters.push_back(1/(1-parameters[i+1]*parameters[i+2]));   
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-
-
-
-
-
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], 1, p[1])
-double to_be_optimized_pop0_dominant_fast(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]);
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        new_parameters.push_back(parameters[i]);
-        if((i-start) % 2 == 0){
-            new_parameters.push_back(1);
-        }
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], p[1], 1)
-double to_be_optimized_pop1_dominant_fast(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        new_parameters.push_back(parameters[i]);
-        if((i-start) % 2 == 1){
-            new_parameters.push_back(1);
-        }
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-//each site is two parameters,p[0] p[1], which translates to (p[0], (1-p[1])/(1-p[1]/2), 1/(1-p[1]/2))
-double to_be_optimized_additive_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i+=2){
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back((1-parameters[i+1])/(1-parameters[i+1]/2));
-        new_parameters.push_back(1/(1-parameters[i+1]/2));
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-//each site is three parameters,p[0] p[1] p[2], which translates to (p[0], (1-p[1])/(1-p[1]*p[2]), 1/(1-p[1]*p[2]))
-double to_be_optimized_h_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i+=3){
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back((1-parameters[i+1])/(1-parameters[i+1]*parameters[i+2]));
-        new_parameters.push_back(1/(1-parameters[i+1]*parameters[i+2]));   
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-
-
-double to_be_optimized_restricted(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size()/2; i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i - start]);
-        new_parameters.push_back(parameters[(i-start)*2 + 0 + start]);
-        new_parameters.push_back(parameters[(i-start)*2 + 1 + start]);
-        
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-
-double to_be_optimized_restricted_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size()/2; i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i - start]);
-        new_parameters.push_back(parameters[(i-start)*2 + 0 + start]);
-        new_parameters.push_back(parameters[(i-start)*2 + 1 + start]);
-        
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-double to_be_optimized_restricted_additive(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i - start]);
-        new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
-        new_parameters.push_back(1/(1-parameters[i]/2));
-        
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-//each site is one parameters,p[0] which translates to (NA, (1-p[0])/(1-p[0]/2), 1/(1-p[0]/2))
-double to_be_optimized_restricted_additive_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i - start]);
-        new_parameters.push_back((1-parameters[i])/(1-parameters[i]/2));
-        new_parameters.push_back(1/(1-parameters[i]/2));
-        
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-double to_be_optimized_restricted_h(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-    
-
-    for(; i < parameters.size(); i+=2){
-        new_parameters.push_back(context.restricted_search_sites[(i-start)/2]);
-        new_parameters.push_back((1-parameters[i])/(1-parameters[i]*parameters[i+1]));
-        new_parameters.push_back(1/(1-parameters[i]*parameters[i+1]));   
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-double to_be_optimized_restricted_h_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-    int start = searching_time + searching_m;
-
-    for(; i < parameters.size(); i+=2){
-        new_parameters.push_back(context.restricted_search_sites[(i - start)/2]);
-        new_parameters.push_back((1-parameters[i])/(1-parameters[i]*parameters[i+1]));
-        new_parameters.push_back(1/(1-parameters[i]*parameters[i+1]));   
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-
-
-
-
-// (p[0]) => (NA, 1, p[0])
-double to_be_optimized_restricted_dom0(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i]);
-        new_parameters.push_back(1);
-        new_parameters.push_back(parameters[i]);
-        
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-
-double to_be_optimized_restricted_dom0_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i]);
-        new_parameters.push_back(1);
-        new_parameters.push_back(parameters[i]);
-        
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-
-
-// (p[0]) => (NA, p[0], 1)
-double to_be_optimized_restricted_dom1(vector<double> parameters){
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i]);
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back(1);
-        
-    }
-
-    return to_be_optimized(new_parameters);
-}
-
-
-double to_be_optimized_restricted_dom1_fast(vector<double> parameters) {
-
-    vector<double> new_parameters;
-
-    int i = 0;
-
-    if(searching_time){
-        new_parameters.push_back(parameters[0]); 
-        i++;
-    }
-    if(searching_m){
-        new_parameters.push_back(parameters[searching_time]); 
-        i++;
-    }
-
-    for(; i < parameters.size(); i++){
-        
-        new_parameters.push_back(context.restricted_search_sites[i]);
-        new_parameters.push_back(parameters[i]);
-        new_parameters.push_back(1);
-        
-    }
-
-    return to_be_optimized_only_near_sites(new_parameters);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-typedef double (*lnl_function)(vector<double> parameters);
-
-
-lnl_function to_be_optimized_variations (bool fast, bool restricted_site, bool additive, bool dom0, bool dom1, bool search_h, bool time, bool mixf) {
-
-    searching_time = time;
-    searching_m    = mixf;
-
-    if(restricted_site){
-        if(fast){
-            if(additive){
-                return &to_be_optimized_restricted_additive_fast;
-            }else if(dom0){
-                return &to_be_optimized_restricted_dom0_fast;
-            }else if(dom1){
-                return &to_be_optimized_restricted_dom1_fast;
-            }else if(search_h){
-                return &to_be_optimized_restricted_h_fast;
-            }else{
-                return &to_be_optimized_restricted_fast;
-            }
-        }else{
-            if(additive){
-                return &to_be_optimized_restricted_additive;
-            }else if(dom0){
-                return &to_be_optimized_restricted_dom0;
-            }else if(dom1){
-                return &to_be_optimized_restricted_dom1;
-            }else if(search_h){
-                return &to_be_optimized_restricted_h;
-            }else{
-                return &to_be_optimized_restricted;
-            }
-        }
-    }else{
-        if(fast){
-            if(additive){
-                return &to_be_optimized_additive_fast;
-            }else if(dom0){
-                return &to_be_optimized_pop0_dominant_fast;
-            }else if(dom1){
-                return &to_be_optimized_pop1_dominant_fast;
-            }else if(search_h){
-                return &to_be_optimized_h_fast;
-            }else{
-                return &to_be_optimized_only_near_sites; //TODO i dont like this name
-            }
-        }else{
-            if(additive){
-                return &to_be_optimized_additive;
-            }else if(dom0){
-                return &to_be_optimized_pop0_dominant;
-            }else if(dom1){
-                return &to_be_optimized_pop1_dominant;
-            }else if(search_h){
-                return &to_be_optimized_h;
-            }else{
-                return &to_be_optimized;
-            }
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//sites to parameters cannot account for time parameter
-vector<double> sites_to_parameters(vector<vector<double>> sites, int parameters_per_site = 3){
-    if(parameters_per_site == 0){
-        parameters_per_site = 3;
-    }
-
-    vector<double> parameters(sites.size()*parameters_per_site);
-
-    for(uint i = 0; i < parameters.size(); i++){
-        parameters[i] = sites[i/parameters_per_site][i%parameters_per_site];
-    }
-
-    return parameters;
-}
-
-vector<vector<double>> parameters_to_sites(vector<double> parameters, int parameters_per_site = 3){
-    
-    vector<vector<double>> sites(parameters.size()/parameters_per_site);
-    
-    for(int j = 0; j < sites.size(); j++){
-        vector<double> site(parameters_per_site);
-
-        for(int i = 0; i < parameters_per_site; i++){
-            site[i] = parameters[j*parameters_per_site + i + searching_time + searching_m];
-        }
-        
-        sites[j] = site;
-    }
-    
-    return sites;
-}
-
-
-
-
-
-vector<double> search_site                       (double chrom_size, nelder_mead &opt, vector<double> site, double width, double height, double depth);
-
-
-vector<double> search_sites                      (double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth);
-vector<double> search_sites_fast                 (double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth);
-
-
-
 vector<double> multi_level_optimization(
     double chrom_size,
     nelder_mead &opt,
     vector<double> &given_parameters,
     vector<vector<vector<double>>> &bottle_necks,
     double (*to_be_optimized_function) (vector<double>),
-    vector<parameter_type> parameter_types,
-    int parameters_per_site = 3
+    vector<parameter_type> parameter_types
 ){
     vector<double> best_parameters;
     double best_ratio = -DBL_MAX;
@@ -1105,38 +414,34 @@ vector<double> multi_level_optimization(
         for(int k = 0; k < bottle_necks[j].size(); k++){
             for(int l = 0; l < bottle_necks[j][k][0]; l++){
                 
-                //if(context.options.verbose_stderr){
-                    cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
-                //}
+                cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                
                 
 
-                vector<double> center_point(given_parameters.size());
+                vector<double> center_point = given_parameters;
                 vector<double> scales(given_parameters.size());
 
-                int number_of_sites = (given_parameters.size() - searching_time - searching_m)/parameters_per_site;
-                if(searching_time){
-                    scales[0] = bottle_necks[j][k][1] * 1000;
-                    center_point[0] = given_parameters[0];
-                }
-                if(searching_m){
-                    scales[searching_time] = bottle_necks[j][k][2];
-                    center_point[searching_time] = given_parameters[searching_time];
-                }
 
-                for(uint i = 0; i < number_of_sites; i++){
-                    for(int h = 0; h < parameters_per_site; h++){
-
-                        center_point[i*parameters_per_site + h + searching_time + searching_m] = given_parameters[i*parameters_per_site + h + searching_time + searching_m];
-
-                        if(parameter_types[h] == location) {
-                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][1];
-                        }else if(parameter_types[h] == selection_coeff){
-                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][2];
-                        }else if(parameter_types[h] == dominance_coeff){
-                            scales[i*parameters_per_site + h + searching_time + searching_m] = bottle_necks[j][k][2] * 5;
-                        }
+                for(int i = 0; i < given_parameters.size(); i++) {
+                    switch(parameter_types[i]){
+                        case admix_frac:
+                            scales[i] = bottle_necks[j][k][2];
+                            break;
+                        case time_since_admix:
+                            scales[i] = bottle_necks[j][k][1] * 1000;
+                            break;
+                        case location:
+                            scales[i] = bottle_necks[j][k][1];
+                            break;
+                        case dominance_coeff:
+                            scales[i] = bottle_necks[j][k][2] * 5;
+                            break;
+                        case selection_coeff:
+                            scales[i] = bottle_necks[j][k][2];
+                            break;
                     }
                 }
+
 
                 opt.populate_points(given_parameters.size(), 1, center_point, scales);
 
@@ -1166,19 +471,7 @@ vector<double> multi_level_optimization(
                     }
                 }
 
-                
-
-
-
                 found_parameters = opt.points[opt.max_index];
-
-
-               // cout << "\n Result of search " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
-                //cout << setprecision(15) << opt.max_value - context.fast_neutral_lnl<< "\n";
-                //for(uint j = 0; j < found_parameters.size(); j++){
-                    //cout << found_parameters[j] << "\n";
-                //}
-                //cout << "\n";
 
                 if(opt.max_value > best_ratio) {
                     best_ratio = opt.max_value;
@@ -1194,347 +487,6 @@ vector<double> multi_level_optimization(
 
     return best_parameters;
 }
-
-
-
-
-
-
-
-
-
-
-vector<double> search_sites(
-    double chrom_size, 
-    nelder_mead &opt,
-    vector<vector<double>> sites,
-    double width,
-    double height,
-    double depth
-)
-{
-    vector<double> center_point(sites.size()*3);
-    vector<double> scales(sites.size()*3);
-
-    for(uint i = 0; i < sites.size(); i++) {
-        center_point[i*3+0] = sites[i][0];
-        center_point[i*3+1] = sites[i][1];
-        center_point[i*3+2] = sites[i][2];
-        scales[i*3+0] = width;
-        scales[i*3+1] = height;
-        scales[i*3+2] = height;
-    }
-
-    opt.populate_points(sites.size()*3, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-    
-    opt.calculate_points(&to_be_optimized);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        
-        opt.iterate(&to_be_optimized);
-        
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-
-
-vector<double> search_sites_fast(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-    
-    vector<double> center_point(sites.size()*3);
-    vector<double> scales(sites.size()*3);
-
-    for(uint i = 0; i < sites.size(); i++){
-        center_point[i*3+0] = sites[i][0];
-        center_point[i*3+1] = sites[i][1];
-        center_point[i*3+2] = sites[i][2];
-        scales[i*3+0] = width;
-        scales[i*3+1] = height;
-        scales[i*3+2] = height;
-    }
-
-    opt.populate_points(sites.size()*3, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_only_near_sites);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        opt.iterate(&to_be_optimized_only_near_sites);
-        
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-
-vector<double> search_sites_fast_fix_all_but_last(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-    
-    vector<vector<double>> new_sites;
-
-    vector<bool> in_new_sites(sites.size());
-
-    for(uint i = 0; i < sites.size(); i++){
-
-        in_new_sites[i] = false;
-
-        double distance_from_last = abs(sites[i][0] - sites[sites.size() - 1][0]);
-
-        if (distance_from_last <= fast_transitions_radius_in_morgans) {
-            new_sites.push_back(sites[i]);
-            in_new_sites[i] = true;
-        }
-
-    }
-    
-
-    vector<double> center_point(new_sites.size()*3);
-    vector<double> scales(new_sites.size()*3);
-
-    for(uint i = 0; i < new_sites.size(); i++){
-        center_point[i*3+0] = new_sites[i][0];
-        center_point[i*3+1] = new_sites[i][1];
-        center_point[i*3+2] = new_sites[i][2];
-        scales[i*3+0] = width;
-        scales[i*3+1] = height;
-        scales[i*3+2] = height;
-    }
-    
-
-    opt.populate_points(new_sites.size()*3, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-    
-    
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_only_near_sites);
-    
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        
-        opt.iterate(&to_be_optimized_only_near_sites);
-
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-    
-    vector<double> ans(sites.size()*3);
-    
-    int counter = 0;
-
-    for(uint i = 0; i < sites.size(); i++){
-        if(in_new_sites[i]){
-            ans[i*3 + 0] = opt.points[opt.max_index][counter*3 + 0];
-            ans[i*3 + 1] = opt.points[opt.max_index][counter*3 + 1];
-            ans[i*3 + 2] = opt.points[opt.max_index][counter*3 + 2];
-
-            counter++;
-        }else{ 
-            ans[i*3 + 0] = sites[i][0];
-            ans[i*3 + 1] = sites[i][1];
-            ans[i*3 + 2] = sites[i][2];
-        }
-    }
-    
-    return ans;
-}
-
-
-
-
-
-
-
-vector<double> search_sites_fast_dom0(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-
-    vector<double> center_point(sites.size()*2);
-    vector<double> scales(sites.size()*2);
-
-    for(uint i = 0; i < sites.size(); i++){
-        center_point[i*2+0] = sites[i][0];
-        center_point[i*2+1] = sites[i][1];
-        scales[i*2+0] = width;
-        scales[i*2+1] = height;
-    }
-
-    opt.populate_points(sites.size()*2, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_pop0_dominant_fast);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        opt.iterate(&to_be_optimized_pop0_dominant_fast);
-
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-vector<double> search_sites_fast_dom1(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-
-    vector<double> center_point(sites.size()*2);
-    vector<double> scales(sites.size()*2);
-
-    for(uint i = 0; i < sites.size(); i++){
-        center_point[i*2+0] = sites[i][0];
-        center_point[i*2+1] = sites[i][1];
-        scales[i*2+0] = width;
-        scales[i*2+1] = height;
-    }
-
-    opt.populate_points(sites.size()*2, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_pop1_dominant_fast);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        opt.iterate(&to_be_optimized_pop1_dominant_fast);
-
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-
-vector<double> search_sites_fast_additive(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-
-    vector<double> center_point(sites.size()*2);
-    vector<double> scales(sites.size()*2);
-
-    for(uint i = 0; i < sites.size(); i++){
-        center_point[i*2+0] = sites[i][0];
-        center_point[i*2+1] = sites[i][1];
-        scales[i*2+0] = width;
-        scales[i*2+1] = height;
-    }
-
-    opt.populate_points(sites.size()*2, 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_additive_fast);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        opt.iterate(&to_be_optimized_additive_fast);
-
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-
-
-vector<double> search_sites_fast_restricted_additive(double chrom_size, nelder_mead &opt, vector<vector<double>> sites, double width, double height, double depth){
-
-    vector<double> center_point(sites.size());
-    vector<double> scales(sites.size());
-
-    for(uint i = 0; i < sites.size(); i++){
-        center_point[i] = sites[i][0];
-        scales[i] = height;
-    }
-
-    opt.populate_points(sites.size(), 1, center_point, scales);
-
-    //random reflections
-    for(uint i = 0; i < center_point.size(); i++){
-        if(rand() < RAND_MAX/2){
-            for(uint j = 0; j < opt.points.size(); j++){
-                opt.points[j][i] = 2*center_point[i] - opt.points[j][i];
-            }
-        }
-    }
-
-    opt.enforce_bounds();
-
-    opt.calculate_points(&to_be_optimized_restricted_additive_fast);
-
-    while((opt.max_value - opt.min_value) > depth && opt.repeated_shrinkages < 4){
-        opt.iterate(&to_be_optimized_restricted_additive_fast);
-
-        if(context.options.verbose_stderr){
-            cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
-        }
-    }
-
-    return opt.points[opt.max_index];
-}
-
-
 
 
 #endif
