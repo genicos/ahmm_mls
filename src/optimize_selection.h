@@ -463,7 +463,11 @@ vector<double> multi_level_optimization(
 
                 opt.calculate_points(to_be_optimized_function);
 
-                while((opt.max_value - opt.min_value) > bottle_necks[j][k][3] && opt.repeated_shrinkages < 4){
+                double initial_range = opt.max_value - opt.min_value;
+
+                double stopping_point = min(initial_range / 20 * bottle_necks[j][k][3], bottle_necks[j][k][3]);
+
+                while((opt.max_value - opt.min_value) > stopping_point && opt.repeated_shrinkages < 4){
                     opt.iterate(to_be_optimized_function);
 
                     if(context.options.verbose_stderr){
