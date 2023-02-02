@@ -4,6 +4,9 @@
 class Search{
 public:
     string search_string;
+
+    string search_name;
+    string posterior_options;
     
     bool search_m;
     double start_m;

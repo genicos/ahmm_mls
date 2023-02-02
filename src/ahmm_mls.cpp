@@ -76,8 +76,6 @@ using namespace arma ;
 #include "read_config.h"
 #include "examine_models.h"
 
-#include "read_model_file.h"
-#include "model_examining.h"
 
 #include "uninformed_inference.h"
 
@@ -128,21 +126,7 @@ int main ( int argc, char *argv[] ) {
     selection_read_file( options, markov_chain_information, state_list, position, recombination_rate, chromosomes ) ;
     
     
-    
     recombination_rate[0] = 0;
-
-    
-    //For converting bp to morgan
-    /*double sum = 0;
-    for(int i = 0; i < recombination_rate.size(); i++){
-        sum += recombination_rate[i];
-        cout << setprecision(15) << position[i] << "\t" << sum << "\n";
-    }
-    exit(0);
-    */
-
-    
-    
     
         
     /// create basic transition information
@@ -167,7 +151,7 @@ int main ( int argc, char *argv[] ) {
     }
 
     
-    
+    /*
     if(options.uninformed_inference){
         selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
 
@@ -180,16 +164,15 @@ int main ( int argc, char *argv[] ) {
             
         selection_optimizer.test_models();
     }
+    */
     
     
     if(options.use_site_file){
-        //read_site_file(options, recombination_rate, position);
         read_config_file(options, recombination_rate, position);
 
         selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
         
         selection_optimizer.examine_models();
-        //selection_optimizer.examine_sites();
     }
 
 

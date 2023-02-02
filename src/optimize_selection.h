@@ -238,8 +238,8 @@ double to_be_optimized (vector<double> parameters) {
 
     int cores = context.options.cores;
 
-    double m        = (global_search.search_m) ?      parameters[0] : context.options.m;
-    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : context.options.generations;
+    double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
+    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
 
     vector<mat> transition_matrices = calculate_transition_rates (
         context.n_recombs,

@@ -70,7 +70,6 @@ void selection_opt::examine_models() {
 
     /*
     vector<double> empty(0);
-
     context.neutral_lnl      = to_be_optimized(empty);
     context.fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
     
@@ -78,7 +77,6 @@ void selection_opt::examine_models() {
     cerr << "\nFast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
     cout << "Neutral likelihood: " << setprecision(15) << context.neutral_lnl << "\n";
     cout << "Fast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
-
     neutral_transition_matrices = last_calculated_transition_matricies;
     */
 
@@ -237,7 +235,40 @@ void selection_opt::examine_models() {
             
             cout << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
             cerr << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
-        
+
+
+            initial_parameters = optimized_parameters;
+
+
+        }
+
+
+        char model_posterior_op = 'm';
+        bool model_posterior_printing = options.mls_searches[i].posterior_options.find(model_posterior_op) != string::npos;
+
+        char data_posterior_op = 'd';
+        bool data_posterior_printing = options.mls_searches[i].posterior_options.find(data_posterior_op) != string::npos;
+
+
+        if (model_posterior_printing || data_posterior_printing)
+            general_to_be_optimized (initial_parameters);
+
+        if ( model_posterior_printing ) {
+
+            ofstream model_ancestry;
+
+            string file_name = "model_ancestry_" + options.mls_searches[i].search_name + ".tsv";
+
+            model_ancestry.open(file_name);
+
+            model_ancestry << "morgan_pos\tlocal_ancestry\n";
+
+            for(int i = 1; i < n_recombs.size() - 1; i++){
+
+                model_ancestry << morgan_position[i]  << "\t" << local_ancestries[i] << "\n";
+            }
+                
+            model_ancestry.close();
         }
 
     }

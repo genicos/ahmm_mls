@@ -4,16 +4,6 @@
 #include <vector>
 
 
-/*
-bool string_is_a_double(string par) {
-    auto result = double();
-    auto i = std::istringstream(par);
-    i >> result;
-
-    return !i.fail() && i.eof();
-}
-*/
-
 void error_string(){
     cerr << "ERROR: malformed config file\n";
     exit(0);
@@ -39,6 +29,15 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
         int morgan_or_bp_choice; //morgan:1   bp:0
         if (!( iss >> morgan_or_bp_choice )) { error_string(); }
         morgan_or_bp.push_back(morgan_or_bp_choice);
+
+
+        string search_name;
+        if (!( iss >> search_name )) { error_string(); }
+        this_line.search_name = search_name;
+
+        string posterior_options; 
+        if (!( iss >> posterior_options )) { error_string(); }
+        this_line.posterior_options = posterior_options;
 
 
         //Read in m value
@@ -151,7 +150,7 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
                     }
                     
                     
-                }else{
+                } else {
                     this_line.search_h.push_back(true);
                     this_line.start_h.push_back(0.5);
                 }
@@ -191,43 +190,8 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
     }
 
     
-    for(int i = 0; i < config_searches.size(); i++){
-        
-        cerr << "\n\nNEW SEARCH\n";
-        cerr << "search_m: " << config_searches[i].search_m << "\n";
-        cerr << "start_m:"  << config_searches[i].start_m << "\n";
-        cerr << "search_t: " << config_searches[i].search_t << "\n";
-        cerr << "start_t:"  << config_searches[i].start_t << "\n";
-        cerr << "PRECHECK\n";
-        cerr << config_searches[i].search_l.size() << "\n";
-        cerr << config_searches[i].start_l.size() << "\n";
-        cerr << config_searches[i].min_bound_l.size() << "\n";
-        cerr << config_searches[i].max_bound_l.size() << "\n";
-        cerr << config_searches[i].search_h.size() << "\n";
-        cerr << config_searches[i].start_h.size() << "\n";
-        cerr << config_searches[i].search_s.size() << "\n";
-        cerr << config_searches[i].start_s.size() << "\n";
-        cerr << config_searches[i].s_pos.size() << "\n";
-        cerr << config_searches[i].s_neg.size() << "\n";
-
-        for(int j = 0; j < config_searches[i].search_l.size(); j++){
-            cerr << "\nj " << j << "\n";
-            cerr << "   search_l: " << config_searches[i].search_l[j] << "\n";
-            cerr << "   start_l: " << config_searches[i].start_l[j] << "\n";
-            cerr << "   min_bound_l: " << config_searches[i].min_bound_l[j] << "\n";
-            cerr << "   max_bound_l: " << config_searches[i].max_bound_l[j] << "\n";
-            cerr << "   search_h: " << config_searches[i].search_h[j] << "\n";
-            cerr << "   start_h: " << config_searches[i].start_h[j] << "\n";
-            cerr << "   search_s: " << config_searches[i].search_s[j] << "\n";
-            cerr << "   start_s: " << config_searches[i].start_s[j] << "\n";
-            cerr << "   s_pos: " << config_searches[i].s_pos[j] << "\n";
-            cerr << "   s_neg: " << config_searches[i].s_neg[j] << "\n";
-        }
-    }
-
     options.mls_searches = config_searches;
-
-    //exit(0);
 }
-//s start is not present
+
+
 #endif
