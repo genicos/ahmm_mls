@@ -273,9 +273,9 @@ void *single_window_process(void *void_info) {
         (*info->transition_matrices)[i] = transition_matrix;
         local_ancestries[i] = trans[0] + trans[1];
 
-        /*if(i % 100 < info->cores){
+        if(i % 100 < info->cores){
             cerr << "thread " << t << " is at " << i << "/" << (*info->transition_matrices).size() << "\n";
-        }*/
+        }
     }
 
     free(void_info);

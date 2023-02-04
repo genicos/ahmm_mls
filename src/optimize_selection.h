@@ -29,17 +29,17 @@ bool searching_m    = false;
 Search global_search;
 
 
-vector<double> get_local_ancestry (vector<mat> neutral_model) {
+vector<vector<vector<double>>> get_local_genotypes (vector<mat> model) {
     
     map<int,vector<mat> > transition_matrix ;
 
     
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
         
-        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, neutral_model ) ;
+        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, model ) ;
             
         for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
-            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], neutral_model ) ;
+            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], model ) ;
         }
     }
     
@@ -60,16 +60,17 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
         context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
     }
 
-    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    //vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    vector<vector<vector<double>>> genotype_posteriors(context.markov_chain_information.size());
 
     
     //looping through samples
     for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
 
-        //looping through sites
-        for( int i = 0; i < data_ancestry.size(); i++){
+        vector<vector<double>> sample_ancestry(context.markov_chain_information[0].alphas.size());
 
-            
+        //looping through sites
+        for( int i = 0; i < sample_ancestry.size(); i++){
 
             vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
             normalize( smoothed_probs ) ;
@@ -78,15 +79,16 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
 
             //ploidy 1
             if(smoothed_probs.size() == 2) {
-                data_ancestry[i] += smoothed_probs[0];
+                sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
+                //sample_ancestry[i] += smoothed_probs[0];
             }
 
             //ploidy 2
             if(smoothed_probs.size() == 3) {
-                data_ancestry[i] += smoothed_probs[0];
-                data_ancestry[i] += smoothed_probs[1] * 0.5;
+                sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
+                //sample_ancestry[i] += smoothed_probs[0];
+                //sample_ancestry[i] += smoothed_probs[1] * 0.5;
             }
-
 
             //TODO generalize ploidy here
             /*
@@ -97,10 +99,49 @@ vector<double> get_local_ancestry (vector<mat> neutral_model) {
             */
         }
 
+        genotype_posteriors[m] = sample_ancestry;
+
+    }
+    
+    return genotype_posteriors;
+}
+
+
+
+
+
+
+
+
+vector<double> get_local_ancestry (vector<mat> model) {
+    
+    vector<vector<vector<double>>> genotypes = get_local_genotypes(model);
+
+    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    
+    //looping through samples
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+
+        //looping through sites
+        for( int i = 0; i < data_ancestry.size(); i++){
+
+            //ploidy 1
+            if(genotypes[m][i].size() == 2) {
+                data_ancestry[i] += genotypes[m][i][0];
+            }
+
+            //ploidy 2
+            if(genotypes[m][i].size() == 3) {
+                data_ancestry[i] += genotypes[m][i][0];
+                data_ancestry[i] += genotypes[m][i][1] * 0.5;
+            }
+
+        }
+
     }
     
     for( int i = 0; i < data_ancestry.size(); i++){
-        data_ancestry[i] /= sample_count;
+        data_ancestry[i] /= context.markov_chain_information.size();
     }
     
     return data_ancestry;

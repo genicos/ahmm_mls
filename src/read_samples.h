@@ -33,7 +33,7 @@ void read_samples( vector<markov_chain> &markov_chain_information, string &input
     }
     in.close() ;
     
-    /// read or generate ploidy pahts
+    /// read or generate ploidy paths
     for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
         if ( markov_chain_information[m].path_file != "null" ) {
             read_ploidy_file( markov_chain_information[m].path_file, markov_chain_information[m].sample_ploidy_path ) ;

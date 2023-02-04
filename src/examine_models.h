@@ -62,23 +62,8 @@ void selection_opt::examine_models() {
     );
 
 
-
-
-
-
     context = *this;
 
-    /*
-    vector<double> empty(0);
-    context.neutral_lnl      = to_be_optimized(empty);
-    context.fast_neutral_lnl = to_be_optimized_only_near_sites(empty);
-    
-    cerr << "\nNeutral likelihood: " << setprecision(15) << context.neutral_lnl << "\n";
-    cerr << "\nFast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
-    cout << "Neutral likelihood: " << setprecision(15) << context.neutral_lnl << "\n";
-    cout << "Fast neutral likelihood: " << setprecision(15) << context.fast_neutral_lnl << "\n";
-    neutral_transition_matrices = last_calculated_transition_matricies;
-    */
 
 
     cerr << setprecision(15);
@@ -129,8 +114,8 @@ void selection_opt::examine_models() {
 
             double lnl = general_to_be_optimized_fast(initial_parameters);
 
-            cout << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
+            cout << setprecision(15) << "fast lnl:\t" << lnl << "\n";
+            cerr << setprecision(15) << "fast lnl:\t" << lnl << "\n";
             
         
         
@@ -249,9 +234,14 @@ void selection_opt::examine_models() {
         char data_posterior_op = 'd';
         bool data_posterior_printing = options.mls_searches[i].posterior_options.find(data_posterior_op) != string::npos;
 
+        char sample_posterior_op = 's';
+        bool sample_posterior_printing = options.mls_searches[i].posterior_options.find(sample_posterior_op) != string::npos;
 
-        if (model_posterior_printing || data_posterior_printing)
+
+        if (model_posterior_printing || data_posterior_printing || sample_posterior_op)
             general_to_be_optimized (initial_parameters);
+
+
 
         if ( model_posterior_printing ) {
 
@@ -261,14 +251,47 @@ void selection_opt::examine_models() {
 
             model_ancestry.open(file_name);
 
-            model_ancestry << "morgan_pos\tlocal_ancestry\n";
+            model_ancestry << "position\tposition_morg\tlocal_ancestry\n";
 
-            for(int i = 1; i < n_recombs.size() - 1; i++){
+            for(int i = 1; i < n_recombs.size() - 1; i++) {
 
-                model_ancestry << morgan_position[i]  << "\t" << local_ancestries[i] << "\n";
+                model_ancestry << context.position[i] << "\t" << morgan_position[i]  << "\t" << local_ancestries[i] << "\n";
             }
                 
             model_ancestry.close();
+        }
+
+
+
+        if ( sample_posterior_op ) {
+            vector<vector<vector<double>>> sample_genotypes = get_local_genotypes(last_calculated_transition_matricies);
+
+            for(int m = 0; m < sample_genotypes.size(); m++) {
+
+            }
+        }
+
+
+
+        if ( data_posterior_printing ) {
+
+            vector<double> data_local_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+
+            ofstream data_ancestry;
+
+            string file_name = "data_ancestry_" + options.mls_searches[i].search_name + ".tsv";
+
+            data_ancestry.open(file_name);
+
+            data_ancestry << "position\tposition_morg\tlocal_ancestry\n";
+
+            for(int i = 1; i < n_recombs.size() - 1; i++) {
+
+                data_ancestry << context.position[i] << "\t" << morgan_position[i]  << "\t" << data_local_ancestry[i] << "\n";
+            }
+
+            data_ancestry.close();
+
         }
 
     }

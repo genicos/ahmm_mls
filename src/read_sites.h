@@ -12,7 +12,7 @@ bool string_is_a_double(string par) {
     return !i.fail() && i.eof();
 }
 
-void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int> &positions){
+void read_site_file(cmd_line &options, vector<double> &recomb_rates , vector<int> &positions) {
 
     // stream in file
     ifstream in ( options.site_file.c_str() );
