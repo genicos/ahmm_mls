@@ -251,11 +251,11 @@ void selection_opt::examine_models() {
 
             model_ancestry.open(file_name);
 
-            model_ancestry << "position\tposition_morg\tlocal_ancestry\n";
+            model_ancestry << "position\tposition_morg\tlocal_ancestry";
 
-            for(int i = 1; i < n_recombs.size() - 1; i++) {
+            for(int i = 1; i < n_recombs.size(); i++) {
 
-                model_ancestry << context.position[i] << "\t" << morgan_position[i]  << "\t" << local_ancestries[i] << "\n";
+                model_ancestry << "\n" << context.position[i] << "\t" << morgan_position[i]  << "\t" << local_ancestries[i];
             }
                 
             model_ancestry.close();
@@ -264,11 +264,36 @@ void selection_opt::examine_models() {
 
 
         if ( sample_posterior_op ) {
-            vector<vector<vector<double>>> sample_genotypes = get_local_genotypes(last_calculated_transition_matricies);
+            get_local_ancestry(last_calculated_transition_matricies);
 
-            for(int m = 0; m < sample_genotypes.size(); m++) {
 
+
+            pulse first_pulse;
+            first_pulse.time = 10000000; //TODO if im allowing time to be searched, change this
+            first_pulse.time_fixed = true;
+            first_pulse.type = 1;
+            first_pulse.proportion = 1 - options.mls_searches[i].start_m;
+            first_pulse.proportion_fixed = true;
+            first_pulse.entry_order = 0;
+
+            pulse second_pulse;
+            second_pulse.time = options.mls_searches[i].start_t; //TODO if im allowing time to be searched, change this
+            second_pulse.time_fixed = true;
+            second_pulse.type = 0;
+            second_pulse.proportion = options.mls_searches[i].start_m;
+            second_pulse.proportion_fixed = true;
+            second_pulse.entry_order = 1;
+
+            vector<pulse> optimum(2);
+            optimum[0] = first_pulse;
+            optimum[1] = second_pulse;
+
+            
+            cerr << "forward-backward posterior decoding and printing\t\t\t";
+            for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
+                context.markov_chain_information[m].combine_prob( context.position, context.state_list, context.chromosomes, options.output_pulses, optimum ) ;
             }
+            
         }
 
 
@@ -283,11 +308,11 @@ void selection_opt::examine_models() {
 
             data_ancestry.open(file_name);
 
-            data_ancestry << "position\tposition_morg\tlocal_ancestry\n";
+            data_ancestry << "position\tposition_morg\tlocal_ancestry";
 
-            for(int i = 1; i < n_recombs.size() - 1; i++) {
+            for(int i = 1; i < n_recombs.size(); i++) {
 
-                data_ancestry << context.position[i] << "\t" << morgan_position[i]  << "\t" << data_local_ancestry[i] << "\n";
+                data_ancestry << "\n" << context.position[i] << "\t" << morgan_position[i]  << "\t" << data_local_ancestry[i];
             }
 
             data_ancestry.close();

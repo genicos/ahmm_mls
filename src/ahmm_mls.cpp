@@ -170,7 +170,7 @@ int main ( int argc, char *argv[] ) {
     if(options.use_site_file){
         read_config_file(options, recombination_rate, position);
 
-        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
+        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position, state_list, chromosomes);
         
         selection_optimizer.examine_models();
     }
