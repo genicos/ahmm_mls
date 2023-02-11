@@ -44,29 +44,10 @@ public:
     }
     selection_opt(){}
 
-    //vector<double> enact_optimization();
-    //vector<double> examine_peaks();
-
-    vector<double> examine_sites();
-
     void examine_models();
 
-    
-    vector<double> grid_search(vector<double> center_point, double width, double height, int x_ticks, int y_ticks);
-    vector<double> grid_search_additive(vector<double> center_point, double width, double height, int x_point_sep, int y_point_sep);
-    vector<double> grid_search_dominant0(vector<double> center_point, double width, double height, int x_point_sep, int y_point_sep);
-    vector<double> grid_search_dominant1(vector<double> center_point, double width, double height, int x_point_sep, int y_point_sep);
-
-    void test_models();
-
-
-    void uninformed_inference();
-
-
     void set_context();
-
-
-    //double to_be_optimized(vector<double> parameters);
+    
 };
 
 #endif

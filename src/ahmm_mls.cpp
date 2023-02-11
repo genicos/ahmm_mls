@@ -77,9 +77,6 @@ using namespace arma ;
 #include "examine_models.h"
 
 
-#include "uninformed_inference.h"
-
-
 int main ( int argc, char *argv[] ) {
     
     /// time tracking
@@ -139,7 +136,7 @@ int main ( int argc, char *argv[] ) {
         }
     }
     
-    /// create admixture model(s)
+    /// create admixture model(s) 
     cerr << (double) (clock() - t) << " ms" << endl << "creating initial admixture model(s)\t\t" ; t = clock();
     vector<vector<pulse> > vertices ;
     int nparams = create_pulses( vertices, options ) ;
@@ -149,22 +146,6 @@ int main ( int argc, char *argv[] ) {
     if ( options.n_restarts < 0 ) {
         options.n_restarts = factorial[nparams] * 2 ;
     }
-
-    
-    /*
-    if(options.uninformed_inference){
-        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
-
-        selection_optimizer.uninformed_inference();
-    }
-
-    if(options.use_model_file){
-        read_model_file(options);
-        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position);
-            
-        selection_optimizer.test_models();
-    }
-    */
     
     
     if(options.use_site_file){

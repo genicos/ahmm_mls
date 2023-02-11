@@ -45,7 +45,7 @@ public:
     nelder_mead(){
         reflection = 1;
         contraction = 0.5;
-        expansion = 1.5;
+        expansion = 2;
         shrinkage = 0.5;
     }
 

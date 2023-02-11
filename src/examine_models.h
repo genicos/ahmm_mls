@@ -7,50 +7,29 @@
 
 void selection_opt::examine_models() {
 
-    // Defining multi-level optimization parameters //
-    vector<vector<vector<double>>> bottle_necks;    //
+    // Defining multi-level optimization parameters
+    vector<vector<vector<double>>> search_restarts;   
 
     vector<vector<double>> shallow;
     
-    vector<double> shallow_short(4);
-    shallow_short[0] = 5;
-    shallow_short[1] = 0.03;
-    shallow_short[2] = 0.01;
-    shallow_short[3] = 5;
-
-    vector<double> shallow_tall(4);
-    shallow_tall[0] = 5;
-    shallow_tall[1] = 0.03;
-    shallow_tall[2] = 0.05;
-    shallow_tall[3] = 5;
-
+    vector<double> shallow_short = {5, 0.03, 0.01, 5};
+    vector<double> shallow_tall  = {5, 0.03, 0.05, 5};
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
 
     vector<vector<double>> deep;
 
-    vector<double> deep_short(4);
-    deep_short[0] = 5;
-    deep_short[1] = 0.01;
-    deep_short[2] = 0.005;
-    deep_short[3] = 1;
-
-    vector<double> deep_tall(4);
-    deep_tall[0] = 5;
-    deep_tall[1] = 0.01;
-    deep_tall[2] = 0.01;
-    deep_tall[3] = 1;
-
+    vector<double> deep_short = {5, 0.01, 0.005, 1};
+    vector<double> deep_tall  = {5, 0.01, 0.01 , 1};
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
 
-    bottle_necks.push_back(shallow);
-    bottle_necks.push_back(deep);                   //
-    //////////////////////////////////////////////////
+    search_restarts.push_back(shallow);
+    search_restarts.push_back(deep);
 
 
     double nelder_mead_reflection  = 1;
-    double nelder_mead_contraction = 0.61803398875;
+    double nelder_mead_contraction = 0.5;
     double nelder_mead_expansion   = 2;
     double nelder_mead_shrinkage   = 0.5;
 
@@ -116,9 +95,6 @@ void selection_opt::examine_models() {
 
             cout << setprecision(15) << "fast lnl:\t" << lnl << "\n";
             cerr << setprecision(15) << "fast lnl:\t" << lnl << "\n";
-            
-        
-        
         
         } else { // Searching
 
@@ -143,12 +119,12 @@ void selection_opt::examine_models() {
             for(int j = 0; j < site_count; j++) {
                 
                 if(options.mls_searches[i].search_l[j]) {
-                    if(options.mls_searches[i].min_bound_l[j] == -1)
+                    if(options.mls_searches[i].min_bound_l[j] < 0)
                         optimizer.min_bounds[p] = 0;
                     else
                         optimizer.min_bounds[p] = options.mls_searches[i].min_bound_l[j];
                     
-                    if(options.mls_searches[i].max_bound_l[j] == -1)
+                    if(options.mls_searches[i].max_bound_l[j] == -1 || options.mls_searches[i].max_bound_l[j] > chrom_size)
                         optimizer.max_bounds[p] = chrom_size;
                     else
                         optimizer.max_bounds[p] = options.mls_searches[i].max_bound_l[j];
@@ -189,7 +165,7 @@ void selection_opt::examine_models() {
                 chrom_size,
                 optimizer,
                 initial_parameters,
-                bottle_necks,
+                search_restarts,
                 &general_to_be_optimized_fast,
                 parameter_types
             );

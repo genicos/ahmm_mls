@@ -23,6 +23,9 @@ void selection_opt::set_context() {
     context = *this;
 }
 
+//TODO move these functions into selection_opt so i dont have to deal with all this global nonsense
+//TODO remove all talk of m and t searching
+
 bool searching_time = false;
 bool searching_m    = false;
 
