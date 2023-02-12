@@ -5,9 +5,106 @@
 
 #include "optimize_selection.h"
 
+vector<vector<vector<double>>> get_local_genotypes (vector<mat> model) {
+    
+    map<int,vector<mat> > transition_matrix ;
+
+    
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        
+        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, model ) ;
+            
+        for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
+            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], model ) ;
+        }
+    }
+    
+    vector<mat> interploidy_transitions;
+
+
+    int sample_count = context.markov_chain_information.size();
+    int site_count = context.markov_chain_information[0].alphas.size();
+
+    
+    //populating alphas
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        context.markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
+    }
+    
+    //populating betas
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+        context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
+    }
+
+    //vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    vector<vector<vector<double>>> genotype_posteriors(context.markov_chain_information.size());
+
+    
+    //looping through samples
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+
+        vector<vector<double>> sample_ancestry(context.markov_chain_information[0].alphas.size());
+
+        //looping through sites
+        for( int i = 0; i < sample_ancestry.size(); i++){
+
+            vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
+            normalize( smoothed_probs ) ;
+            
+            sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
+            
+        }
+
+        genotype_posteriors[m] = sample_ancestry;
+
+    }
+    
+    return genotype_posteriors;
+}
+
+
+
+
+vector<double> get_local_ancestry (vector<mat> model) {
+    
+    vector<vector<vector<double>>> genotypes = get_local_genotypes(model);
+
+    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    
+    //looping through samples
+    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+
+        //looping through sites
+        for( int i = 0; i < data_ancestry.size(); i++){
+
+            //ploidy 1
+            if(genotypes[m][i].size() == 2) {
+                data_ancestry[i] += genotypes[m][i][0];
+            }
+
+            //ploidy 2
+            if(genotypes[m][i].size() == 3) {
+                data_ancestry[i] += genotypes[m][i][0];
+                data_ancestry[i] += genotypes[m][i][1] * 0.5;
+            }
+
+        }
+
+    }
+    
+    for( int i = 0; i < data_ancestry.size(); i++){
+        data_ancestry[i] /= context.markov_chain_information.size();
+    }
+    
+    return data_ancestry;
+}
+
+
+
+
 void selection_opt::examine_models() {
 
-    // Defining multi-level optimization parameters
+    // Defining optimization parameters
     vector<vector<vector<double>>> search_restarts;   
 
     vector<vector<double>> shallow;
@@ -26,7 +123,6 @@ void selection_opt::examine_models() {
 
     search_restarts.push_back(shallow);
     search_restarts.push_back(deep);
-
 
     double nelder_mead_reflection  = 1;
     double nelder_mead_contraction = 0.5;
@@ -91,7 +187,7 @@ void selection_opt::examine_models() {
 
         if(parameter_count == 0) { //No searching, just fitting a model
 
-            double lnl = general_to_be_optimized_fast(initial_parameters);
+            double lnl = to_be_optimized_fast(initial_parameters);
 
             cout << setprecision(15) << "fast lnl:\t" << lnl << "\n";
             cerr << setprecision(15) << "fast lnl:\t" << lnl << "\n";
@@ -161,12 +257,12 @@ void selection_opt::examine_models() {
             }
         
 
-            vector<double> optimized_parameters = multi_level_optimization(
+            vector<double> optimized_parameters = multi_restart_optimization(
                 chrom_size,
                 optimizer,
                 initial_parameters,
                 search_restarts,
-                &general_to_be_optimized_fast,
+                &to_be_optimized_fast,
                 parameter_types
             );
 
@@ -192,10 +288,10 @@ void selection_opt::examine_models() {
             
 
 
-            double lnl = general_to_be_optimized_fast (optimized_parameters);
+            double lnl = to_be_optimized_fast (optimized_parameters);
             
-            cout << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl - context.fast_neutral_lnl << "\n";
+            cout << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
+            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
 
 
             initial_parameters = optimized_parameters;
@@ -215,7 +311,7 @@ void selection_opt::examine_models() {
 
 
         if (model_posterior_printing || data_posterior_printing || sample_posterior_op)
-            general_to_be_optimized (initial_parameters);
+            to_be_optimized (initial_parameters);
 
 
 
@@ -239,7 +335,7 @@ void selection_opt::examine_models() {
 
 
 
-        if ( sample_posterior_op ) {
+        if ( sample_posterior_printing ) {
             get_local_ancestry(last_calculated_transition_matricies);
 
 
@@ -253,7 +349,7 @@ void selection_opt::examine_models() {
             first_pulse.entry_order = 0;
 
             pulse second_pulse;
-            second_pulse.time = options.mls_searches[i].start_t; //TODO if im allowing time to be searched, change this
+            second_pulse.time = options.mls_searches[i].start_t;
             second_pulse.time_fixed = true;
             second_pulse.type = 0;
             second_pulse.proportion = options.mls_searches[i].start_m;

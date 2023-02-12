@@ -258,7 +258,6 @@ void *single_window_process(void *void_info) {
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
     long t = info->t;
     
-    cerr << "size to do: " << (*info->transition_matrices).size() << "\n";
     for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores) {
 
         vector<double> trans = adjacent_transition_rate(*info->recomb_rates_around_selected_sites, *info->fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
@@ -273,9 +272,11 @@ void *single_window_process(void *void_info) {
         (*info->transition_matrices)[i] = transition_matrix;
         local_ancestries[i] = trans[0] + trans[1];
 
-        if(i % 100 < info->cores){
+        //if verbose
+        if(t == 0){
             cerr << "thread " << t << " is at " << i << "/" << (*info->transition_matrices).size() << "\n";
         }
+        
     }
 
     free(void_info);

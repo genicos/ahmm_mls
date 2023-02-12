@@ -32,124 +32,52 @@ bool searching_m    = false;
 Search global_search;
 
 
-vector<vector<vector<double>>> get_local_genotypes (vector<mat> model) {
-    
-    map<int,vector<mat> > transition_matrix ;
 
-    
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-        
-        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, model ) ;
-            
-        for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
-            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], model ) ;
-        }
-    }
-    
-    vector<mat> interploidy_transitions;
+vector<double> convert_parameters_to_long_form(vector<double> parameters) {
+    vector<double> new_params(0);
 
-
-    int sample_count = context.markov_chain_information.size();
-    int site_count = context.markov_chain_information[0].alphas.size();
-
-    
-    //populating alphas
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-        context.markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
-    }
-    
-    //populating betas
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-        context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
+    int i = 0;
+    if (global_search.search_m) {
+        new_params.push_back(parameters[i++]);
     }
 
-    //vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
-    vector<vector<vector<double>>> genotype_posteriors(context.markov_chain_information.size());
+    if(global_search.search_t) {
+        new_params.push_back(parameters[i++]);
+    }
 
-    
-    //looping through samples
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for(int j = 0; j < global_search.search_l.size(); j++) {
 
-        vector<vector<double>> sample_ancestry(context.markov_chain_information[0].alphas.size());
-
-        //looping through sites
-        for( int i = 0; i < sample_ancestry.size(); i++){
-
-            vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
-            normalize( smoothed_probs ) ;
-
-            //int ploidy = statecount2ploidy[smoothed_probs.size()];
-
-            //ploidy 1
-            if(smoothed_probs.size() == 2) {
-                sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
-                //sample_ancestry[i] += smoothed_probs[0];
-            }
-
-            //ploidy 2
-            if(smoothed_probs.size() == 3) {
-                sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
-                //sample_ancestry[i] += smoothed_probs[0];
-                //sample_ancestry[i] += smoothed_probs[1] * 0.5;
-            }
-
-            //TODO generalize ploidy here
-            /*
-            data_ancestry[i] += smoothed_probs[0];
-            for(int i = 1; i < smoothed_probs.size() - 1; i++) {
-                data_ancestry[i] += smoothed_probs[i] * (smoothed_probs.size() - i)/(smoothed_probs.size() - 1);
-            }
-            */
+        if(global_search.search_l[j]) {
+            new_params.push_back(parameters[i++]);
+        }else{
+            new_params.push_back(global_search.start_l[j]);
         }
 
-        genotype_posteriors[m] = sample_ancestry;
+        bool h_and_s = true; // Not all fitnesses can be expressed in terms of h and s
+        double h = 0;
+        double s = 0;
 
+        if(global_search.search_h[j]){
+            h = parameters[i++];
+        }else{
+            h = global_search.start_h[j];
+        }
+
+        if(global_search.search_s[j]){
+            s = parameters[i++];
+        }else{
+            s = global_search.start_s[j];
+        }
+
+        if(h_and_s){
+            new_params.push_back(1 / (1 - h * s));
+            new_params.push_back((1 - s) / (1 - h * s));
+        }
     }
-    
-    return genotype_posteriors;
+
+
+    return new_params;
 }
-
-
-
-
-
-
-
-
-vector<double> get_local_ancestry (vector<mat> model) {
-    
-    vector<vector<vector<double>>> genotypes = get_local_genotypes(model);
-
-    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
-    
-    //looping through samples
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-
-        //looping through sites
-        for( int i = 0; i < data_ancestry.size(); i++){
-
-            //ploidy 1
-            if(genotypes[m][i].size() == 2) {
-                data_ancestry[i] += genotypes[m][i][0];
-            }
-
-            //ploidy 2
-            if(genotypes[m][i].size() == 3) {
-                data_ancestry[i] += genotypes[m][i][0];
-                data_ancestry[i] += genotypes[m][i][1] * 0.5;
-            }
-
-        }
-
-    }
-    
-    for( int i = 0; i < data_ancestry.size(); i++){
-        data_ancestry[i] /= context.markov_chain_information.size();
-    }
-    
-    return data_ancestry;
-}
-
 
 
 
@@ -159,7 +87,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
     selection_recomb_rates.resize(selected_sites_count + 1);
     fitnesses.resize(selected_sites_count);
     
-    if(parameters.size() > 0){
+    if(parameters.size() > 0) {
         
 
         if(context.options.verbose_stderr) {
@@ -265,12 +193,20 @@ double compute_lnl(vector<mat> &transition_matrices){
 }
 
 
-
+/////////////////////////////
+////////////////////////////
+//////////////////////////
+/////////////////////////////
+////////////////////////////
+/////////////////////////
+////////////////////////
 
 
 vector<mat> last_calculated_transition_matricies;
 
 double to_be_optimized (vector<double> parameters) {
+
+    parameters = convert_parameters_to_long_form(parameters);
 
     double timer = get_wall_time();
     
@@ -314,7 +250,9 @@ double to_be_optimized (vector<double> parameters) {
 
 vector<mat> neutral_transition_matrices;
 
-double to_be_optimized_only_near_sites(vector<double> parameters) {
+double to_be_optimized_fast(vector<double> parameters) {
+
+    parameters = convert_parameters_to_long_form(parameters);
     
     double timer = get_wall_time();
     
@@ -372,63 +310,6 @@ void setup_searches(Search this_search) {
     global_search = this_search;
 }
 
-vector<double> convert_parameters_to_long_form(vector<double> parameters) {
-    vector<double> new_params(0);
-
-    int i = 0;
-    if (global_search.search_m) {
-        new_params.push_back(parameters[i++]);
-    }
-
-    if(global_search.search_t) {
-        new_params.push_back(parameters[i++]);
-    }
-
-    for(int j = 0; j < global_search.search_l.size(); j++) {
-
-        if(global_search.search_l[j]) {
-            new_params.push_back(parameters[i++]);
-        }else{
-            new_params.push_back(global_search.start_l[j]);
-        }
-
-        bool h_and_s = true; // Not all fitnesses can be expressed in terms of h and s
-        double h = 0;
-        double s = 0;
-
-        if(global_search.search_h[j]){
-            h = parameters[i++];
-        }else{
-            h = global_search.start_h[j];
-        }
-
-        if(global_search.search_s[j]){
-            s = parameters[i++];
-        }else{
-            s = global_search.start_s[j];
-        }
-
-        if(h_and_s){
-            new_params.push_back(1 / (1 - h * s));
-            new_params.push_back((1 - s) / (1 - h * s));
-        }
-    }
-
-
-    return new_params;
-}
-
-double general_to_be_optimized(vector<double> parameters){
-    parameters = convert_parameters_to_long_form(parameters);
-
-    return to_be_optimized(parameters);
-}
-
-double general_to_be_optimized_fast(vector<double> parameters){
-    parameters = convert_parameters_to_long_form(parameters);
-
-    return to_be_optimized_only_near_sites(parameters);
-}
 
 
 
@@ -440,11 +321,13 @@ double general_to_be_optimized_fast(vector<double> parameters){
 
 
 
-vector<double> multi_level_optimization(
+
+
+vector<double> multi_restart_optimization(
     double chrom_size,
     nelder_mead &opt,
     vector<double> &given_parameters,
-    vector<vector<vector<double>>> &bottle_necks,
+    vector<vector<vector<double>>> &restarts,
     double (*to_be_optimized_function) (vector<double>),
     vector<parameter_type> parameter_types
 ){
@@ -454,11 +337,11 @@ vector<double> multi_level_optimization(
     vector<double> found_parameters;
     
 
-    for(int j = 0; j < bottle_necks.size(); j++){
-        for(int k = 0; k < bottle_necks[j].size(); k++){
-            for(int l = 0; l < bottle_necks[j][k][0]; l++){
+    for(int j = 0; j < restarts.size(); j++){
+        for(int k = 0; k < restarts[j].size(); k++){
+            for(int l = 0; l < restarts[j][k][0]; l++){
                 
-                cerr << "\n SEARCH " << j + 1 << "/" << bottle_necks.size() << " " << k + 1 << "/" << bottle_necks[j].size() << " " << l + 1 << "/" << bottle_necks[j][k][0] << "\n";
+                cerr << "\n SEARCH " << j + 1 << "/" << restarts.size() << " " << k + 1 << "/" << restarts[j].size() << " " << l + 1 << "/" << restarts[j][k][0] << "\n";
                 
                 
 
@@ -469,19 +352,19 @@ vector<double> multi_level_optimization(
                 for(int i = 0; i < given_parameters.size(); i++) {
                     switch(parameter_types[i]){
                         case admix_frac:
-                            scales[i] = bottle_necks[j][k][2];
+                            scales[i] = restarts[j][k][2];
                             break;
                         case time_since_admix:
-                            scales[i] = bottle_necks[j][k][1] * 1000;
+                            scales[i] = restarts[j][k][1] * 1000;
                             break;
                         case location:
-                            scales[i] = bottle_necks[j][k][1];
+                            scales[i] = restarts[j][k][1];
                             break;
                         case dominance_coeff:
-                            scales[i] = bottle_necks[j][k][2] * 5;
+                            scales[i] = restarts[j][k][2] * 5;
                             break;
                         case selection_coeff:
-                            scales[i] = bottle_necks[j][k][2];
+                            scales[i] = restarts[j][k][2];
                             break;
                     }
                 }
@@ -509,7 +392,7 @@ vector<double> multi_level_optimization(
 
                 double initial_range = opt.max_value - opt.min_value;
 
-                double stopping_point = min(initial_range / 20 * bottle_necks[j][k][3], bottle_necks[j][k][3]);
+                double stopping_point = min(initial_range / 20 * restarts[j][k][3], restarts[j][k][3]);
 
                 while((opt.max_value - opt.min_value) > stopping_point && opt.repeated_shrinkages < 4){
                     opt.iterate(to_be_optimized_function);

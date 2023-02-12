@@ -23,7 +23,7 @@ public:
     vector<string> chromosomes ;
 
 
-    selection_opt(vector<double> neutral_recombs, cmd_line o, vector<markov_chain> mci, map<int, vector<vector<map<vector<transition_information>,double>>>> tmi, vector<int> pos, map<int,vector<vector<int>>> &states, vector<string> chroms){
+    selection_opt(vector<double> &neutral_recombs, cmd_line &o, vector<markov_chain> &mci, map<int, vector<vector<map<vector<transition_information>,double>>>> &tmi, vector<int> &pos, map<int,vector<vector<int>>> &states, vector<string> &chroms){
         n_recombs = neutral_recombs;
         options = o;
         markov_chain_information = mci;
@@ -47,6 +47,8 @@ public:
     void examine_models();
 
     void set_context();
+
+    //vector<vector<vector<double>>> get_local_genotypes (vector<mat> model)
     
 };
 
