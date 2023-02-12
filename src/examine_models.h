@@ -310,7 +310,7 @@ void selection_opt::examine_models() {
         bool sample_posterior_printing = options.mls_searches[i].posterior_options.find(sample_posterior_op) != string::npos;
 
 
-        if (model_posterior_printing || data_posterior_printing || sample_posterior_op)
+        if (model_posterior_printing || data_posterior_printing || sample_posterior_printing)
             to_be_optimized (initial_parameters);
 
 
