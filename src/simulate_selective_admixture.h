@@ -128,8 +128,6 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     recomb_rates = new_recomb_rates;                                                       //
     /////////////////////////////////////////////////////////////////////////////////////////
     
-    
-
 
     int haploids = pow(2,sites);
     
@@ -251,14 +249,16 @@ struct intra_model_shared_info{
     int cores;
     vector<double> *selected_sites;
     double fast_transitions_radius_in_morgans;
+    double chrom_size;
 };
+
 
 void *single_window_process(void *void_info) {
 
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
     long t = info->t;
     
-    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores) {
+    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores) { //CHECK RECOMB_RATES_AROUND_SELECTED_SITES
 
         vector<double> trans = adjacent_transition_rate(*info->recomb_rates_around_selected_sites, *info->fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
@@ -407,7 +407,7 @@ void *single_fast_window_process(void *void_info){
             for(uint j = 1; j < pertinent_selected_sites.size(); j++){
                 pertinent_recomb_rates_around_selected_sites[j] = pertinent_selected_sites[j] - pertinent_selected_sites[j - 1];
             }
-            pertinent_recomb_rates_around_selected_sites[pertinent_selected_sites.size()] = 1 - pertinent_selected_sites[pertinent_selected_sites.size() - 1];
+            pertinent_recomb_rates_around_selected_sites[pertinent_selected_sites.size()] = 1 - pertinent_selected_sites[pertinent_selected_sites.size() - 1]; 
 
 
             vector<double> trans = adjacent_transition_rate(pertinent_recomb_rates_around_selected_sites, pertinent_fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
@@ -564,14 +564,11 @@ void *alt_single_fast_window_process(void *void_info) {
                 pertinent_recomb_rates_around_selected_sites[j] = pertinent_selected_sites[j] - pertinent_selected_sites[j - 1];
             }
 
-            pertinent_recomb_rates_around_selected_sites[pertinent_selected_sites.size()] = 1 - pertinent_selected_sites[pertinent_selected_sites.size() - 1];
+            pertinent_recomb_rates_around_selected_sites[pertinent_selected_sites.size()] = info->chrom_size - pertinent_selected_sites[pertinent_selected_sites.size() - 1];
         }else{
 
-            pertinent_recomb_rates_around_selected_sites[0] = 1;
+            pertinent_recomb_rates_around_selected_sites[0] = info->chrom_size;
         }
-
-        
-
 
         vector<double> trans = adjacent_transition_rate(pertinent_recomb_rates_around_selected_sites, pertinent_fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
@@ -581,7 +578,6 @@ void *alt_single_fast_window_process(void *void_info) {
         transition_matrix(0,1) = 1 - transition_matrix(0,0);
         transition_matrix(1,0) = trans[2]/(trans[2] + trans[3]);
         transition_matrix(1,1) = 1 - transition_matrix(1,0);
-
 
         for(int j = i - (pairs_skipped/2); j <= i + ((pairs_skipped - 1)/2) && j < local_ancestries.size(); j++){
 
@@ -613,13 +609,13 @@ vector<mat> alternative_fast_transition_rates (
   double m,
   int generations,
   int cores,
+  double chrom_size,
   double fast_transitions_radius_in_morgans
 ) {
     vector<mat> transition_matrices(recomb_rates_around_neutral_sites.size());
     
     local_ancestries.clear();
     local_ancestries.resize(recomb_rates_around_neutral_sites.size());
-
     
     // Creating site vectors //////////////////////////////////////////////////////
     vector<double>  neutral_sites(recomb_rates_around_neutral_sites.size()  + 1);//
@@ -639,7 +635,6 @@ vector<mat> alternative_fast_transition_rates (
     ///////////////////////////////////////////////////////////////////////////////
 
     
-
     // Creating threads to deal with independent adjacent neutral regions //////////////////
     vector<pthread_t> threads(cores);
     
@@ -656,6 +651,7 @@ vector<mat> alternative_fast_transition_rates (
         this_threads_info->transition_matrices = &transition_matrices;
         this_threads_info->cores = cores;
         this_threads_info->fast_transitions_radius_in_morgans = fast_transitions_radius_in_morgans;
+        this_threads_info->chrom_size = chrom_size;
         
         this_threads_info->selected_sites = &selected_sites;
 
@@ -684,7 +680,6 @@ vector<mat> alternative_fast_transition_rates (
     for(int i = last_present + 1; i < transition_matrices.size(); i++) {
         transition_matrices[i] = transition_matrices[last_present];
     }
-
     
     return transition_matrices;
 }

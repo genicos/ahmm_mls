@@ -23,12 +23,6 @@ void selection_opt::set_context() {
     context = *this;
 }
 
-//TODO move these functions into selection_opt so i dont have to deal with all this global nonsense
-//TODO remove all talk of m and t searching
-
-bool searching_time = false;
-bool searching_m    = false;
-
 Search global_search;
 
 
@@ -81,7 +75,7 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
 
 
 
-void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses){
+void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size){
 
     int selected_sites_count = parameters.size() / 3;
     selection_recomb_rates.resize(selected_sites_count + 1);
@@ -102,10 +96,10 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
                 cerr << "selection site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with fitness: " << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << ",1," << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
             }
         }else{
-            if (searching_time) {
+            if (global_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
             }
-            if (searching_m) {
+            if (global_search.search_t) {
                 cerr << "time:    " << parameters[global_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
@@ -147,14 +141,14 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
             last = selected_pairs[i].site;
         }
 
-        selection_recomb_rates[selected_pairs.size()] = 1 - last;
+        selection_recomb_rates[selected_pairs.size()] = chrom_size - last;
 
         for(uint i = 0; i < selected_sites_count; i++){
             fitnesses[i] = selected_pairs[i].fitness;
         }
         
     }else{
-        selection_recomb_rates[0] = 1;
+        selection_recomb_rates[0] = chrom_size;
     }
 
 }
@@ -176,7 +170,6 @@ double compute_lnl(vector<mat> &transition_matrices){
         }
 
     }
-    
     
     vector<mat> interploidy_transitions;
 
@@ -214,7 +207,7 @@ double to_be_optimized (vector<double> parameters) {
     vector<vector<double>> fitnesses;
     
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, context.chrom_size);
 
     int cores = context.options.cores;
 
@@ -231,8 +224,10 @@ double to_be_optimized (vector<double> parameters) {
     );
     
     last_calculated_transition_matricies = transition_matrices;
+
     
     double lnl = compute_lnl(transition_matrices);
+    
 
     if(context.options.verbose_stderr){
         cerr << "lnl = " << setprecision(15) << lnl << "\n";
@@ -259,14 +254,9 @@ double to_be_optimized_fast(vector<double> parameters) {
     vector<double> selection_recomb_rates;
     vector<vector<double>> fitnesses;
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, context.chrom_size);
     
     int cores = context.options.cores;
-    
-
-    if(context.options.use_model_file) // TODO, chnage how cores affects model files
-        cores = 1;
-
     
     double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
     int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
@@ -278,11 +268,11 @@ double to_be_optimized_fast(vector<double> parameters) {
         m,
         generations,
         cores,
+        context.chrom_size,
         context.options.fast_transitions_radius_in_morgans
     );
 
     double lnl = compute_lnl(transition_matrices);
-    
 
     if(context.options.verbose_stderr) {
         cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";

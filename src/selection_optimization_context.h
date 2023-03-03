@@ -48,7 +48,16 @@ public:
 
     void set_context();
 
+
     //vector<vector<vector<double>>> get_local_genotypes (vector<mat> model)
+
+    //vector<double> convert_parameters_to_long_form(vector<double> parameters)
+
+    //double compute_lnl(vector<mat> &transition_matrices)
+
+    //double to_be_optimized (vector<double> parameters);
+
+    //double to_be_optimized_fast(vector<double> parameters);
     
 };
 
