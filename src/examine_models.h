@@ -229,7 +229,7 @@ void selection_opt::examine_models() {
                     p++;
                 }
 
-                if(options.mls_searches[i].search_h[j]) { //TODO should h always be [0,1]?
+                if(options.mls_searches[i].search_h[j]) {
                     optimizer.min_bounds[p] = 0;
                     optimizer.max_bounds[p] = 1;
                     initial_parameters[p] = options.mls_searches[i].start_h[j];
