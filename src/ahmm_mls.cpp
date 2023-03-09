@@ -84,7 +84,6 @@ int main ( int argc, char *argv[] ) {
     clock_t total = clock() ;
     
     /// seed prng
-    cerr << time(NULL) << "\n";
     srand (time(NULL)) ;
     
 	// read cmd line 

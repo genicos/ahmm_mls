@@ -20,7 +20,6 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
     while (getline(in, line))
     {
         istringstream iss (line);
-        cerr << line << "\n";
 
         Search this_line;
 
@@ -48,7 +47,6 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
             this_line.search_m = true;
             m_string = m_string.substr(1, m_string.length() - 2);
         }
-
         this_line.start_m = stod(m_string);
 
 
@@ -60,7 +58,6 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
             this_line.search_t = true;
             t_string = t_string.substr(1, t_string.length() - 2);
         }
-
         this_line.start_t = stod(t_string);
         
 
@@ -111,7 +108,6 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
                     this_line.max_bound_l.push_back(-1);
                 }
 
-                //cerr << "AAAA\n" << i << "\n\n";
                 if(i >= sites_info.size()){
                     this_line.search_h.push_back(true);
                     this_line.start_h.push_back(0.5);
@@ -122,8 +118,7 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
                     this_line.s_neg.push_back(false);
                     break;
                 }
-
-
+                
                 if (!sites_info[i].compare("h")) {
                     i++;
 
@@ -174,7 +169,7 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
                     }
                     sites_info[i] = sites_info[i].substr(1, sites_info[i].length() - 2);
                 }
-                cerr << "Heres the s: " << sites_info[i] << "\n";
+                
 
                 if(sites_info[i].length() > 0)
                     this_line.start_s.push_back(stod(sites_info[i]));
@@ -187,6 +182,65 @@ void read_config_file(cmd_line &options, vector<double> &recomb_rates , vector<i
         
 
         config_searches.push_back(this_line);
+    }
+
+
+    vector<double> morgan_position(recomb_rates.size());
+    double sum = 0;
+    for(uint i = 0; i < recomb_rates.size(); i++){
+        sum += recomb_rates[i];
+        morgan_position[i] = sum;
+    }
+
+    for(int i = 0; i < config_searches.size(); i++){
+        if(!morgan_or_bp[i]){
+
+            for(int k = 0; k < config_searches[i].start_l.size(); k++) {
+
+                //Replacing start_l with morgan position
+                int j = 0;
+                for(; j < positions.size(); j++){
+                    if (positions[j] >= config_searches[i].start_l[k]) {
+                        config_searches[i].start_l[k] = morgan_position[j];
+                        break;
+                    }
+                }
+                if(j == positions.size()){
+                    cerr << "Position not found: " << config_searches[i].start_l[k] << "\n";
+                    exit(0); // TODO
+                }
+
+                if (config_searches[i].min_bound_l[k] != -1) { //If min and max bound were defined
+
+                    //Replacing min_bound_l with morgan position
+                    j = 0;
+                    for(; j < positions.size(); j++){
+                        if (positions[j] >= config_searches[i].min_bound_l[k]) {
+                            config_searches[i].min_bound_l[k] = morgan_position[j];
+                            break;
+                        }
+                    }
+                    if(j == positions.size()){
+                        cerr << "Position not found: " << config_searches[i].min_bound_l[k] << "\n";
+                        exit(0); // TODO
+                    }
+
+                    //Replacing max_bound_l with morgan position
+                    j = 0;
+                    for(; j < positions.size(); j++) {
+                        if (positions[j] >= config_searches[i].max_bound_l[k]) {
+                            config_searches[i].max_bound_l[k] = morgan_position[j];
+                            break;
+                        }
+                    }
+                    if(j == positions.size()) {
+                        cerr << "Position not found: " << config_searches[i].max_bound_l[k] << "\n";
+                        exit(0); // TODO
+                    }
+
+                }
+            }
+        }
     }
 
     
