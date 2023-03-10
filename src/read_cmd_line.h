@@ -228,7 +228,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         }
         
         
-        if ( strcmp(argv[i], "-m") == 0 ){
+        if ( strcmp(argv[i], "-m") == 0 ){ //TODO remove
             admixture_parameters_set = true;
 
             m = stod(argv[++i]);
@@ -241,7 +241,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             cores = stoi(argv[++i]);
         }
 
-        if ( strcmp(argv[i], "-S") == 0 ){
+        if ( strcmp(argv[i], "-S") == 0 ){ //TODO remove
 
             uninformed_inference = true;
 
@@ -260,6 +260,20 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             fast_transitions_radius_in_morgans = stod(argv[++i]);
         }
         
+        if ( strcmp(argv[i], "-t1") == 0 ) {
+
+            search_stage_1_threshold = stod(argv[++i]);
+        }
+
+        if ( strcmp(argv[i], "-t2") == 0 ) {
+
+            search_stage_2_threshold = stod(argv[++i]);
+        }
+
+        if ( strcmp(argv[i], "-k") == 0 ) {
+
+            sampled_pair_skips = stoi(argv[++i]);
+        }
 
     }
 

@@ -325,6 +325,8 @@ vector<double> multi_restart_optimization(
     double best_ratio = -DBL_MAX;
 
     vector<double> found_parameters;
+
+    vector<double> lnls;
     
 
     for(int j = 0; j < restarts.size(); j++){
@@ -359,10 +361,9 @@ vector<double> multi_restart_optimization(
                     }
                 }
 
-
+                
                 opt.populate_points(given_parameters.size(), 1, center_point, scales);
 
-                
 
                 //random reflections
                 for(uint i = 0; i < center_point.size(); i++){
@@ -375,7 +376,6 @@ vector<double> multi_restart_optimization(
                 
 
                 opt.enforce_bounds();
-
 
 
                 opt.calculate_points(to_be_optimized_function);
@@ -398,6 +398,10 @@ vector<double> multi_restart_optimization(
                     best_ratio = opt.max_value;
                     best_parameters = found_parameters;
                 }
+
+                if (j == restarts.size() - 1){
+                    lnls.push_back(opt.max_value);
+                }
             }
         }
 
@@ -406,7 +410,7 @@ vector<double> multi_restart_optimization(
         best_ratio = -DBL_MAX;
     }
 
-    return best_parameters;
+    return lnls;
 }
 
 

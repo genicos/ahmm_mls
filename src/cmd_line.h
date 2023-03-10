@@ -118,6 +118,11 @@ public:
     bool only_fast = false;
 
     double fast_transitions_radius_in_morgans = 0.02;
+
+    double search_stage_1_threshold = 5;
+    double search_stage_2_threshold = 1;
+
+    int sampled_pair_skips = 4;
     
 
 
