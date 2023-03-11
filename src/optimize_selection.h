@@ -206,8 +206,12 @@ double to_be_optimized (vector<double> parameters) {
     vector<double> selection_recomb_rates;
     vector<vector<double>> fitnesses;
     
+    double used_chrom_size = 1;
+    if(context.chrom_size > 1){
+        used_chrom_size = context.chrom_size;
+    }
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, context.chrom_size);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size);
 
     int cores = context.options.cores;
 
@@ -254,7 +258,12 @@ double to_be_optimized_fast(vector<double> parameters) {
     vector<double> selection_recomb_rates;
     vector<vector<double>> fitnesses;
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, context.chrom_size);
+    double used_chrom_size = 1;
+    if(context.chrom_size > 1){
+        used_chrom_size = context.chrom_size;
+    }
+
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size);
     
     int cores = context.options.cores;
     
@@ -268,7 +277,7 @@ double to_be_optimized_fast(vector<double> parameters) {
         m,
         generations,
         cores,
-        context.chrom_size,
+        used_chrom_size,
         context.options.fast_transitions_radius_in_morgans
     );
 

@@ -273,7 +273,7 @@ void *single_window_process(void *void_info) {
         local_ancestries[i] = trans[0] + trans[1];
 
         //if verbose
-        if(t == 0){
+        if(t == 0) {
             cerr << "thread " << t << " is at " << i << "/" << (*info->transition_matrices).size() << "\n";
         }
         
@@ -306,12 +306,12 @@ vector<mat> calculate_transition_rates(
 
     double sum = 0;
     neutral_sites[0] = 0; //extra
-    for(uint i = 0; i < recomb_rates_around_neutral_sites.size(); i++){
+    for(uint i = 0; i < recomb_rates_around_neutral_sites.size(); i++) {
         sum += recomb_rates_around_neutral_sites[i];
         neutral_sites[i + 1] = sum;
     }
     sum = 0;
-    for(uint i = 0; i < selected_sites.size(); i++){
+    for(uint i = 0; i < selected_sites.size(); i++) {
         sum += recomb_rates_around_selected_sites[i];
         selected_sites[i] = sum;
     }                                                                            //
