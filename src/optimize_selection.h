@@ -327,8 +327,6 @@ vector<double> multi_restart_optimization(
     double best_ratio = -DBL_MAX;
 
     vector<double> found_parameters;
-
-    vector<double> lnls;
     
 
     for(int j = 0; j < restarts.size(); j++){
@@ -401,9 +399,6 @@ vector<double> multi_restart_optimization(
                     best_parameters = found_parameters;
                 }
 
-                if (j == restarts.size() - 1){
-                    lnls.push_back(opt.max_value);
-                }
             }
         }
 
@@ -412,7 +407,7 @@ vector<double> multi_restart_optimization(
         best_ratio = -DBL_MAX;
     }
 
-    return lnls;
+    return best_parameters;
 }
 
 

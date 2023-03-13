@@ -258,7 +258,7 @@ void selection_opt::examine_models() {
         
             
 
-            vector<double> lnls = multi_restart_optimization(
+            vector<double> best_parameters = multi_restart_optimization(
                 chrom_size,
                 optimizer,
                 initial_parameters,
@@ -269,9 +269,7 @@ void selection_opt::examine_models() {
 
             cerr << "\n\nBest Model\n";
 
-            
-
-            vector<double> parameters = convert_parameters_to_long_form(initial_parameters);
+            vector<double> parameters = convert_parameters_to_long_form(best_parameters);
 
             if (global_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
@@ -287,24 +285,8 @@ void selection_opt::examine_models() {
             }
 
             
-           
-            double mean = 0;
-            for (int k = 0; k < lnls.size(); k++) {
-                mean += lnls[k];
-            }
 
-            mean /= lnls.size();
-
-            double std = 0;
-            for(int k = 0; k < lnls.size(); k++){
-                std += (lnls[k] - mean) * (lnls[k] - mean);
-            }
-            std /= lnls.size() - 1;
-            std = sqrt(std);
-
-            
-
-            double lnl = to_be_optimized_fast (initial_parameters);
+            double lnl = to_be_optimized_fast (best_parameters);
             
             cout << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
             cerr << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
