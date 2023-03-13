@@ -306,8 +306,8 @@ void selection_opt::examine_models() {
 
             double lnl = to_be_optimized_fast (initial_parameters);
             
-            cout << setprecision(15) << "fast lnl ratio:\t" << lnl << "\tmean\t"<<mean<<"\tstd\t"<<std<<"\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl << "\tmean\t"<<mean<<"\tstd\t"<<std<<"\n";
+            cout << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
+            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
             
 
 
