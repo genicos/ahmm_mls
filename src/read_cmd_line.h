@@ -72,6 +72,9 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
     
     // intput file
     input_file = "null" ;
+
+    // model file
+    model_file = "null" ;
     
     /// bootstraps
     n_bootstraps = 0 ;
@@ -201,6 +204,8 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             ne = 2 * atof(argv[++i]) ;
         }
 
+
+
         /// this version will allow inputting all samples in a single file with separate posterior output files
         if ( strcmp(argv[i],"-i") == 0 ) {
             input_file = string(argv[++i]) ;
@@ -218,34 +223,17 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             ancestral_fixed = true ;
         }
 
-
-
-
-        if ( strcmp(argv[i], "-l") == 0 ){
-            use_site_file = true;
-
-            site_file = string(argv[++i]);
-        }
-        
-        
-        if ( strcmp(argv[i], "-m") == 0 ){ //TODO remove
-            admixture_parameters_set = true;
-
-            m = stod(argv[++i]);
-            generations = stoi(argv[++i]);
+        if ( strcmp(argv[i], "-m") == 0 ){ 
+            model_file = string(argv[++i]);
         }
         
 
-        if ( strcmp(argv[i], "-c") == 0 ){
-            
+
+
+        if ( strcmp(argv[i], "-c") == 0 ) {
             cores = stoi(argv[++i]);
         }
 
-        if ( strcmp(argv[i], "-S") == 0 ){ //TODO remove
-
-            uninformed_inference = true;
-
-        }
 
         if( strcmp(argv[i], "-vc") == 0 ){
             verbose_stderr = true;
@@ -292,21 +280,20 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         print_usage() ;
         exit(1) ;
     }
-
-    /*
-    if ( use_site_file == false && use_model_file == false){
-        cerr << "\n\n\t\tERROR: must provide either site file or model file \n\n\t\t\t-l [path/to/site_file]\n\n" ;
-        cerr << "\t\t\t-M [path/to/model_file]\n\n" ;
+    if ( model_file == "null" ) {
+        cerr << "\n\n\t\tERROR: must provide model file \n\n\t\t\t-m [path/to/model_file]\n\n" ;
         print_usage() ;
         exit(1) ;
     }
-    */
     
+    
+    /*
     if ( ancestry_proportion.size() > ancestry_pulses.size() ) {
-	cerr << "\n\n\t\tERROR: insufficient ancestry pulses specified\n\n" ;
-	print_usage() ; 
-	exit(1) ; 
+        cerr << "\n\n\t\tERROR: insufficient ancestry pulses specified\n\n" ;
+        print_usage() ; 
+        exit(1) ; 
     }
+    */
     return ;
 }
 

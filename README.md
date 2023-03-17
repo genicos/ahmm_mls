@@ -1,8 +1,36 @@
 # Ancestry_HMM_MLS
 
-#### Basic usage
-	ahmm_mls -i [input_file] –s [sample_file] -l [model_file]
+### Overview
 
+Ancestry_HMM_MLS (Ancestry HMM Multi Locus Selection), is a program to infer the strength and presence of multiple loci under selection in admixed populations. Ancestry_HMM_MLS is an extension to Ancestry_HMM, and more information on the format of the input files can be found at https://github.com/russcd/Ancestry_HMM.
+
+
+#### Basic usage
+	ahmm_mls -i [input_file] –s [sample_file] -m [model_file]
+
+For a list of options and arguments, see the built in help message:
+
+    $ ahmm_mls --help
+
+This will print the following:
+
+ahmm_mls usage:
+
+        required:
+                -i [string]             input file
+                -s [string]             sample id and ploidy file
+                -m [string]             model file
+        optional:
+                --help                  print this help statement
+                -g                      samples are specified with genotypes rather than read counts
+                -c [int]                        number of cores used
+                -vc                     verbose stderr output
+                -vo                     verbose stdout output
+                -R [float]                      specify morgan distance from selected site after which they are ignored
+                -t1 [float]                     threshold of lnL ratio range in simplex for first stage of optimization
+                -t2 [float]                     threshold of lnL ratio range in simplex for second stage of optimization
+                -k [int]                        number of skipped regions between adjacent sampled sites
+                                        for each one calculated.
 
 #### Input File and Sample File Format
 
@@ -16,7 +44,7 @@ Each line must have the following  5 required columns
 
 1. Site coordinates used in this line (0 for bp, 1 for Morgans)
 2. Name of model
-3. Local Ancestry decoding method 
+3. Local Ancestry decoding method
 
 This is specified as a string containing the characters 'd', 'm', or 's'. If 'd' is present, then the average local ancestry of the samples is computed. If 'm' is present, the expected local ancestry from the model is computed. If 's' is present, then the forward-packward posterior probabilities are decoded for each sample. If neither of these characters are present, no local ancestry decoding takes place (we recommed simply placing an 'n', for no decoding).
 

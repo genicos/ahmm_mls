@@ -70,10 +70,7 @@ using namespace arma ;
 #include "nelder_mead_general.h"
 #include "optimize_selection.h"
 
-
-
-#include "read_sites.h"
-#include "read_config.h"
+#include "read_model.h"
 #include "examine_models.h"
 
 
@@ -148,13 +145,13 @@ int main ( int argc, char *argv[] ) {
     
     
     
-    if(options.use_site_file){
-        read_config_file(options, recombination_rate, position);
+    
+    read_model_file(options, recombination_rate, position);
 
-        selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position, state_list, chromosomes);
+    selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position, state_list, chromosomes);
         
-        selection_optimizer.examine_models();
-    }
+    selection_optimizer.examine_models();
+    
 
 
     

@@ -71,51 +71,32 @@ public:
 
     
 
-    bool admixture_parameters_set = false;
+    //bool admixture_parameters_set = false;
 
     // given ancestry proportion
-    double m;
+    //double m;
 
     // given generations
-    int generations;
+    //int generations;
     
 
     
 
     // Place sites one at a time, with no info on selected sites
-    bool uninformed_inference = false;
+    //bool uninformed_inference = false;
     
 
 
     // examine sites from site file
-    bool use_site_file = false;
-
-    //sites file
-    string site_file;
-    vector<vector<double>> site_file_positions;
-    vector<vector<double>> site_file_morgan_positions;
-    vector<vector<string>> site_file_options;
-    vector<vector<double>> site_file_low_bounds;
-    vector<vector<double>> site_file_high_bounds;
-
-    vector<Search> mls_searches;
-
-
-    
-    // calculate likelihoods for models
-    bool use_model_file = false;
+    // bool use_site_file = false;
 
     string model_file;
-    vector<vector<double>> models;
+    vector<Search> mls_searches;
 
     int cores = 1;
 
-
     bool verbose_stdout = false;
     bool verbose_stderr = false;
-
-
-    bool only_fast = false;
 
     double fast_transitions_radius_in_morgans = 0.02;
 
