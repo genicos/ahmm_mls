@@ -271,7 +271,8 @@ double to_be_optimized_fast(vector<double> parameters) {
         generations,
         cores,
         used_chrom_size,
-        context.options.fast_transitions_radius_in_morgans
+        context.options.fast_transitions_radius_in_morgans,
+        context.options.sampled_pair_skips
     );
 
     double lnl = compute_lnl(transition_matrices);
