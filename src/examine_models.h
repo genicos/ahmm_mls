@@ -109,15 +109,16 @@ void selection_opt::examine_models() {
 
     vector<vector<double>> shallow;
     
-    vector<double> shallow_short = {5, 0.03, 0.01, 5};
-    vector<double> shallow_tall  = {5, 0.03, 0.05, 5};
+    
+    vector<double> shallow_short = {5, 0.03, 0.01 , options.search_stage_1_threshold};
+    vector<double> shallow_tall  = {5, 0.03, 0.05 , options.search_stage_1_threshold};
     shallow.push_back(shallow_short);
     shallow.push_back(shallow_tall);
 
     vector<vector<double>> deep;
 
-    vector<double> deep_short = {5, 0.01, 0.005, 1};
-    vector<double> deep_tall  = {5, 0.01, 0.01 , 1};
+    vector<double> deep_short = {5, 0.01, 0.005 , options.search_stage_2_threshold};
+    vector<double> deep_tall  = {5, 0.01, 0.01  , options.search_stage_2_threshold};
     deep.push_back(deep_short);
     deep.push_back(deep_tall);
 
