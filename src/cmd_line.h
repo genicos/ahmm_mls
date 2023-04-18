@@ -95,7 +95,6 @@ public:
 
     int cores = 1;
 
-    bool verbose_stdout = false;
     bool verbose_stderr = false;
 
     double fast_transitions_radius_in_morgans = 0.02;
@@ -104,6 +103,8 @@ public:
     double search_stage_2_threshold = 1;
 
     int sampled_pair_skips = 4;
+
+    bool output_relative_fitnesses = false;
     
 
 

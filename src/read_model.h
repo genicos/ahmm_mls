@@ -214,7 +214,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                 }
                 if(j == positions.size()){
                     cerr << "Position not found: " << config_searches[i].start_l[k] << "\n";
-                    exit(0); // TODO
+                    exit(0);
                 }
 
                 if (config_searches[i].min_bound_l[k] != -1) { //If min and max bound were defined
@@ -229,7 +229,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     }
                     if(j == positions.size()){
                         cerr << "Position not found: " << config_searches[i].min_bound_l[k] << "\n";
-                        exit(0); // TODO
+                        exit(0);
                     }
 
                     //Replacing max_bound_l with morgan position
@@ -242,7 +242,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     }
                     if(j == positions.size()) {
                         cerr << "Position not found: " << config_searches[i].max_bound_l[k] << "\n";
-                        exit(0); // TODO
+                        exit(0);
                     }
 
                 }

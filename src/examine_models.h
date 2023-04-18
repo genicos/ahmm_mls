@@ -104,6 +104,8 @@ vector<double> get_local_ancestry (vector<mat> model) {
 
 void selection_opt::examine_models() {
 
+    
+
     // Defining optimization parameters
     vector<vector<vector<double>>> search_restarts;   
 
@@ -140,15 +142,10 @@ void selection_opt::examine_models() {
 
     context = *this;
 
-
-
     cerr << setprecision(15);
     cout << setprecision(15);
 
     for(int i = 0; i < options.mls_searches.size(); i++){
-
-        cerr << options.mls_searches[i].search_string << "\n";
-        cout << options.mls_searches[i].search_string << "\n";
 
         setup_searches(options.mls_searches[i]);
 
@@ -190,8 +187,27 @@ void selection_opt::examine_models() {
 
             double lnl = to_be_optimized_fast(initial_parameters);
 
-            cout << setprecision(15) << "fast lnl:\t" << lnl << "\n";
-            cerr << setprecision(15) << "fast lnl:\t" << lnl << "\n";
+            vector<double> parameters = convert_parameters_to_long_form(initial_parameters);
+
+            for (uint i = 0; i < site_count; i++) {
+                double s_p1 = parameters[3*i + 1 + global_search.search_m + global_search.search_t];
+                double s_p2 = parameters[3*i + 2 + global_search.search_m + global_search.search_t];
+
+                double s = 1 - s_p2/s_p1;
+                double h = (1 - 1/s_p1)/s;
+
+                if(options.output_relative_fitnesses){
+                    cerr << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cout << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                }else{
+                    cerr << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cout << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                }
+            }
+            
+
+            cout << setprecision(15) << "lnl:\t" << lnl << "\n";
+            cerr << setprecision(15) << "lnl:\t" << lnl << "\n";
         
         } else { // Searching
 
@@ -281,17 +297,26 @@ void selection_opt::examine_models() {
                 cout << "Time:    " << parameters[global_search.search_m] << "\n";
             }
             for (uint i = 0; i < site_count; i++) {
-                cerr << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with fitness: " << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << ",1," << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
-                cout << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with fitness: " << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << ",1," << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
+                double s_p1 = parameters[3*i + 1 + global_search.search_m + global_search.search_t];
+                double s_p2 = parameters[3*i + 2 + global_search.search_m + global_search.search_t];
+
+                double s = 1 - s_p2/s_p1;
+                double h = (1 - 1/s_p1)/s;
+
+                if(options.output_relative_fitnesses){
+                    cerr << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cout << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                }else{
+                    cerr << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cout << "site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                }
+                
             }
 
-            
 
             double lnl = to_be_optimized_fast (best_parameters);
             
-            cout << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
-            cerr << setprecision(15) << "fast lnl ratio:\t" << lnl << "\n";
-            
+            cout << setprecision(15) << "lnl:\t" << lnl << "\n";
 
 
         }
@@ -334,11 +359,9 @@ void selection_opt::examine_models() {
 
         if ( sample_posterior_printing ) {
             get_local_ancestry(last_calculated_transition_matricies);
-
-
-
+            
             pulse first_pulse;
-            first_pulse.time = 10000000; //TODO if im allowing time to be searched, change this
+            first_pulse.time = 10000000;
             first_pulse.time_fixed = true;
             first_pulse.type = 1;
             first_pulse.proportion = 1 - options.mls_searches[i].start_m;

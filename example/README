@@ -1,6 +1,6 @@
 cmd line:
 
-./ahmm_mls -i example.panel -s example.sample -m model_file > example.output
+ahmm_mls -i example.panel -s example.sample -m model_file > example.output
 
 The model file contains two lines, one two fit a single locus selection model, and one to fit a two 
 locus selection model. These models will be fit to a simulated dataset in which two nearby selected positions

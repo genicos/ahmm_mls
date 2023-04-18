@@ -223,7 +223,7 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             ancestral_fixed = true ;
         }
 
-        if ( strcmp(argv[i], "-m") == 0 ){ 
+        if ( strcmp(argv[i], "-m") == 0 ) {
             model_file = string(argv[++i]);
         }
         
@@ -235,13 +235,10 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         }
 
 
-        if( strcmp(argv[i], "-vc") == 0 ){
+        if( strcmp(argv[i], "-vo") == 0 ){
             verbose_stderr = true;
         }
 
-        if( strcmp(argv[i], "-vo") == 0 ){
-            verbose_stdout = true;
-        }
 
         if ( strcmp(argv[i], "-R") == 0 ){
 
@@ -261,6 +258,11 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
         if ( strcmp(argv[i], "-k") == 0 ) {
 
             sampled_pair_skips = stoi(argv[++i]);
+        }
+
+        if ( strcmp(argv[i], "-f") == 0 ) {
+
+            output_relative_fitnesses = true;
         }
 
     }
@@ -287,13 +289,6 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
     }
     
     
-    /*
-    if ( ancestry_proportion.size() > ancestry_pulses.size() ) {
-        cerr << "\n\n\t\tERROR: insufficient ancestry pulses specified\n\n" ;
-        print_usage() ; 
-        exit(1) ; 
-    }
-    */
     return ;
 }
 

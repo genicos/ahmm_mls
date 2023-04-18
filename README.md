@@ -16,21 +16,21 @@ This will print the following:
 
 ahmm_mls usage:
 
-        required:
-                -i [string]             input file
-                -s [string]             sample id and ploidy file
-                -m [string]             model file
-        optional:
-                --help                  print this help statement
-                -g                      samples are specified with genotypes rather than read counts
-                -c [int]                        number of cores used
-                -vc                     verbose stderr output
-                -vo                     verbose stdout output
-                -R [float]                      specify morgan distance from selected site after which they are ignored
-                -t1 [float]                     threshold of lnL ratio range in simplex for first stage of optimization
-                -t2 [float]                     threshold of lnL ratio range in simplex for second stage of optimization
-                -k [int]                        number of skipped regions between adjacent sampled sites
-                                        for each one calculated.
+	required:
+		-i [string]		input file
+		-s [string]		sample id and ploidy file
+		-m [string]		model file
+	optional:
+		--help			print this help statement
+		-g			samples are specified with genotypes rather than read counts
+		-c [int]		number of cores used
+		-f			output relative fitnesses rather than selection coefficients
+		-vo			verbose stderr output
+		-R [float]		specify morgan distance from selected site after which they are ignored
+		-t1 [float]		threshold of lnL ratio range in simplex for first stage of optimization
+		-t2 [float]		threshold of lnL ratio range in simplex for second stage of optimization
+		-k [int]		number of skipped regions between adjacent sampled sites
+					for each one calculated.
 
 #### Input File and Sample File Format
 
@@ -40,7 +40,7 @@ AHMM_MLS uses the same file format for genotype data as Ancestry_HMM. See https:
 
 Each line in the model file corresponds to a model being fit to the genotype data, which may or may not include optimization.
 
-Each line must have the following  5 required columns
+Each line must have the following 5 required columns
 
 1. Site coordinates used in this line (0 for bp, 1 for Morgans)
 2. Name of model
@@ -84,7 +84,7 @@ Here are a few examples of lines that may be in a model file.
 
 1 neut_model s 0.3 620
 
-This line would fit a neutral model in with an admixture fraction of 0.3, and a time since admixture of 620. It would then decode the posterior-probabilities for each sample.
+This line would fit a neutral model in with an admixture fraction of 0.3, and a time since admixture of 620 generations. It would then decode the posterior-probabilities for each sample.
 
 0 la_compare dm 0.3 620 l 2048541 h 0.5 s 0.01 l 8836891 h 0 s 0.02
 

@@ -29,7 +29,6 @@ public:
         markov_chain_information = mci;
         transition_matrix_information = tmi;
         position = pos;
-        state_list = state_list;
         chromosomes = chroms;
         
         morgan_position.resize(n_recombs.size());

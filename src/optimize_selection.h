@@ -64,7 +64,7 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
         }
 
         if(h_and_s){
-            new_params.push_back(1 / (1 - h * s));
+            new_params.push_back( 1      / (1 - h * s));
             new_params.push_back((1 - s) / (1 - h * s));
         }
     }
@@ -103,7 +103,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
                 cerr << "time:    " << parameters[global_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
+                cerr << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << "\t1\t" << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
             }
         }
 
@@ -228,7 +228,7 @@ double to_be_optimized (vector<double> parameters) {
 
     if(context.options.verbose_stderr){
         cerr << "lnl = " << setprecision(15) << lnl << "\n";
-        cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
+        cerr << "time passed in iteration: " << (get_wall_time() - timer) << "\n";
     }else{
         cerr << "lnl\t" << setprecision(15) << lnl << "\n";
     }
@@ -278,10 +278,10 @@ double to_be_optimized_fast(vector<double> parameters) {
     double lnl = compute_lnl(transition_matrices);
 
     if(context.options.verbose_stderr) {
-        cerr << "lnl ratio = " << setprecision(15) << lnl << "\n";
-        cerr << "TIME PASSED IN ONE ITERATION: " << (get_wall_time() - timer) << "\n";
+        cerr << "lnl = " << setprecision(15) << lnl << "\n";
+        cerr << "time passed in iteration: " << (get_wall_time() - timer) << "\n";
     }else{
-        cerr << "lnl ratio\t" << setprecision(15) << lnl << "\n";
+        cerr << "lnl \t" << setprecision(15) << lnl << "\n";
     }
     
     return lnl;
