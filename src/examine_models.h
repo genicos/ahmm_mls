@@ -147,6 +147,8 @@ void selection_opt::examine_models() {
 
     for(int i = 0; i < options.mls_searches.size(); i++){
 
+        cout << options.mls_searches[i].search_string << "\n";
+
         setup_searches(options.mls_searches[i]);
 
         
