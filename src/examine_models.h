@@ -5,50 +5,47 @@
 
 #include "optimize_selection.h"
 
-vector<vector<vector<double>>> get_local_genotypes (vector<mat> model) {
+vector<vector<vector<double>>> get_local_genotypes (vector<mat> model, vector<markov_chain> &markov_chain_information, map<int, vector<vector<map<vector<transition_information>,double>>>> &transition_matrix_information, vector<int> &position, vector<double> &n_recombs) {
     
     map<int,vector<mat> > transition_matrix ;
 
     
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
         
-        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, model ) ;
+        alt_create_transition_matrix( transition_matrix, transition_matrix_information[markov_chain_information.at(m).number_chromosomes], n_recombs, position, markov_chain_information.at(m).number_chromosomes, model ) ;
             
-        for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
-            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs,  context.position, context.markov_chain_information[m].ploidy_switch[p], model ) ;
+        for ( int p = 0 ; p < markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
+            alt_create_transition_matrix( transition_matrix, transition_matrix_information[markov_chain_information[m].ploidy_switch[p]], n_recombs,  position, markov_chain_information[m].ploidy_switch[p], model ) ;
         }
     }
     
     vector<mat> interploidy_transitions;
 
-
-    int sample_count = context.markov_chain_information.size();
-    int site_count = context.markov_chain_information[0].alphas.size();
-
+    int sample_count = markov_chain_information.size();
+    int site_count = markov_chain_information[0].alphas.size();
     
     //populating alphas
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-        context.markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
+    for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
+        markov_chain_information[m].compute_forward_probabilities(  transition_matrix, interploidy_transitions) ;
     }
     
     //populating betas
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
-        context.markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
+    for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
+        markov_chain_information[m].compute_backward_probabilities( transition_matrix, interploidy_transitions ) ;
     }
 
-    //vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
-    vector<vector<vector<double>>> genotype_posteriors(context.markov_chain_information.size());
+    vector<vector<vector<double>>> genotype_posteriors(markov_chain_information.size());
 
     
     //looping through samples
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
 
-        vector<vector<double>> sample_ancestry(context.markov_chain_information[0].alphas.size());
+        vector<vector<double>> sample_ancestry(markov_chain_information[0].alphas.size());
 
         //looping through sites
         for( int i = 0; i < sample_ancestry.size(); i++){
 
-            vec smoothed_probs = context.markov_chain_information[m].alphas[i] % context.markov_chain_information[m].betas[i] ;
+            vec smoothed_probs = markov_chain_information[m].alphas[i] % markov_chain_information[m].betas[i] ;
             normalize( smoothed_probs ) ;
             
             sample_ancestry[i] = conv_to< vector<double> >::from(smoothed_probs);
@@ -65,14 +62,14 @@ vector<vector<vector<double>>> get_local_genotypes (vector<mat> model) {
 
 
 
-vector<double> get_local_ancestry (vector<mat> model) {
+vector<double> get_local_ancestry (vector<mat> model, vector<markov_chain> &markov_chain_information,  map<int, vector<vector<map<vector<transition_information>,double>>>> &transition_matrix_information, vector<int> &position, vector<double> &n_recombs) {
     
-    vector<vector<vector<double>>> genotypes = get_local_genotypes(model);
+    vector<vector<vector<double>>> genotypes = get_local_genotypes(model, markov_chain_information, transition_matrix_information, position, n_recombs);
 
-    vector<double> data_ancestry(context.markov_chain_information[0].alphas.size());
+    vector<double> data_ancestry(markov_chain_information[0].alphas.size());
     
     //looping through samples
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
 
         //looping through sites
         for( int i = 0; i < data_ancestry.size(); i++){
@@ -93,7 +90,7 @@ vector<double> get_local_ancestry (vector<mat> model) {
     }
     
     for( int i = 0; i < data_ancestry.size(); i++){
-        data_ancestry[i] /= context.markov_chain_information.size();
+        data_ancestry[i] /= markov_chain_information.size();
     }
     
     return data_ancestry;
@@ -103,8 +100,6 @@ vector<double> get_local_ancestry (vector<mat> model) {
 
 
 void selection_opt::examine_models() {
-
-    
 
     // Defining optimization parameters
     vector<vector<vector<double>>> search_restarts;   
@@ -127,6 +122,7 @@ void selection_opt::examine_models() {
     search_restarts.push_back(shallow);
     search_restarts.push_back(deep);
 
+    //Defining nelder mead hyper parameters
     double nelder_mead_reflection  = 1;
     double nelder_mead_contraction = 0.5;
     double nelder_mead_expansion   = 2;
@@ -139,8 +135,8 @@ void selection_opt::examine_models() {
         nelder_mead_shrinkage
     );
 
+    optimizer.supporting_info = this;
 
-    context = *this;
 
     cerr << setprecision(15);
     cout << setprecision(15);
@@ -187,7 +183,7 @@ void selection_opt::examine_models() {
 
         if(parameter_count == 0) { //No searching, just fitting a model
 
-            double lnl = to_be_optimized_fast(initial_parameters);
+            double lnl = to_be_optimized_fast(initial_parameters, this);
 
             vector<double> parameters = convert_parameters_to_long_form(initial_parameters);
 
@@ -269,7 +265,7 @@ void selection_opt::examine_models() {
                 }
             }
 
-            for(int h = 0; h < initial_parameters.size(); h++){
+            for(int h = 0; h < initial_parameters.size(); h++) {
                 cerr << initial_parameters[h] << "\n";
                 cerr << optimizer.min_bounds[h] << "\n";
                 cerr << optimizer.max_bounds[h] << "\n\n\n";
@@ -283,7 +279,8 @@ void selection_opt::examine_models() {
                 initial_parameters,
                 search_restarts,
                 &to_be_optimized_fast,
-                parameter_types
+                parameter_types,
+                options.verbose_stderr
             );
 
             cerr << "\n\nBest Model\n";
@@ -316,10 +313,9 @@ void selection_opt::examine_models() {
             }
 
 
-            double lnl = to_be_optimized_fast (best_parameters);
+            double lnl = to_be_optimized_fast (best_parameters, this);
             
             cout << setprecision(15) << "lnl:\t" << lnl << "\n";
-
 
         }
 
@@ -334,9 +330,9 @@ void selection_opt::examine_models() {
         bool sample_posterior_printing = options.mls_searches[i].posterior_options.find(sample_posterior_op) != string::npos;
 
 
-        if (model_posterior_printing || data_posterior_printing || sample_posterior_printing)
-            to_be_optimized (initial_parameters);
-
+        if (model_posterior_printing || data_posterior_printing || sample_posterior_printing) {
+            to_be_optimized (initial_parameters, this);
+        }
 
 
         if ( model_posterior_printing ) {
@@ -351,7 +347,7 @@ void selection_opt::examine_models() {
 
             for(int i = 1; i < n_recombs.size(); i++) {
 
-                model_ancestry << "\n" << context.position[i] << "\t" << morgan_position[i]  << "\t" << local_ancestries[i];
+                model_ancestry << "\n" << position[i] << "\t" << morgan_position[i]  << "\t" << local_ancestries[i];
             }
                 
             model_ancestry.close();
@@ -360,7 +356,7 @@ void selection_opt::examine_models() {
 
 
         if ( sample_posterior_printing ) {
-            get_local_ancestry(last_calculated_transition_matricies);
+            get_local_ancestry(last_calculated_transition_matricies, markov_chain_information, transition_matrix_information, position, n_recombs);
             
             pulse first_pulse;
             first_pulse.time = 10000000;
@@ -385,7 +381,7 @@ void selection_opt::examine_models() {
             
             cerr << "forward-backward posterior decoding and printing\t\t\t";
             for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
-                context.markov_chain_information[m].combine_prob( context.position, context.state_list, context.chromosomes, options.output_pulses, optimum ) ;
+                markov_chain_information[m].combine_prob( position, state_list, chromosomes, options.output_pulses, optimum ) ;
             }
             
         }
@@ -394,7 +390,7 @@ void selection_opt::examine_models() {
 
         if ( data_posterior_printing ) {
 
-            vector<double> data_local_ancestry = get_local_ancestry(last_calculated_transition_matricies);
+            vector<double> data_local_ancestry = get_local_ancestry(last_calculated_transition_matricies, markov_chain_information, transition_matrix_information, position, n_recombs);
 
             ofstream data_ancestry;
 
@@ -406,7 +402,7 @@ void selection_opt::examine_models() {
 
             for(int i = 1; i < n_recombs.size(); i++) {
 
-                data_ancestry << "\n" << context.position[i] << "\t" << morgan_position[i]  << "\t" << data_local_ancestry[i];
+                data_ancestry << "\n" << position[i] << "\t" << morgan_position[i]  << "\t" << data_local_ancestry[i];
             }
 
             data_ancestry.close();

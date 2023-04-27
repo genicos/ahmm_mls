@@ -17,12 +17,6 @@ double get_wall_time() {
 }
 
 
-selection_opt context;
-
-void selection_opt::set_context() {
-    context = *this;
-}
-
 Search global_search;
 
 
@@ -75,7 +69,7 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
 
 
 
-void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size){
+void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size, bool verbose){
 
     int selected_sites_count = parameters.size() / 3;
     selection_recomb_rates.resize(selected_sites_count + 1);
@@ -84,7 +78,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
     if(parameters.size() > 0) {
         
 
-        if(context.options.verbose_stderr) {
+        if(verbose) {
             cerr << "\nTesting parameters:\n";
             if (global_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
@@ -156,30 +150,29 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
 
 
-double compute_lnl(vector<mat> &transition_matrices){
+double compute_lnl(vector<mat> &transition_matrices, selection_opt &opt_context){
 
     map<int,vector<mat> > transition_matrix ;
     
     // Compute transition matricies for different ploidies
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for ( int m = 0 ; m < opt_context.markov_chain_information.size() ; m ++ ) {
         
-        alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information.at(m).number_chromosomes], context.n_recombs, context.position, context.markov_chain_information.at(m).number_chromosomes, transition_matrices ) ;
+        alt_create_transition_matrix( transition_matrix, opt_context.transition_matrix_information[opt_context.markov_chain_information.at(m).number_chromosomes], opt_context.n_recombs, opt_context.position, opt_context.markov_chain_information.at(m).number_chromosomes, transition_matrices ) ;
         
-        for ( int p = 0 ; p < context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
-            alt_create_transition_matrix( transition_matrix, context.transition_matrix_information[context.markov_chain_information[m].ploidy_switch[p]], context.n_recombs, context.position, context.markov_chain_information[m].ploidy_switch[p], transition_matrices ) ;
+        for ( int p = 0 ; p < opt_context.markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
+            alt_create_transition_matrix( transition_matrix, opt_context.transition_matrix_information[opt_context.markov_chain_information[m].ploidy_switch[p]], opt_context.n_recombs, opt_context.position, opt_context.markov_chain_information[m].ploidy_switch[p], transition_matrices ) ;
         }
 
     }
     
     vector<mat> interploidy_transitions;
 
-    
     double lnl = 0 ;
     
     // Sum up log likelihoods for each panel
-    for ( int m = 0 ; m < context.markov_chain_information.size() ; m ++ ) {
+    for ( int m = 0 ; m < opt_context.markov_chain_information.size() ; m ++ ) {
         
-        lnl += context.markov_chain_information[m].compute_lnl( transition_matrix, interploidy_transitions) ;
+        lnl += opt_context.markov_chain_information[m].compute_lnl( transition_matrix, interploidy_transitions) ;
     }
     
     return lnl;
@@ -190,7 +183,9 @@ double compute_lnl(vector<mat> &transition_matrices){
 
 vector<mat> last_calculated_transition_matricies;
 
-double to_be_optimized (vector<double> parameters) {
+double to_be_optimized (vector<double> parameters, void *info) {
+
+    selection_opt *opt_context = (class selection_opt *) info;
 
     parameters = convert_parameters_to_long_form(parameters);
 
@@ -200,19 +195,19 @@ double to_be_optimized (vector<double> parameters) {
     vector<vector<double>> fitnesses;
     
     double used_chrom_size = 1;
-    if(context.chrom_size > 1){
-        used_chrom_size = context.chrom_size;
+    if((*opt_context).chrom_size > 1){
+        used_chrom_size = (*opt_context).chrom_size;
     }
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr);
 
-    int cores = context.options.cores;
+    int cores = (*opt_context).options.cores;
 
     double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
     int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
 
     vector<mat> transition_matrices = calculate_transition_rates (
-        context.n_recombs,
+        (*opt_context).n_recombs,
         selection_recomb_rates,
         fitnesses,
         m,
@@ -223,10 +218,10 @@ double to_be_optimized (vector<double> parameters) {
     last_calculated_transition_matricies = transition_matrices;
 
     
-    double lnl = compute_lnl(transition_matrices);
+    double lnl = compute_lnl(transition_matrices, (*opt_context));
     
 
-    if(context.options.verbose_stderr){
+    if((*opt_context).options.verbose_stderr){
         cerr << "lnl = " << setprecision(15) << lnl << "\n";
         cerr << "time passed in iteration: " << (get_wall_time() - timer) << "\n";
     }else{
@@ -242,7 +237,9 @@ double to_be_optimized (vector<double> parameters) {
 
 vector<mat> neutral_transition_matrices;
 
-double to_be_optimized_fast(vector<double> parameters) {
+double to_be_optimized_fast(vector<double> parameters, void *info) {
+
+    selection_opt *opt_context = (class selection_opt *) info;
 
     parameters = convert_parameters_to_long_form(parameters);
     
@@ -252,32 +249,32 @@ double to_be_optimized_fast(vector<double> parameters) {
     vector<vector<double>> fitnesses;
 
     double used_chrom_size = 1;
-    if(context.chrom_size > 1){
-        used_chrom_size = context.chrom_size;
+    if((*opt_context).chrom_size > 1){
+        used_chrom_size = (*opt_context).chrom_size;
     }
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr);
     
-    int cores = context.options.cores;
+    int cores = (*opt_context).options.cores;
     
     double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
     int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
-        context.n_recombs,
+        (*opt_context).n_recombs,
         selection_recomb_rates,
         fitnesses,
         m,
         generations,
         cores,
         used_chrom_size,
-        context.options.fast_transitions_radius_in_morgans,
-        context.options.sampled_pair_skips
+        (*opt_context).options.fast_transitions_radius_in_morgans,
+        (*opt_context).options.sampled_pair_skips
     );
 
-    double lnl = compute_lnl(transition_matrices);
+    double lnl = compute_lnl(transition_matrices, (*opt_context));
 
-    if(context.options.verbose_stderr) {
+    if((*opt_context).options.verbose_stderr) {
         cerr << "lnl = " << setprecision(15) << lnl << "\n";
         cerr << "time passed in iteration: " << (get_wall_time() - timer) << "\n";
     }else{
@@ -321,8 +318,9 @@ vector<double> multi_restart_optimization(
     nelder_mead &opt,
     vector<double> &given_parameters,
     vector<vector<vector<double>>> &restarts,
-    double (*to_be_optimized_function) (vector<double>),
-    vector<parameter_type> parameter_types
+    double (*to_be_optimized_function) (vector<double>, void*),
+    vector<parameter_type> parameter_types,
+    bool verbose
 ){
     vector<double> best_parameters;
     double best_ratio = -DBL_MAX;
@@ -388,7 +386,7 @@ vector<double> multi_restart_optimization(
                 while((opt.max_value - opt.min_value) > stopping_point && opt.repeated_shrinkages < 4){
                     opt.iterate(to_be_optimized_function);
 
-                    if(context.options.verbose_stderr){
+                    if(verbose){
                         cerr << "nelder-mead simplex_size: " << opt.simplex_size() << " output range: " << opt.max_value - opt.min_value << "\n";
                     }
                 }

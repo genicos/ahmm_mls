@@ -49,25 +49,17 @@ public:
         shrinkage = 0.5;
     }
 
+    void *supporting_info = NULL;
+
     void init_bounds(int dimensions, double reb);
     void enforce_bounds();
 
     void populate_points(int dimensions, double size, vector<double> center, vector<double> scales);
     void populate_points(int dimensions, double size, vector<double> center);
 
-    int calculate_points(double (*f)(vector<double>));  // returns number of function calls
-    int iterate(double (*f)(vector<double>));           //
+    int calculate_points(double (*f)(vector<double>, void*));  // returns number of function calls
+    int iterate(double (*f)(vector<double>, void*));           //
 
-    
-    
-
-    vector<double> best_reflections;
-    vector<double> best_contractions;
-    vector<double> best_expansions;
-    vector<double> best_shrinkages;
-
-    vector<double> ground_truth;
-    double meta_optimize(vector<double> origin, vector<double> director);
 
     void determine_max();
     void determine_min();
@@ -200,12 +192,12 @@ void nelder_mead::populate_points(int dimensions, double size, vector<double> ce
 
 
 
-int nelder_mead::calculate_points(double (*f)(vector<double>)){
+int nelder_mead::calculate_points(double (*f)(vector<double>, void*)){
     
     point_values.resize(points.size());
     
     for(uint i = 0; i < points.size(); i++){
-        point_values[i] = (*f)(points[i]);
+        point_values[i] = (*f)(points[i], supporting_info);
     }
     
     determine_max();
@@ -217,7 +209,7 @@ int nelder_mead::calculate_points(double (*f)(vector<double>)){
     return points.size();
 }
 
-int nelder_mead::iterate(double (*f)(vector<double>)){
+int nelder_mead::iterate(double (*f)(vector<double>, void*)){
 
     int function_calls = 0;
 
@@ -252,14 +244,8 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
     }
     
     
-    // meta optimizing transformed point TODO REMOVE METAOPTS
-    if (ground_truth.size() > 0){
-        
-        best_reflections.push_back( -meta_optimize(best_centroid, points[min_index]) );
-    }
-    
     // calculating function value of transformed point
-    double reflected_value = (*f)(reflected);
+    double reflected_value = (*f)(reflected, supporting_info);
     function_calls++;
 
     if(reflected_value > scnd_min_value && reflected_value < max_value){
@@ -294,13 +280,9 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
             }
         }
 
-        // meta optimizing transformed point
-        if (ground_truth.size() > 0){
-            best_expansions.push_back( meta_optimize(best_centroid, reflected) );
-        }
 
         // calculating function value of transformed point
-        double expanded_value = (*f)(expanded);
+        double expanded_value = (*f)(expanded, supporting_info);
         function_calls++;
 
         repeated_shrinkages = 0;
@@ -342,13 +324,9 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
         contracted[d] = best_centroid[d] + contraction * (points[min_index][d] - best_centroid[d]);
     }
 
-    // meta optimizing transformed point
-    if (ground_truth.size() > 0){
-        best_contractions.push_back( meta_optimize(best_centroid, points[min_index]) );
-    }
 
     // calculating function value of transformed point
-    double contracted_value = (*f)(contracted);
+    double contracted_value = (*f)(contracted, supporting_info);
     function_calls++;
 
     if(contracted_value > min_value){
@@ -373,13 +351,9 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
                 points[i][d] = points[max_index][d] + shrinkage * (points[i][d] - points[max_index][d]);
             }
 
-            // meta optimizing transformed point
-            if (ground_truth.size() > 0){
-                best_shrinkages.push_back( meta_optimize(points[max_index], points[i]) );
-            }
 
             // calculating function value of transformed point
-            point_values[i] = (*f)(points[i]);
+            point_values[i] = (*f)(points[i], supporting_info);
             function_calls++;
         }
     }               
@@ -393,44 +367,6 @@ int nelder_mead::iterate(double (*f)(vector<double>)){
 
     return function_calls;
 }
-
-
-
-
-//Assumes ground_truth is populated
-// finds value of x such that (origin + x(director - origin)) is as close as possible
-// to ground_truth
-//
-// the returned value is the scalar projection of (ground_truth - origin) onto
-// (director - origin) divided by the magnitude of (director - origin)
-//EXPERIMENTAL, UNUSED
-double nelder_mead::meta_optimize(vector<double> origin, vector<double> director){
-
-    vector<double> truth_displacement(origin.size());
-    vector<double> direction(origin.size());
-
-    //calculating displacements
-    for(uint i = 0; i < origin.size(); i++){
-        truth_displacement[i] = ground_truth[i] - origin[i];
-        direction[i]          = director[i]     - origin[i];
-    }
-    double dot_product = 0;
-
-    for(int i = 0; i < origin.size(); i++){
-        dot_product += truth_displacement[i] * direction[i];
-    }
-
-    double direction_magnitude_squared = 0;
-
-    for(int i = 0; i < origin.size(); i++){
-        direction_magnitude_squared += direction[i] * direction[i];
-    }
-
-    return dot_product / direction_magnitude_squared;
-}
-
-
-
 
 
 

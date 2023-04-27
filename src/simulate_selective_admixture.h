@@ -259,7 +259,7 @@ void *single_window_process(void *void_info) {
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
     long t = info->t;
     
-    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores) { //CHECK RECOMB_RATES_AROUND_SELECTED_SITES
+    for(uint i = t; i < (*info->transition_matrices).size(); i+= info->cores) {
 
         vector<double> trans = adjacent_transition_rate(*info->recomb_rates_around_selected_sites, *info->fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
