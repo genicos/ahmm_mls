@@ -69,45 +69,33 @@ public:
     int block_size ; 
 
 
-    
-
-    //bool admixture_parameters_set = false;
-
-    // given ancestry proportion
-    //double m;
-
-    // given generations
-    //int generations;
-    
-
-    
-
-    // Place sites one at a time, with no info on selected sites
-    //bool uninformed_inference = false;
-    
-
-
-    // examine sites from site file
-    // bool use_site_file = false;
-
+    /// model file name, defines MLS models
     string model_file;
+
+    /// Multi-Locus selections or model fits
     vector<Search> mls_searches;
 
+    /// Threads used in MLS fitting
     int cores = 1;
 
+    /// Output more info to command line when fitting MLS models
     bool verbose_stderr = false;
 
+    /// Radius around which sites are accounted for in MLS fast lnl calculation
     double fast_transitions_radius_in_morgans = 0.02;
 
+    /// range of lnL in simplex after which first stage of searching an MLS model is stopped
     double search_stage_1_threshold = 5;
+
+    /// range of lnL in simplex after which second stage of searching an MLS model is stopped
     double search_stage_2_threshold = 1;
 
+    /// Adjacent pairs of sampled sites skipped in fast lnl calculation of MLS model
     int sampled_pair_skips = 4;
 
+    // Output relative fitnesses of genotype rather than selection coefficients
     bool output_relative_fitnesses = false;
     
-
-
     /// read relevant information
     void read_cmd_line ( int argc, char *argv[] ) ;
 

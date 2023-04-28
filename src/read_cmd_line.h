@@ -223,45 +223,36 @@ void cmd_line::read_cmd_line ( int argc, char *argv[] ) {
             ancestral_fixed = true ;
         }
 
+
         if ( strcmp(argv[i], "-m") == 0 ) {
             model_file = string(argv[++i]);
         }
-        
-
-
 
         if ( strcmp(argv[i], "-c") == 0 ) {
             cores = stoi(argv[++i]);
         }
 
-
         if( strcmp(argv[i], "-vo") == 0 ){
             verbose_stderr = true;
         }
 
-
         if ( strcmp(argv[i], "-R") == 0 ){
-
             fast_transitions_radius_in_morgans = stod(argv[++i]);
         }
         
         if ( strcmp(argv[i], "-t1") == 0 ) {
-
             search_stage_1_threshold = stod(argv[++i]);
         }
 
         if ( strcmp(argv[i], "-t2") == 0 ) {
-
             search_stage_2_threshold = stod(argv[++i]);
         }
 
         if ( strcmp(argv[i], "-k") == 0 ) {
-
             sampled_pair_skips = stoi(argv[++i]);
         }
 
         if ( strcmp(argv[i], "-f") == 0 ) {
-
             output_relative_fitnesses = true;
         }
 

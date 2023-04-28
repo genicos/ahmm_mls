@@ -23,6 +23,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
     vector<int> morgan_or_bp(0);
     vector<Search> config_searches;
 
+    // read each line, each line defines an MLS search
     string line;
     while (getline(in, line))
     {
@@ -32,10 +33,10 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
 
         this_line.search_string = line;
 
+        // Grab first three columns
         int morgan_or_bp_choice;
         if (!( iss >> morgan_or_bp_choice )) { error_string(); }
         morgan_or_bp.push_back(morgan_or_bp_choice);
-
 
         string search_name;
         if (!( iss >> search_name )) { error_string(); }
@@ -70,18 +71,24 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
         this_line.start_t = stod(t_string);
         
 
+        // Grab the rest of the columns, which define the selected sites in the MLS model
         vector<string> sites_info;
         string entry;
         while(iss >> entry){
             sites_info.push_back(entry);
         }
 
-
+        // Parse the rest of the columns
         for(int i = 0; i < sites_info.size(); i++) {
-            if (!sites_info[i].compare("l")) {
+            
+            // Start of new site
+            if (sites_info[i].compare("l") == 0) {
                 i++;
 
+                
                 this_line.search_l.push_back(false);
+
+                // If the location is surrounded by parenthesis, we are fitting location
                 if(sites_info[i][0] == '(') {
                     this_line.search_l.back() = true;
 
@@ -91,7 +98,9 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
 
                 i++;
 
-                if(i >= sites_info.size() || !sites_info[i].compare("l")){
+                if(i >= sites_info.size() || sites_info[i].compare("l") == 0){
+                    // We have reached the end of defining this site
+
                     this_line.min_bound_l.push_back(-1);
                     this_line.max_bound_l.push_back(-1);
 
@@ -104,20 +113,25 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     this_line.s_neg.push_back(false);
 
                     i--;
-                    continue;
+                    continue; // go to next site
                 }
 
+                
                 if(string_is_a_double(sites_info[i])) {
+                    // Bounds for location have been defined
                     this_line.min_bound_l.push_back(stod(sites_info[i]));
                     i++;
                     this_line.max_bound_l.push_back(stod(sites_info[i]));
                     i++;
                 }else{
+                    // No bounds defined
                     this_line.min_bound_l.push_back(-1);
                     this_line.max_bound_l.push_back(-1);
                 }
 
                 if(i >= sites_info.size()){
+                    // We have reached the end of this search
+                    
                     this_line.search_h.push_back(true);
                     this_line.start_h.push_back(0.5);
 
@@ -125,32 +139,39 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     this_line.start_s.push_back(0);
                     this_line.s_pos.push_back(false);
                     this_line.s_neg.push_back(false);
+
                     break;
                 }
                 
-                if (!sites_info[i].compare("h")) {
+                
+                if (sites_info[i].compare("h") == 0) {
+                    // dominance coefficient is defined
                     i++;
 
                     this_line.search_h.push_back(false);
-                    if(sites_info[i][0] == '(') {
+                    if(sites_info[i][0] == '(') { // We are fitting dominance coeffient
                         this_line.search_h.back() = true;
 
                         sites_info[i] = sites_info[i].substr(1, sites_info[i].length() - 2);
                     }
 
+                    // check if starting point for h has been defined
                     if(sites_info[i].length() > 0)
                         this_line.start_h.push_back(stod(sites_info[i]));
                     else
                         this_line.start_h.push_back(0.5);
                     
                     i++;
+
                     if(i >= sites_info.size() || sites_info[i].compare("s")) {
+                        // We have reached the end of defining this site
+
                         this_line.search_s.push_back(true);
                         this_line.start_s.push_back(0);
                         this_line.s_pos.push_back(false);
                         this_line.s_neg.push_back(false);
                         i--;
-                        continue;
+                        continue; // go to next site
                     }
                     
                     
@@ -159,19 +180,22 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     this_line.start_h.push_back(0.5);
                 }
 
-                i++;
+                // at this point, sites_info[i] is an 's' 
 
+                i++;
+                
                 this_line.search_s.push_back(false);
                 this_line.s_pos.push_back(false);
                 this_line.s_neg.push_back(false);
 
+                // Check if we are searching s
                 if (sites_info[i][0] == '(') {
                     this_line.search_s.back() = true;
 
                     if (sites_info[i].back() != ')') {
-                        if(sites_info[i].back() == '+')
+                        if(sites_info[i].back() == '+') // Restricting search to positive
                             this_line.s_pos.back() = true;
-                        else
+                        else                            // Restricting search to negative
                             this_line.s_neg.back() = true;
                         
                         sites_info[i] = sites_info[i].substr(0, sites_info[i].length() - 1);
@@ -179,7 +203,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
                     sites_info[i] = sites_info[i].substr(1, sites_info[i].length() - 2);
                 }
                 
-
+                //Check if s starting point has been defined
                 if(sites_info[i].length() > 0)
                     this_line.start_s.push_back(stod(sites_info[i]));
                 else
@@ -201,6 +225,8 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
         morgan_position[i] = sum;
     }
 
+    // Go through each search and check if sites have been defined in bp coords
+    //   if so, replace bp coords with morgans
     for(int i = 0; i < config_searches.size(); i++){
         if(!morgan_or_bp[i]){
 

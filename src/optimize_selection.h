@@ -16,7 +16,7 @@ double get_wall_time() {
     return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
 
-
+// Fill in MLS parameters that arent being fit
 vector<double> convert_parameters_to_long_form(vector<double> parameters, Search &current_search) {
     vector<double> new_params(0);
 
@@ -37,7 +37,6 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters, Search
             new_params.push_back(current_search.start_l[j]);
         }
 
-        bool h_and_s = true; // Not all fitnesses can be expressed in terms of h and s
         double h = 0;
         double s = 0;
 
@@ -52,11 +51,10 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters, Search
         }else{
             s = current_search.start_s[j];
         }
-
-        if(h_and_s){
-            new_params.push_back( 1      / (1 - h * s));
-            new_params.push_back((1 - s) / (1 - h * s));
-        }
+        
+        new_params.push_back( 1      / (1 - h * s));
+        new_params.push_back((1 - s) / (1 - h * s));
+        
     }
 
 
@@ -64,7 +62,7 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters, Search
 }
 
 
-
+// Fills fitnesses vector with appropriate relative fitnesses, and selection_recomb_rates with recomb rates between selected sites
 void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size, bool verbose, Search &current_search){
 
     int selected_sites_count = parameters.size() / 3;
@@ -179,6 +177,7 @@ double compute_lnl(vector<mat> &transition_matrices, selection_opt &opt_context)
 
 vector<mat> last_calculated_transition_matricies;
 
+// Slow lnL calculation
 double to_be_optimized (vector<double> parameters, void *info) {
 
     selection_opt *opt_context = (class selection_opt *) info;
@@ -187,9 +186,10 @@ double to_be_optimized (vector<double> parameters, void *info) {
 
     double timer = get_wall_time();
     
-    vector<double> selection_recomb_rates;
+    vector<double> selection_recomb_rates; // Recomb rates around selected sites
     vector<vector<double>> fitnesses;
     
+    // If chrom size is less than 1 morgan, treat it as if its 1
     double used_chrom_size = 1;
     if((*opt_context).chrom_size > 1) {
         used_chrom_size = (*opt_context).chrom_size;
@@ -197,20 +197,21 @@ double to_be_optimized (vector<double> parameters, void *info) {
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr, (*opt_context).curr_search);
 
-    int cores = (*opt_context).options.cores;
-
+    // m or t may have been fit
     double m        = ((*opt_context).curr_search.search_m) ?      parameters[0]                                   : (*opt_context).curr_search.start_m;
     int generations = ((*opt_context).curr_search.search_t) ? (int)parameters[(*opt_context).curr_search.search_m] : (*opt_context).curr_search.start_t;
 
+    
     vector<mat> transition_matrices = calculate_transition_rates (
         (*opt_context).n_recombs,
         selection_recomb_rates,
         fitnesses,
         m,
         generations,
-        cores
+        (*opt_context).options.cores
     );
     
+    // Keep track of last full transition matrix
     last_calculated_transition_matricies = transition_matrices;
 
     
@@ -233,6 +234,7 @@ double to_be_optimized (vector<double> parameters, void *info) {
 
 vector<mat> neutral_transition_matrices;
 
+// Fast lnL calculation
 double to_be_optimized_fast(vector<double> parameters, void *info) {
 
     selection_opt *opt_context = (class selection_opt *) info;
@@ -241,9 +243,10 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
     
     double timer = get_wall_time();
     
-    vector<double> selection_recomb_rates;
+    vector<double> selection_recomb_rates; // Recomb rates around selected sites
     vector<vector<double>> fitnesses;
 
+    // If chrom size is less than 1 morgan, treat it as if its 1
     double used_chrom_size = 1;
     if((*opt_context).chrom_size > 1){
         used_chrom_size = (*opt_context).chrom_size;
@@ -251,8 +254,8 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
 
     prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr, (*opt_context).curr_search);
     
-    int cores = (*opt_context).options.cores;
     
+    //m or t may have been fit
     double m        = ((*opt_context).curr_search.search_m) ?      parameters[0]                                   : (*opt_context).curr_search.start_m;
     int generations = ((*opt_context).curr_search.search_t) ? (int)parameters[(*opt_context).curr_search.search_m] : (*opt_context).curr_search.start_t;
     
@@ -262,7 +265,7 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
         fitnesses,
         m,
         generations,
-        cores,
+        (*opt_context).options.cores,
         used_chrom_size,
         (*opt_context).options.fast_transitions_radius_in_morgans,
         (*opt_context).options.sampled_pair_skips
@@ -284,7 +287,7 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
 
 
 
-
+// Fits an MLS model
 vector<double> multi_restart_optimization(
     double chrom_size,
     nelder_mead &opt,
@@ -306,12 +309,11 @@ vector<double> multi_restart_optimization(
                 
                 cerr << "\n SEARCH " << j + 1 << "/" << restarts.size() << " " << k + 1 << "/" << restarts[j].size() << " " << l + 1 << "/" << restarts[j][k][0] << "\n";
                 
-                
 
                 vector<double> center_point = given_parameters;
                 vector<double> scales(given_parameters.size());
 
-
+                //Defines sizes of dimensions in starting simplex
                 for(int i = 0; i < given_parameters.size(); i++) {
                     switch(parameter_types[i]){
                         case admix_frac:
@@ -336,7 +338,7 @@ vector<double> multi_restart_optimization(
                 opt.populate_points(given_parameters.size(), 1, center_point, scales);
                 
 
-                //random reflections
+                //random reflections so each simplex is different
                 for(uint i = 0; i < center_point.size(); i++){
                     if(rand() < RAND_MAX/2){
                         for(uint j = 0; j < opt.points.size(); j++){
@@ -345,9 +347,7 @@ vector<double> multi_restart_optimization(
                     }
                 }
                 
-
                 opt.enforce_bounds();
-
 
                 opt.calculate_points(to_be_optimized_function);
 
@@ -355,6 +355,7 @@ vector<double> multi_restart_optimization(
 
                 double stopping_point = min(initial_range / 20 * restarts[j][k][3], restarts[j][k][3]);
 
+                //Perform a nelder mead search
                 while((opt.max_value - opt.min_value) > stopping_point && opt.repeated_shrinkages < 4){
                     opt.iterate(to_be_optimized_function);
 
@@ -365,6 +366,7 @@ vector<double> multi_restart_optimization(
 
                 found_parameters = opt.points[opt.max_index];
 
+                // Keep track of best parameters
                 if(opt.max_value > best_ratio) {
                     best_ratio = opt.max_value;
                     best_parameters = found_parameters;
@@ -373,6 +375,7 @@ vector<double> multi_restart_optimization(
             }
         }
 
+        // Start new set of searches around best of last search
         given_parameters = best_parameters;
 
         best_ratio = -DBL_MAX;

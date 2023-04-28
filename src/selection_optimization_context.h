@@ -2,24 +2,35 @@
 #define SELECTION_OPTIMIZATION_CONTEXT
 #include <vector>
 
-class selection_opt{
+
+// Object containing info neccessary to perform MLS searches and calculate lnL
+class selection_opt {
 public:
+
+    // Recombination rate between each adjacent pair of sampled sites
     vector<double> n_recombs;
+
     cmd_line options;
     
     vector<markov_chain> markov_chain_information ;
     map<int, vector<vector< map< vector<transition_information>, double > > > > transition_matrix_information ;
+
+    // Position of each sampled site in bp
     vector<int> position ;
+
+    // Position of each sampled site in morgans
     vector<double> morgan_position;
+
     double chrom_size;
 
+    // State list for combining probabilities
     map<int,vector<vector<int> > > state_list ;
 
-    vector<double> restricted_search_sites;
+    // Name of sampled chromosomes
     vector<string> chromosomes ;
 
+    // Current MLS search
     Search curr_search;
-
 
     selection_opt(vector<double> &neutral_recombs, cmd_line &o, vector<markov_chain> &mci, map<int, vector<vector<map<vector<transition_information>,double>>>> &tmi, vector<int> &pos, map<int,vector<vector<int>>> &states, vector<string> &chroms){
         n_recombs = neutral_recombs;
@@ -41,6 +52,7 @@ public:
     }
     selection_opt(){}
 
+    // Examing MLS models
     void examine_models();
     
 };

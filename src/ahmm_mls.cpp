@@ -141,7 +141,6 @@ int main ( int argc, char *argv[] ) {
     
     
 
-
     
     // read model file and place list of searches in options
     read_model_file(options, recombination_rate, position);

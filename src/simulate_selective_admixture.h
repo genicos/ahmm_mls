@@ -30,6 +30,7 @@ double gwall_time(){
 }
 
 
+// Covert gamete to index in haploid vector
 int gamete_to_index(vector<bool> gamete){
     int ans = 0;
     for(unsigned int i = 0; i < gamete.size(); i++)
@@ -38,6 +39,7 @@ int gamete_to_index(vector<bool> gamete){
     return ans;
 }
 
+// Covert index in haploid vector to gamete
 vector<bool> index_to_gamete(int index, int sites){
     vector<bool> ans(sites);
     for(int s = 0; s < sites; s++)
@@ -46,9 +48,8 @@ vector<bool> index_to_gamete(int index, int sites){
 }
 
 
-
-
-
+// Fertilization, produces distribution of diploypes D as the zygotes, 
+//  from distribution of haplotypes H acting as gametes. Assumes mendelian segregation
 void HtoD(Row<double> *H, Row<double> *D){
     for (uint i = 0 ; i < H->n_elem; i++){
         for (uint j = 0; j < H->n_elem; j++) {
@@ -58,6 +59,7 @@ void HtoD(Row<double> *H, Row<double> *D){
 }
 
 
+// Normalize haploid distribution
 void normH(Row<double> *H){
     double total = 0;
     for (uint i = 0; i < H->n_elem; i++){
@@ -69,7 +71,15 @@ void normH(Row<double> *H){
 }
 
 
-//m is proportion of ancestry type 0
+//Calculates frequency of combinations of ancestry types of adjacent sampled sites
+// Returns a vector of size 4, whose entries correspond to the relative frequencies
+//  of ancestry types (0,0) (0,1) (1,0) (1,1). 
+//
+// recomb_rates is recomb rates between selected sites
+// fitnesses are relative fitnesses of genotypes of selected sites
+// m is proportion of final ancestry that was introgressed from ancestral population 0
+// n_site1 and n_site2 are morgan positions of adjacent sampled sites
+// generations is time since admixture
 vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vector<double>> fitnesses, double m,
     double n_site1, double n_site2, int generations) {
     
@@ -131,6 +141,8 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 
     int haploids = pow(2,sites);
     
+    // haploid distribution at generation 0, 
+    //  only haploid are those that consist only of a single ancestry type
     Row<double> H(haploids, fill::zeros);
     H(0) = m;
     H(haploids - 1) = 1 - m;
@@ -140,18 +152,19 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     Row<double> D(haploids*haploids, fill::zeros);
     
     // populate M matrix //////////////////////////////////////////////////////////////
-    //loop through all diploids                                                      //
+    //loop through all diplotype                                                     //
     
     for (int i = 0; i < haploids; i++){
         for (int j = 0; j < haploids; j++){
             
-            int di = i*haploids + j;
-            vector<bool> chr1 = index_to_gamete(i, sites);
-            vector<bool> chr2 = index_to_gamete(j, sites);
+            int di = i*haploids + j; // index of diplotype
+            vector<bool> chr1 = index_to_gamete(i, sites); // First chromosome of diplotype
+            vector<bool> chr2 = index_to_gamete(j, sites); // Second chromosome of diplotype
 
             
             double fitness = 1;
 
+            // Calcuating fitness of diplotype, given relative fitness of all selected sites
             for(int s = 0; s < sites; s++){
                 if     (chr1[s] == 0 && chr2[s] == 0)
                     fitness *= fitnesses[s][0];
@@ -186,37 +199,37 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     
     // Run through generations /////////////
     for(int g = 0; g < generations; g++) {//
-        HtoD(&H, &D);
-        H = D * M;
+        HtoD(&H, &D);   // fertilization
+        H = D * M;      // life of diploids and meiosis
         normH(&H);
     }                                     //
     ////////////////////////////////////////
 
     
-    // Calculating transition rates ///////////////////////////////
-    vector<double> transitions(4);                               //
+    // Calculating sampled site haploid frequencies ///////////////
+    vector<double> ancestry_pair_frequencies(4);                 //
     
     for(int i = 0; i < haploids; i++){
         int anc_of_site_1 = index_to_gamete(i,sites)[n_sites[0]];
         int anc_of_site_2 = index_to_gamete(i,sites)[n_sites[1]];
 
         if(anc_of_site_1 == 0 && anc_of_site_2 == 0)
-            transitions[0] += H(i);
+            ancestry_pair_frequencies[0] += H(i);
         
         if(anc_of_site_1 == 0 && anc_of_site_2 == 1)
-            transitions[1] += H(i);
+            ancestry_pair_frequencies[1] += H(i);
 
         if(anc_of_site_1 == 1 && anc_of_site_2 == 0)
-            transitions[2] += H(i);
+            ancestry_pair_frequencies[2] += H(i);
 
         if(anc_of_site_1 == 1 && anc_of_site_2 == 1)
-            transitions[3] += H(i);
+            ancestry_pair_frequencies[3] += H(i);
 
     }                                                            //
     ///////////////////////////////////////////////////////////////
     
     
-    return transitions;
+    return ancestry_pair_frequencies;
 }
 
 
@@ -233,11 +246,11 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
 
 
 
-
+// Expected local ancestry of last calculated MLS model
 vector<double> local_ancestries;
 
 
-
+// Information needed by each thread
 struct intra_model_shared_info{
     long t;
     vector<double> *neutral_sites;
@@ -253,7 +266,7 @@ struct intra_model_shared_info{
     double chrom_size;
 };
 
-
+// Each thread calls this function
 void *single_window_process(void *void_info) {
 
     struct intra_model_shared_info *info = (struct intra_model_shared_info *)void_info;
@@ -265,6 +278,7 @@ void *single_window_process(void *void_info) {
 
         mat transition_matrix(2,2,fill::zeros);
 
+        // Convert ancestry frequencies into transition matrix
         transition_matrix(0,0) = trans[0]/(trans[0] + trans[1]);
         transition_matrix(0,1) = 1 - transition_matrix(0,0);
         transition_matrix(1,0) = trans[2]/(trans[2] + trans[3]);
@@ -287,7 +301,7 @@ void *single_window_process(void *void_info) {
 
 
 
-
+// Calculates transition rates between all sites
 vector<mat> calculate_transition_rates(
   vector<double> &recomb_rates_around_neutral_sites,
   vector<double> &recomb_rates_around_selected_sites,
@@ -318,7 +332,6 @@ vector<mat> calculate_transition_rates(
     }                                                                            //
     ///////////////////////////////////////////////////////////////////////////////
     
-
     
     
     // Creating threads to deal with independent adjacent neutral regions //////////////////
@@ -353,17 +366,10 @@ vector<mat> calculate_transition_rates(
     }                                                                                     //
     ////////////////////////////////////////////////////////////////////////////////////////
     
-
     
     return transition_matrices;
 }
 
-
-
-
-
-
-void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , vector<vector< map< vector<transition_information>, double > > > &transition_info, vector<double> &recombination_rate, vector<int> &positions, double &number_chromosomes, vector<mat> &transition_matrices);
 
 
 
@@ -379,11 +385,12 @@ void *alt_single_fast_window_process(void *void_info) {
     int pairs_skipped = info->pairs_skipped + 1;
     
     
-    for(uint i = t*pairs_skipped + (pairs_skipped/2); i < (*info->transition_matrices).size(); i+= info->cores*pairs_skipped){
+    for(uint i = t*pairs_skipped + (pairs_skipped/2); i < (*info->transition_matrices).size(); i+= info->cores*pairs_skipped ) {
         
         vector<double> pertinent_selected_sites;
         vector<vector<double>> pertinent_fitnesses;
 
+        // Check which sites we are going to account for
         for(uint j = 0; j < (*info->selected_sites).size(); j++){
             double distance = (*info->neutral_sites)[i] - (*info->selected_sites)[j];
             if(distance <= info->fast_transitions_radius_in_morgans && distance >= -info->fast_transitions_radius_in_morgans){
@@ -393,6 +400,7 @@ void *alt_single_fast_window_process(void *void_info) {
         }
 
 
+        // Recomb rates around sites we are accounting for
         vector<double> pertinent_recomb_rates_around_selected_sites(pertinent_selected_sites.size() + 1);
 
         if(pertinent_selected_sites.size() >= 1){
@@ -409,16 +417,20 @@ void *alt_single_fast_window_process(void *void_info) {
             pertinent_recomb_rates_around_selected_sites[0] = info->chrom_size;
         }
 
+
+        
         vector<double> trans = adjacent_transition_rate(pertinent_recomb_rates_around_selected_sites, pertinent_fitnesses, info->m, (*info->neutral_sites)[i], (*info->neutral_sites)[i + 1], info->generations);
 
         mat transition_matrix(2,2,fill::zeros);
 
+        // Convert ancestry frequencies into transition matrix
         transition_matrix(0,0) = trans[0]/(trans[0] + trans[1]);
         transition_matrix(0,1) = 1 - transition_matrix(0,0);
         transition_matrix(1,0) = trans[2]/(trans[2] + trans[3]);
         transition_matrix(1,1) = 1 - transition_matrix(1,0);
+        
 
-        for(int j = i - (pairs_skipped/2); j <= i + ((pairs_skipped - 1)/2) && j < local_ancestries.size(); j++){
+        for(int j = i - (pairs_skipped/2); j <= i + ((pairs_skipped - 1)/2) && j < local_ancestries.size(); j++) {
 
             (*info->transition_matrices)[j] = transition_matrix;
             local_ancestries[j] = trans[0] + trans[1];
@@ -440,7 +452,7 @@ void *alt_single_fast_window_process(void *void_info) {
     return NULL;
 }
 
-
+// Calculates transition rates between adjacent sampled sites in a faster way
 vector<mat> alternative_fast_transition_rates (
   vector<double> &recomb_rates_around_neutral_sites,
   vector<double> &recomb_rates_around_selected_sites,
@@ -511,6 +523,7 @@ vector<mat> alternative_fast_transition_rates (
 
     int last_present = transition_matrices.size() - 1;
 
+    // Find the last transition matrix we calculated
     for(int i = transition_matrices.size() - 1; i >= 0; i--){
         if (transition_matrices[i].n_elem != 0){
             last_present = i;
@@ -518,20 +531,13 @@ vector<mat> alternative_fast_transition_rates (
         }
     }
 
+    // Fill up the rest of the empty transition matricies with the last calculated one
     for(int i = last_present + 1; i < transition_matrices.size(); i++) {
         transition_matrices[i] = transition_matrices[last_present];
     }
     
     return transition_matrices;
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -553,10 +559,6 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
 
 
     //// iterate across all positions and compute transition matrixes
-
-    //NOTE changed p starting point from 1 to 0
-
-    
     for ( int p = 0 ; p < recombination_rate.size(); p ++ ) {
         
         mat segment_transitions = transition_matrices[p];
@@ -564,22 +566,17 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
         /// population transitions by summing across all routes
         
         transition_matrix[number_chromosomes][p] = mat(transition_info.size(),transition_info.size(), fill::zeros);
-
         
-
         for ( int i = 0 ; i < transition_info.size() ; i ++ ) {
             for ( int j = 0 ; j < transition_info[i].size() ; j ++ ) {
                 
                 for ( std::map<vector<transition_information>,double>::iterator t = transition_info[i][j].begin() ; t != transition_info[i][j].end() ; ++ t ) {
                     
-
                     double prob_t = 1 ;
                     for ( int r = 0 ; r < t->first.size() ; r ++ ) {
                         
                         prob_t *= pow( segment_transitions(t->first[r].start_state,t->first[r].end_state), t->first[r].transition_count ) ;
-                        
                     }
-                    
                     
                     transition_matrix[number_chromosomes][p](j,i) += prob_t * t->second ;
                 }
@@ -589,121 +586,5 @@ void alt_create_transition_matrix ( map<int,vector<mat> > &transition_matrix , v
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//// create all transition rates between ancestry types for a single chromosome
-mat alt_create_transition_rates ( vector<pulse> admixture_pulses, double n, vector<double> ancestry_proportion ) {
-    
-    /// determine ancestry proportions based on the fraction of remainder
-    for ( int p = 0 ; p < admixture_pulses.size() ; p ++ ) {
-        admixture_pulses[p].proportion = admixture_pulses[p].fraction_of_remainder * ancestry_proportion[admixture_pulses[p].type] ;
-        ancestry_proportion[admixture_pulses[p].type] -= admixture_pulses[p].proportion ;
-    }
-    
-    //// sort by time so oldest events are at the top
-    sort( admixture_pulses.begin(), admixture_pulses.end() ) ;
-    
-    /// all ancestry proprionts to this point are in units of final ancestry
-    /// however before the pulses that came before, there was more
-    double ancestry_accounted = 0 ;
-    for ( int p = admixture_pulses.size() - 1 ; p > 0 ; p -- ) {
-        double accounted_here = admixture_pulses[p].proportion ;
-        admixture_pulses[p].proportion = admixture_pulses[p].proportion/( 1 - ancestry_accounted ) ;
-        ancestry_accounted += accounted_here ;
-    }
-
-    /// matrix to hold transition rates
-    mat transition_rates( admixture_pulses.size(), admixture_pulses.size(), fill::zeros ) ;
-    
-    /// iterate through all states
-    for ( int s1 = 0 ; s1 < admixture_pulses.size() ; s1 ++ ) {
-        for ( int s2 = 0 ; s2 < admixture_pulses.size() ; s2 ++ ) {
-            
-            //// self transition rates are just going to be 1-all others
-            if ( s2 == s1 ) continue ;
-            
-            /// rates calculated one way if greater than
-            if ( s1 > s2 ) {
-                for ( int t = s1 ; t < admixture_pulses.size() ; t ++ ) {
-                    
-                    /// basic recombination rates in each epoch
-                    double rate ;
-                    if ( t != admixture_pulses.size() - 1 ) {
-                        rate = n * ( 1 - exp( (admixture_pulses[t+1].time-admixture_pulses[t].time)/n ) ) ;
-                    }
-                    else {
-                        rate = n * ( 1 - exp( (-1*admixture_pulses[t].time)/n ) ) ;
-                    }
-                    
-                    /// probability of no recombination in prior epochs
-                    /// will skip epoch of s1 since that's in the above equation by definition
-                    for ( int t2 = t - 1 ; t2 > s1 - 1 ; t2 -- ) {
-                        rate *= exp((admixture_pulses[t2+1].time-admixture_pulses[t2].time)/n) ;
-                    }
-                    
-                    /// now probability of not selecting other acnestry types
-                    for ( int a = t ; a > s2 ; a -- ) {
-                        rate *= ( 1 - admixture_pulses[a].proportion ) ;
-                    }
-                    
-                    /// now select the correct ancestry type
-                    if ( s2 != 0 ) {
-                        rate *= admixture_pulses[s2].proportion ;
-                    }
-                    
-                    transition_rates(admixture_pulses[s2].entry_order,admixture_pulses[s1].entry_order) += rate ;
-                }
-            }
-            else {
-                for ( int t = s2 ; t < admixture_pulses.size() ; t ++ ) {
-                    
-                    /// basic recombination rates in each epoch
-                    double rate ;
-                    if ( t != admixture_pulses.size() - 1 ) {
-                        rate = n * ( 1 - exp( (admixture_pulses[t+1].time-admixture_pulses[t].time)/n ) ) ;
-                    }
-                    else {
-                        rate = n * ( 1 - exp( (-1*admixture_pulses[t].time)/n ) ) ;
-                    }
-                    
-                    /// probability of no recombination in prior epochs
-                    /// will skip epoch of s1 since that's in the above equation by definition
-                    for ( int t2 = t - 1 ; t2 > s2 - 1 ; t2 -- ) {
-                        rate *= exp((admixture_pulses[t2+1].time-admixture_pulses[t2].time)/n) ;
-                    }
-                    
-                    /// now deal with selecting lineage of the correct ancestry type
-                    for ( int a = t ; a > s2 ; a -- ) {
-                        rate *= ( 1 - admixture_pulses[a].proportion ) ;
-                    }
-                    
-                    /// now select the correct ancestry type
-                    rate *= admixture_pulses[s2].proportion ;
-                    
-                    /// and augment by this rate for this epoch
-                    transition_rates(admixture_pulses[s2].entry_order,admixture_pulses[s1].entry_order) += rate ;
-                }
-            }
-        }
-    }
-    
-    return transition_rates.t() ;
-}
 
 #endif

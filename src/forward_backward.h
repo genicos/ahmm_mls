@@ -45,10 +45,6 @@ void markov_chain::combine_prob( vector<int> &position, map<int, vector<vector<i
         for ( map<int, vector<vector<int> > >::iterator s = states.begin() ; s != states.end() ; s ++ ) {
             statecount2ploidy[s->second.size()] = s->first ;
         }
-
-        for(int i = 0; i < statecount2ploidy.size(); i++){
-            cerr << "AAAA " << i << "  " << statecount2ploidy[i] << "\n";
-        }
         
         //// now iterate through function and print appropriate ancestry states given ploidy at each site
         for ( int i = 0 ; i < alphas.size() ; i ++ ) {

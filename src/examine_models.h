@@ -5,13 +5,12 @@
 
 #include "optimize_selection.h"
 
+// Get genotype frequencies for each sample sites, for each sample
 vector<vector<vector<double>>> get_local_genotypes (vector<mat> model, vector<markov_chain> &markov_chain_information, map<int, vector<vector<map<vector<transition_information>,double>>>> &transition_matrix_information, vector<int> &position, vector<double> &n_recombs) {
     
     map<int,vector<mat> > transition_matrix ;
-
     
     for ( int m = 0 ; m < markov_chain_information.size() ; m ++ ) {
-        
         alt_create_transition_matrix( transition_matrix, transition_matrix_information[markov_chain_information.at(m).number_chromosomes], n_recombs, position, markov_chain_information.at(m).number_chromosomes, model ) ;
             
         for ( int p = 0 ; p < markov_chain_information[m].ploidy_switch.size() ; p ++ ) {
@@ -61,7 +60,7 @@ vector<vector<vector<double>>> get_local_genotypes (vector<mat> model, vector<ma
 
 
 
-
+// Get average local ancestry across all samples
 vector<double> get_local_ancestry (vector<mat> model, vector<markov_chain> &markov_chain_information,  map<int, vector<vector<map<vector<transition_information>,double>>>> &transition_matrix_information, vector<int> &position, vector<double> &n_recombs) {
     
     vector<vector<vector<double>>> genotypes = get_local_genotypes(model, markov_chain_information, transition_matrix_information, position, n_recombs);
@@ -151,6 +150,7 @@ void selection_opt::examine_models() {
 
         curr_search = options.mls_searches[i];
         
+        // Getting types of parameters to be fit
         vector<parameter_type> parameter_types(0);
         
         int site_count = options.mls_searches[i].search_l.size(); 
@@ -180,6 +180,7 @@ void selection_opt::examine_models() {
             }
         }
 
+
         vector<double> initial_parameters(parameter_count);
         vector<double> optimized_parameters(parameter_count);
 
@@ -189,6 +190,7 @@ void selection_opt::examine_models() {
 
             vector<double> parameters = convert_parameters_to_long_form(initial_parameters, curr_search);
 
+            // Printing sites to console and output
             for (uint i = 0; i < site_count; i++) {
                 double s_p1 = parameters[3*i + 1 + curr_search.search_m + curr_search.search_t];
                 double s_p2 = parameters[3*i + 2 + curr_search.search_m + curr_search.search_t];
@@ -204,7 +206,6 @@ void selection_opt::examine_models() {
                     cout << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with h: " << h << " s: " << s << "\n";
                 }
             }
-            
 
             cout << setprecision(15) << "lnl:\t" << lnl << "\n";
             cerr << setprecision(15) << "lnl:\t" << lnl << "\n";
@@ -213,6 +214,7 @@ void selection_opt::examine_models() {
 
             optimizer.init_bounds(parameter_count, 0.001);
             
+            // Defining search boundaries
             int p = 0;
             if (options.mls_searches[i].search_m) {
                 optimizer.min_bounds[p] = 0;
@@ -268,7 +270,7 @@ void selection_opt::examine_models() {
             }
         
             
-
+            // Performing search
             vector<double> best_parameters = multi_restart_optimization(
                 chrom_size,
                 optimizer,
@@ -279,10 +281,12 @@ void selection_opt::examine_models() {
                 options.verbose_stderr
             );
 
+
             cerr << "\n\nBest Model\n";
 
             vector<double> parameters = convert_parameters_to_long_form(best_parameters, curr_search);
 
+            // Printing fit model
             if (curr_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
                 cout << "m: " << parameters[0] << "\n";
@@ -316,7 +320,7 @@ void selection_opt::examine_models() {
 
         }
 
-
+        //Checking if we need to do posterior probability decoding
         char model_posterior_op = 'm';
         bool model_posterior_printing = options.mls_searches[i].posterior_options.find(model_posterior_op) != string::npos;
 
@@ -326,12 +330,12 @@ void selection_opt::examine_models() {
         char sample_posterior_op = 's';
         bool sample_posterior_printing = options.mls_searches[i].posterior_options.find(sample_posterior_op) != string::npos;
 
-
+        // If so, need to calculate transition rates in a way that lets all sites affect all sampled sites
         if (model_posterior_printing || data_posterior_printing || sample_posterior_printing) {
             to_be_optimized (optimized_parameters, this);
         }
 
-
+        // Print expected local ancestry from MLS model
         if ( model_posterior_printing ) {
 
             ofstream model_ancestry;
@@ -351,13 +355,14 @@ void selection_opt::examine_models() {
         }
 
 
-
+        // Output posteriors for each sample
         if ( sample_posterior_printing ) {
             get_local_ancestry(last_calculated_transition_matricies, markov_chain_information, transition_matrix_information, position, n_recombs);
             
             double m        = (curr_search.search_m) ?      optimized_parameters[0] : curr_search.start_m;
             int generations = (curr_search.search_t) ? (int)optimized_parameters[curr_search.search_m] : curr_search.start_t;
 
+            // Creating admixture pulse model
             pulse first_pulse;
             first_pulse.time = 10000000;
             first_pulse.time_fixed = true;
@@ -387,7 +392,7 @@ void selection_opt::examine_models() {
         }
 
 
-
+        // Output average local ancestry across all samples
         if ( data_posterior_printing ) {
 
             vector<double> data_local_ancestry = get_local_ancestry(last_calculated_transition_matricies, markov_chain_information, transition_matrix_information, position, n_recombs);
