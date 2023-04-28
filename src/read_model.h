@@ -251,7 +251,6 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
             }
         }
     }
-
     
     options.mls_searches = config_searches;
 }

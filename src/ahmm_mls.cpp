@@ -44,6 +44,7 @@ using namespace arma ;
 #include "viterbi.h" 
 #include "transition_information.h"
 #include "exponentiate_matrix.h"
+
 #include "searches.h"
 #include "cmd_line.h"
 #include "create_transition_rates.h"
@@ -64,13 +65,13 @@ using namespace arma ;
 #include "bootstrap.h"
 #include <iomanip>
 
-#include "selection_optimization_context.h"
-#include "simulate_selective_admixture.h"
+#include "read_model.h"
 #include "new_read_input.h"
 #include "nelder_mead_general.h"
-#include "optimize_selection.h"
 
-#include "read_model.h"
+#include "selection_optimization_context.h"
+#include "simulate_selective_admixture.h"
+#include "optimize_selection.h"
 #include "examine_models.h"
 
 
@@ -113,15 +114,10 @@ int main ( int argc, char *argv[] ) {
     vector<double> recombination_rate ;
     vector<string> chromosomes ;
 
-
-    
-    
     selection_read_file( options, markov_chain_information, state_list, position, recombination_rate, chromosomes ) ;
     
-    
     recombination_rate[0] = 0;
-    
-        
+     
     /// create basic transition information
     cerr << (double) (clock() - t) << " ms" << endl << "computing transition routes\t\t\t" ; t = clock() ;
     /// 3d map to look up by ploidy, start state, end state, and then relevant transition information
@@ -144,19 +140,17 @@ int main ( int argc, char *argv[] ) {
     }
     
     
+
+
     
-    
+    // read model file and place list of searches in options
     read_model_file(options, recombination_rate, position);
 
+    // create mls optimizer object that holds all necessary information to calculate lnl
     selection_opt selection_optimizer(recombination_rate, options, markov_chain_information, transition_matrix_information, position, state_list, chromosomes);
-        
+
+    // Examine all MLS models
     selection_optimizer.examine_models();
-    
-
-
-    
-
-    
     
         
     cerr << (double) (clock() - t) << " ms" << endl ;

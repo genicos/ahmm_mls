@@ -101,6 +101,7 @@ vector<double> get_local_ancestry (vector<mat> model, vector<markov_chain> &mark
 
 void selection_opt::examine_models() {
 
+
     // Defining optimization parameters
     vector<vector<vector<double>>> search_restarts;   
 
@@ -141,16 +142,16 @@ void selection_opt::examine_models() {
     cerr << setprecision(15);
     cout << setprecision(15);
 
+    
     for(int i = 0; i < options.mls_searches.size(); i++){
-
+        
+        cerr << "\nPARSING ENTRY:\n";
+        cerr << options.mls_searches[i].search_string << "\n";
         cout << options.mls_searches[i].search_string << "\n";
 
-        //setup_searches(options.mls_searches[i]);
-        current_search = options.mls_searches[i];
-
+        curr_search = options.mls_searches[i];
         
         vector<parameter_type> parameter_types(0);
-
         
         int site_count = options.mls_searches[i].search_l.size(); 
         int parameter_count = 0;
@@ -186,21 +187,21 @@ void selection_opt::examine_models() {
 
             double lnl = to_be_optimized_fast(initial_parameters, this);
 
-            vector<double> parameters = convert_parameters_to_long_form(initial_parameters);
+            vector<double> parameters = convert_parameters_to_long_form(initial_parameters, curr_search);
 
             for (uint i = 0; i < site_count; i++) {
-                double s_p1 = parameters[3*i + 1 + current_search.search_m + current_search.search_t];
-                double s_p2 = parameters[3*i + 2 + current_search.search_m + current_search.search_t];
+                double s_p1 = parameters[3*i + 1 + curr_search.search_m + curr_search.search_t];
+                double s_p2 = parameters[3*i + 2 + curr_search.search_m + curr_search.search_t];
 
                 double s = 1 - s_p2/s_p1;
                 double h = (1 - 1/s_p1)/s;
 
                 if(options.output_relative_fitnesses){
-                    cerr << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
-                    cout << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cerr << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cout << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
                 }else{
-                    cerr << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with h: " << h << " s: " << s << "\n";
-                    cout << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cerr << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cout << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with h: " << h << " s: " << s << "\n";
                 }
             }
             
@@ -265,12 +266,6 @@ void selection_opt::examine_models() {
                     p++;
                 }
             }
-
-            for(int h = 0; h < initial_parameters.size(); h++) {
-                cerr << initial_parameters[h] << "\n";
-                cerr << optimizer.min_bounds[h] << "\n";
-                cerr << optimizer.max_bounds[h] << "\n\n\n";
-            }
         
             
 
@@ -286,29 +281,29 @@ void selection_opt::examine_models() {
 
             cerr << "\n\nBest Model\n";
 
-            vector<double> parameters = convert_parameters_to_long_form(best_parameters);
+            vector<double> parameters = convert_parameters_to_long_form(best_parameters, curr_search);
 
-            if (current_search.search_m) {
+            if (curr_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
                 cout << "m: " << parameters[0] << "\n";
             }
-            if (current_search.search_t) {
-                cerr << "Time:    " << parameters[current_search.search_m] << "\n";
-                cout << "Time:    " << parameters[current_search.search_m] << "\n";
+            if (curr_search.search_t) {
+                cerr << "Time:    " << parameters[curr_search.search_m] << "\n";
+                cout << "Time:    " << parameters[curr_search.search_m] << "\n";
             }
             for (uint i = 0; i < site_count; i++) {
-                double s_p1 = parameters[3*i + 1 + current_search.search_m + current_search.search_t];
-                double s_p2 = parameters[3*i + 2 + current_search.search_m + current_search.search_t];
+                double s_p1 = parameters[3*i + 1 + curr_search.search_m + curr_search.search_t];
+                double s_p2 = parameters[3*i + 2 + curr_search.search_m + curr_search.search_t];
 
                 double s = 1 - s_p2/s_p1;
                 double h = (1 - 1/s_p1)/s;
 
                 if(options.output_relative_fitnesses){
-                    cerr << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
-                    cout << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cerr << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
+                    cout << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with relative fitness: 1," << 1/s_p1 << "," << s_p2/s_p1 << "\n";
                 }else{
-                    cerr << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with h: " << h << " s: " << s << "\n";
-                    cout << "site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cerr << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with h: " << h << " s: " << s << "\n";
+                    cout << "site: " << parameters[3*i + 0 + curr_search.search_m + curr_search.search_t] << " with h: " << h << " s: " << s << "\n";
                 }
                 
             }
@@ -360,8 +355,8 @@ void selection_opt::examine_models() {
         if ( sample_posterior_printing ) {
             get_local_ancestry(last_calculated_transition_matricies, markov_chain_information, transition_matrix_information, position, n_recombs);
             
-            double m        = (current_search.search_m) ?      optimized_parameters[0] : current_search.start_m;
-            int generations = (current_search.search_t) ? (int)optimized_parameters[current_search.search_m] : current_search.start_t;
+            double m        = (curr_search.search_m) ?      optimized_parameters[0] : curr_search.start_m;
+            int generations = (curr_search.search_t) ? (int)optimized_parameters[curr_search.search_m] : curr_search.start_t;
 
             pulse first_pulse;
             first_pulse.time = 10000000;

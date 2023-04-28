@@ -17,11 +17,7 @@ double get_wall_time() {
 }
 
 
-Search current_search;
-
-
-
-vector<double> convert_parameters_to_long_form(vector<double> parameters) {
+vector<double> convert_parameters_to_long_form(vector<double> parameters, Search &current_search) {
     vector<double> new_params(0);
 
     int i = 0;
@@ -69,7 +65,7 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
 
 
 
-void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size, bool verbose){
+void prepare_selection_info(vector<double> &parameters, vector<double> &selection_recomb_rates, vector<vector<double>> &fitnesses, double chrom_size, bool verbose, Search &current_search){
 
     int selected_sites_count = parameters.size() / 3;
     selection_recomb_rates.resize(selected_sites_count + 1);
@@ -187,7 +183,7 @@ double to_be_optimized (vector<double> parameters, void *info) {
 
     selection_opt *opt_context = (class selection_opt *) info;
 
-    parameters = convert_parameters_to_long_form(parameters);
+    parameters = convert_parameters_to_long_form(parameters, (*opt_context).curr_search);
 
     double timer = get_wall_time();
     
@@ -195,16 +191,16 @@ double to_be_optimized (vector<double> parameters, void *info) {
     vector<vector<double>> fitnesses;
     
     double used_chrom_size = 1;
-    if((*opt_context).chrom_size > 1){
+    if((*opt_context).chrom_size > 1) {
         used_chrom_size = (*opt_context).chrom_size;
     }
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr, (*opt_context).curr_search);
 
     int cores = (*opt_context).options.cores;
 
-    double m        = (current_search.search_m) ?      parameters[0] : current_search.start_m;
-    int generations = (current_search.search_t) ? (int)parameters[current_search.search_m] : current_search.start_t;
+    double m        = ((*opt_context).curr_search.search_m) ?      parameters[0]                                   : (*opt_context).curr_search.start_m;
+    int generations = ((*opt_context).curr_search.search_t) ? (int)parameters[(*opt_context).curr_search.search_m] : (*opt_context).curr_search.start_t;
 
     vector<mat> transition_matrices = calculate_transition_rates (
         (*opt_context).n_recombs,
@@ -241,7 +237,7 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
 
     selection_opt *opt_context = (class selection_opt *) info;
 
-    parameters = convert_parameters_to_long_form(parameters);
+    parameters = convert_parameters_to_long_form(parameters, (*opt_context).curr_search);
     
     double timer = get_wall_time();
     
@@ -253,12 +249,12 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
         used_chrom_size = (*opt_context).chrom_size;
     }
 
-    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr);
+    prepare_selection_info(parameters, selection_recomb_rates, fitnesses, used_chrom_size, (*opt_context).options.verbose_stderr, (*opt_context).curr_search);
     
     int cores = (*opt_context).options.cores;
     
-    double m        = (current_search.search_m) ?      parameters[0] : current_search.start_m;
-    int generations = (current_search.search_t) ? (int)parameters[current_search.search_m] : current_search.start_t;
+    double m        = ((*opt_context).curr_search.search_m) ?      parameters[0]                                   : (*opt_context).curr_search.start_m;
+    int generations = ((*opt_context).curr_search.search_t) ? (int)parameters[(*opt_context).curr_search.search_m] : (*opt_context).curr_search.start_t;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
         (*opt_context).n_recombs,
@@ -335,10 +331,10 @@ vector<double> multi_restart_optimization(
                             break;
                     }
                 }
-
+                
                 
                 opt.populate_points(given_parameters.size(), 1, center_point, scales);
-
+                
 
                 //random reflections
                 for(uint i = 0; i < center_point.size(); i++){
