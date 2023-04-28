@@ -32,7 +32,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
 
         this_line.search_string = line;
 
-        int morgan_or_bp_choice; //morgan:1   bp:0
+        int morgan_or_bp_choice;
         if (!( iss >> morgan_or_bp_choice )) { error_string(); }
         morgan_or_bp.push_back(morgan_or_bp_choice);
 
@@ -49,6 +49,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
         //Read in m value
         string m_string;
         if (!( iss >> m_string )) { error_string(); }
+        //Fit admixture proportion EPERIMENTAL, UNTESTED
         this_line.search_m = false;
         if(m_string[0] == '(') {
             this_line.search_m = true;
@@ -60,6 +61,7 @@ void read_model_file(cmd_line &options, vector<double> &recomb_rates , vector<in
         //Read in t value
         string t_string;
         if (!( iss >> t_string )) { error_string(); }
+        //Fit time since admixture EPERIMENTAL, UNTESTED
         this_line.search_t = false;
         if(t_string[0] == '(') {
             this_line.search_t = true;

@@ -17,7 +17,7 @@ double get_wall_time() {
 }
 
 
-Search global_search;
+Search current_search;
 
 
 
@@ -25,36 +25,36 @@ vector<double> convert_parameters_to_long_form(vector<double> parameters) {
     vector<double> new_params(0);
 
     int i = 0;
-    if (global_search.search_m) {
+    if (current_search.search_m) {
         new_params.push_back(parameters[i++]);
     }
 
-    if(global_search.search_t) {
+    if(current_search.search_t) {
         new_params.push_back(parameters[i++]);
     }
 
-    for(int j = 0; j < global_search.search_l.size(); j++) {
+    for(int j = 0; j < current_search.search_l.size(); j++) {
 
-        if(global_search.search_l[j]) {
+        if(current_search.search_l[j]) {
             new_params.push_back(parameters[i++]);
         }else{
-            new_params.push_back(global_search.start_l[j]);
+            new_params.push_back(current_search.start_l[j]);
         }
 
         bool h_and_s = true; // Not all fitnesses can be expressed in terms of h and s
         double h = 0;
         double s = 0;
 
-        if(global_search.search_h[j]){
+        if(current_search.search_h[j]){
             h = parameters[i++];
         }else{
-            h = global_search.start_h[j];
+            h = current_search.start_h[j];
         }
 
-        if(global_search.search_s[j]){
+        if(current_search.search_s[j]){
             s = parameters[i++];
         }else{
-            s = global_search.start_s[j];
+            s = current_search.start_s[j];
         }
 
         if(h_and_s){
@@ -80,24 +80,24 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
         if(verbose) {
             cerr << "\nTesting parameters:\n";
-            if (global_search.search_m) {
+            if (current_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
             }
-            if (global_search.search_t) {
-                cerr << "time:    " << parameters[global_search.search_m] << "\n";
+            if (current_search.search_t) {
+                cerr << "time:    " << parameters[current_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << "selection site: " << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << " with fitness: " << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << ",1," << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
+                cerr << "selection site: " << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << " with fitness: " << parameters[3*i + 1 + current_search.search_m + current_search.search_t] << ",1," << parameters[3*i + 2 + current_search.search_m + current_search.search_t] << "\n";
             }
         }else{
-            if (global_search.search_m) {
+            if (current_search.search_m) {
                 cerr << "m: " << parameters[0] << "\n";
             }
-            if (global_search.search_t) {
-                cerr << "time:    " << parameters[global_search.search_m] << "\n";
+            if (current_search.search_t) {
+                cerr << "time:    " << parameters[current_search.search_m] << "\n";
             }
             for (uint i = 0; i < selected_sites_count; i++) {
-                cerr << parameters[3*i + 0 + global_search.search_m + global_search.search_t] << "\t" << parameters[3*i + 1 + global_search.search_m + global_search.search_t] << "\t1\t" << parameters[3*i + 2 + global_search.search_m + global_search.search_t] << "\n";
+                cerr << parameters[3*i + 0 + current_search.search_m + current_search.search_t] << "\t" << parameters[3*i + 1 + current_search.search_m + current_search.search_t] << "\t1\t" << parameters[3*i + 2 + current_search.search_m + current_search.search_t] << "\n";
             }
         }
 
@@ -114,11 +114,11 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         vector<Selected_pair> selected_pairs(selected_sites_count);
         for(int i = 0; i < selected_sites_count; i++){
             Selected_pair ss;
-            ss.site = parameters[i*3 + global_search.search_m + global_search.search_t];
+            ss.site = parameters[i*3 + current_search.search_m + current_search.search_t];
             ss.fitness.resize(3);
-            ss.fitness[0] = parameters[i*3 + 1 + global_search.search_m + global_search.search_t];
+            ss.fitness[0] = parameters[i*3 + 1 + current_search.search_m + current_search.search_t];
             ss.fitness[1] = 1;
-            ss.fitness[2] = parameters[i*3 + 2 + global_search.search_m + global_search.search_t];
+            ss.fitness[2] = parameters[i*3 + 2 + current_search.search_m + current_search.search_t];
 
             selected_pairs[i] = ss;
         }
@@ -203,8 +203,8 @@ double to_be_optimized (vector<double> parameters, void *info) {
 
     int cores = (*opt_context).options.cores;
 
-    double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
-    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
+    double m        = (current_search.search_m) ?      parameters[0] : current_search.start_m;
+    int generations = (current_search.search_t) ? (int)parameters[current_search.search_m] : current_search.start_t;
 
     vector<mat> transition_matrices = calculate_transition_rates (
         (*opt_context).n_recombs,
@@ -257,8 +257,8 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
     
     int cores = (*opt_context).options.cores;
     
-    double m        = (global_search.search_m) ?      parameters[0] : global_search.start_m;
-    int generations = (global_search.search_t) ? (int)parameters[global_search.search_m] : global_search.start_t;
+    double m        = (current_search.search_m) ?      parameters[0] : current_search.start_m;
+    int generations = (current_search.search_t) ? (int)parameters[current_search.search_m] : current_search.start_t;
     
     vector<mat> transition_matrices = alternative_fast_transition_rates (
         (*opt_context).n_recombs,
@@ -283,30 +283,6 @@ double to_be_optimized_fast(vector<double> parameters, void *info) {
     
     return lnl;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-void setup_searches(Search this_search) {
-    global_search = this_search;
-}
-
-
-
-
-
-
-
-
 
 
 
