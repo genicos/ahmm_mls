@@ -88,7 +88,7 @@ public:
     double search_stage_1_threshold = 5;
 
     /// range of lnL in simplex after which second stage of searching an MLS model is stopped
-    double search_stage_2_threshold = 1;
+    double search_stage_2_threshold = 0.1;
 
     /// Adjacent pairs of sampled sites skipped in fast lnl calculation of MLS model
     int sampled_pair_skips = 4;
