@@ -6,30 +6,28 @@ Ancestry_HMM_MLS (Ancestry HMM Multi Locus Selection), is a program to infer the
 
 
 #### Basic usage
-> ahmm_mls -i [input_file] –s [sample_file] -m [model_file]
+	ahmm_mls -i [input_file] –s [sample_file] -m [model_file]
 
 For a list of options and arguments, see the built in help message:
 
-> ahmm_mls --help
+	ahmm_mls --help
 
 This will print the following:
 
-> ahmm_mls usage:
-> 
->	required:
->		-i [string]		input file
->		-s [string]		sample id and ploidy file
->		-m [string]		model file
->	optional:
->		--help			print this help statement
->		-g			samples are specified with genotypes rather than read counts
->		-c [int]		number of cores used
->		-f			output relative fitnesses rather than selection coefficients
->		-vo			verbose stderr output
->		-R [float]		specify morgan distance from selected site after which they are ignored
->		-t1 [float]		threshold of lnL ratio range in simplex for first stage of optimization
->		-t2 [float]		threshold of lnL ratio range in simplex for second stage of optimization
->		-k [int]		number of skipped regions between adjacent sampled sites
+	required:
+		-i [string]		input file
+		-s [string]		sample id and ploidy file
+		-m [string]		model file
+	optional:
+		--help			print this help statement
+		-g			samples are specified with genotypes rather than read counts
+		-c [int]		number of cores used
+		-f			output relative fitnesses rather than selection coefficients
+		-vo			verbose stderr output
+		-R [float]		specify morgan distance from selected site after which they are ignored
+		-t1 [float]		threshold of lnL ratio range in simplex for first stage of optimization
+		-t2 [float]		threshold of lnL ratio range in simplex for second stage of optimization
+		-k [int]		number of skipped regions between adjacent sampled sites
 					for each one calculated.
 
 #### Input File and Sample File Format
