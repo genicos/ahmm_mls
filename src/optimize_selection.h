@@ -20,15 +20,16 @@ double get_wall_time() {
 vector<double> convert_parameters_to_long_form(vector<double> parameters, Search &current_search) {
     vector<double> new_params(0);
 
+    // Adding m and t parameters
     int i = 0;
     if (current_search.search_m) {
         new_params.push_back(parameters[i++]);
     }
-
     if(current_search.search_t) {
         new_params.push_back(parameters[i++]);
     }
 
+    // Adding selected sites parameters
     for(int j = 0; j < current_search.search_l.size(); j++) {
 
         if(current_search.search_l[j]) {
@@ -70,8 +71,8 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
     fitnesses.resize(selected_sites_count);
     
     if(parameters.size() > 0) {
-        
 
+        // Print model being tested
         if(verbose) {
             cerr << "\nTesting parameters:\n";
             if (current_search.search_m) {
@@ -121,6 +122,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
         sort(selected_pairs.begin(), selected_pairs.end());         //
         //////////////////////////////////////////////////////////////
 
+        // Get recomb rates around selected sites
         selection_recomb_rates[0] = 1;
 
         double last = 0;
@@ -143,7 +145,7 @@ void prepare_selection_info(vector<double> &parameters, vector<double> &selectio
 
 
 
-
+// Computes likelihood for transition rates
 double compute_lnl(vector<mat> &transition_matrices, selection_opt &opt_context){
 
     map<int,vector<mat> > transition_matrix ;

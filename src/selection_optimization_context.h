@@ -10,8 +10,10 @@ public:
     // Recombination rate between each adjacent pair of sampled sites
     vector<double> n_recombs;
 
+    // Command line arguments
     cmd_line options;
     
+    // Markov chain info for lnl calculation
     vector<markov_chain> markov_chain_information ;
     map<int, vector<vector< map< vector<transition_information>, double > > > > transition_matrix_information ;
 
@@ -40,6 +42,7 @@ public:
         position = pos;
         chromosomes = chroms;
         
+        // Calculate morgan positions of each sampled site
         morgan_position.resize(n_recombs.size());
         double sum = 0;
         for(uint i = 0; i < n_recombs.size(); i++){

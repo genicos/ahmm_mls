@@ -88,7 +88,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     int sites = fitnesses.size() + 2;                                                      //
     int n_sites[2];
     
-    vector<double> neutral_fit(3);
+    vector<double> neutral_fit(3); // Fitness of neutral sites
     neutral_fit[0] = 1;
     neutral_fit[1] = 1;
     neutral_fit[2] = 1;
@@ -104,7 +104,7 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
     for(unsigned int i = 0; i < recomb_rates.size(); i++){
         recomb_sum += recomb_rates[i];
 
-        if(!inserted_first){
+        if(!inserted_first){ // We have yet to insert first neutral site
             if(n_site1 - EPSILON <= recomb_sum){
                 auto fit = new_fitnesses.begin();
                 new_fitnesses.insert(fit + i, neutral_fit);
@@ -113,13 +113,12 @@ vector<double> adjacent_transition_rate(vector<double> recomb_rates, vector<vect
                 auto rit = new_recomb_rates.begin();
                 new_recomb_rates.insert(rit + i + 1, recomb_sum - n_site1);
                 new_recomb_rates[i] = n_site1 - (recomb_sum - recomb_rates[i]);
-                
 
                 inserted_first = true;
             }
         }
         
-        if(inserted_first){
+        if(inserted_first){ // We have inserted first neutral site, now inserting second
             if(n_site2 - EPSILON <= recomb_sum){
                 auto fit = new_fitnesses.begin();
                 new_fitnesses.insert(fit + i + 1, neutral_fit);
